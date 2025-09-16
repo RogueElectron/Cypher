@@ -13,8 +13,8 @@ def serve_index():
 # login page
 @app.route('/api/login', methods=['POST', 'GET'])
 def handle_login():
-    if request.method == 'GET': # placeholder for login page
-        return ""
+    if request.method == 'GET':
+        return render_template('login.html')
 
     elif request.method == 'POST': # if have time, implement input sanitization
         return ""
@@ -22,8 +22,8 @@ def handle_login():
 # register page
 @app.route('/api/register', methods=['POST', 'GET'])
 def handle_register():
-    if request.method == 'GET': # placeholder for register page
-        return ""
+    if request.method == 'GET':
+        return render_template('register.html')
 
     elif request.method == 'POST':
         return ""
