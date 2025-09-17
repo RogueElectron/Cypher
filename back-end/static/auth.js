@@ -41,14 +41,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             try {
                 // start step 1 of the opaque protocol
-                const { message, clientSecret } = await client.createRegistrationRequest(password);
+                // First create a registration request
+                const registrationRequest = await client.createRegistrationRequest(password);
                 
-                // Store the client secret
-                sessionStorage.setItem('client_secret', arrayBufferToBase64(clientSecret));
+                // Store the registration request for later use
+                sessionStorage.setItem('registration_request', arrayBufferToBase64(registrationRequest));
                 sessionStorage.setItem('username', username); // Store username 
                 
-                // Convert message to base64 for sending
-                const messageBase64 = arrayBufferToBase64(message);
+                // The registration request is already in the correct format for sending
+                const messageBase64 = arrayBufferToBase64(registrationRequest);
                 
                 // Send to server as JSON
                 const response = await fetch('/api/register/start', {
