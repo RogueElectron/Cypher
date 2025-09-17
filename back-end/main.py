@@ -42,10 +42,9 @@ def handle_register():
 @app.route('/api/register/start', methods=['POST'])
 def handle_register_start():
     # Print raw request data
-    print("\n=== Received Request ===")
     print(f"Headers: {dict(request.headers)}")
     print(f"Data: {request.get_data()}")
-
+    return 'ok '
 #step 3
 @app.route('/api/register/finish', methods=['POST'])
 def handle_register_finish():
