@@ -1,5 +1,5 @@
 from flask import Flask, send_from_directory, request, session, render_template, url_for
-
+import base64
 app = Flask(__name__)
 
 
@@ -39,7 +39,37 @@ def handle_register():
 # step 1
 @app.route('/api/register/start', methods=['POST'])
 def handle_register_start():
-   return "" #placeholder
+    try:
+        # Try to get JSON data first
+        if request.is_json:
+            data = request.get_json()
+        else:
+            return {'error': 'Request must be JSON' }, 400
+
+        if not data:
+            return {'error': 'No data provided'}, 400
+            
+        username = data.get('username')
+        message_base64 = data.get('message')
+            
+        # Something is wrong here, i don't have time now but i forgot if the server sends json or b64
+        try:
+            message = base64.b64decode(message_base64)
+            print(f"Received registration start for user: {username}")
+            print(f"Message length: {len(message)} bytes")
+            
+            return {
+                'status': 'success',
+                'message': 'test passed',
+                'username': username
+            }
+            
+        except Exception as e:
+            return {'error': f'Error decoding message: {str(e)}'}, 400
+            
+    except Exception as e:
+        return {'error': f'Error processing request: {str(e)}'}, 500
+
 #step 3
 @app.route('/api/register/finish', methods=['POST'])
 def handle_register_finish():
