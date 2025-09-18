@@ -3,7 +3,7 @@
 {% block title %}Register{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-5"> <!-- so basically this is probably, useless since we will-->
+<div class="container-fluid mt-5"> 
     <div class="row">              <!-- we still haven't made the OPAQUE logic-->
         <div class="col-md-6 offset-md-3"> 
             <div class="card border-secondary">
@@ -28,7 +28,7 @@
                     </form>
                 </div>
                 <div class="card-footer text-center">
-                    <small>Already have an account? <a href="{{ url_for('handle_login') }}">Login here</a></small>
+                    <small>Already have an account? <a href="{{ url_for('serve_login') }}">Login here</a></small>
                 </div>
             </div>
         </div>

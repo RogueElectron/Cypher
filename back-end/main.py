@@ -15,7 +15,7 @@ def serve_index():
 
 # login page
 @app.route('/api/login', methods=['POST'])     
-def handle_login():
+def serve_login():
     if request.method == 'GET':
         return render_template('login.html')
 
@@ -32,7 +32,7 @@ def handle_login_finish():
 
 # register page
 @app.route('/api/register', methods=['GET'])
-def handle_register():
+def serve_register():
     if request.method == 'GET':
         return render_template('register.html')
 

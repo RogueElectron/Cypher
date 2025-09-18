@@ -21,15 +21,9 @@ const client = new OpaqueClient({
 });
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // wait for client to start
-    try {
-        await client.ready;
-        console.log('OPAQUE client initialized successfully');
-    } catch (error) {
-        console.error('Failed to initialize OPAQUE client:', error);
-        return;
-    }
-
+    // so this is sent to the flask server, the flask forwards it to the node.js endpoint exposed by express,
+    // the ts lib proccesses the requests and sends responses through the flask server which forwards it to 
+    // the clients, easy, right?
     const registerForm = document.getElementById('register-form'); 
     
     if (registerForm) {
@@ -39,42 +33,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             const username = formData.get('username');
             const password = formData.get('password');
             
-            try {
-                // start step 1 of the opaque protocol
-                const registrationRequest = await client.createRegistrationRequest(password);
-                
-                sessionStorage.setItem('registration_request', arrayBufferToBase64(registrationRequest));
-                sessionStorage.setItem('username', username); // Store username 
-                
-                const messageBase64 = arrayBufferToBase64(registrationRequest);
-                
-                const response = await fetch('/api/register/start', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        username: username,
-                        message: messageBase64
-                    })
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`Server responded with status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                console.log('Server response:', data);
-                
-                // todo - handle server response
-                // using client.finalizeRegistrationRequest()
-                // for now we will configure the server to just print what's sent by this to test for compatability with the python lib
-                
-            } catch (error) {
-                console.error('Registration error:', error);
-                alert(`Registration failed: ${error.message}. See console for details.`);
-            }
         });
     }
 });
