@@ -5,8 +5,8 @@ from dotenv import load_dotenv
 import requests
 import os
 
-port = int(os.getenv('NODE_API_PORT', 3000))  # so it needs a default so i passed the one from the .env as default
-
+node_api_port = int(os.getenv('NODE_API_PORT', 3000))  # so it needs a default so i passed the one from the .env as default
+node_api_url = f"http://127.0.0.1:{node_api_port}"
 
 load_dotenv()
 app = Flask(__name__)
@@ -36,29 +36,33 @@ def serve_register():
 # OPAQUE routing
 # so choom this just forwards it to the node js api
 # TODO IMPLEMENT INPUT SANITIZATION
+# TODO implement error handling
+# TODO implement timeout
+# TODO use urljoin 
+# TODO implement header forwarding 
 
 @app.route('/api/register/init', methods=['POST'])
 def handle_register_init():
-    print(f"Headers: {dict(request.headers)}")
-    print(f"Data: {request.get_data()}")
-    return 'ok '
+
+    response = requests.post(node_api_url + '/register/init', json=request.json)
+    return response.content, response.status_code
 
 @app.route('/api/register/finish', methods=['POST'])
 def handle_register_finish():
-    url = 'http://127.0.0.1:3000/register/finish'
-    response = requests.post(url, json=request.json)
+
+    response = requests.post(node_api_url + '/register/finish', json=request.json)
     return response.content, response.status_code
 
 @app.route('/api/login/init', methods=['POST'])
 def handle_login_init():
-    url = 'http://127.0.0.1:3000/login/start'
-    response = requests.post(url, json=request.json)
+
+    response = requests.post(node_api_url + '/login/start', json=request.json)
     return response.content, response.status_code
 
 @app.route('/api/login/finish', methods=['POST'])
 def handle_login_finish():
-    url = 'http://127.0.0.1:3000/login/finish'
-    response = requests.post(url, json=request.json)
+
+    response = requests.post(node_api_url + '/login/finish', json=request.json)
     return response.content, response.status_code
 
 
