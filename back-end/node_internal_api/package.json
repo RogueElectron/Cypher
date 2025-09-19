@@ -8,6 +8,7 @@
     "dev": "nodemon app.js"
   },
   "dependencies": {
+    "@cloudflare/opaque-ts": "^0.7.5",
     "express": "^4.18.2"
   },
   "devDependencies": {

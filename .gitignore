@@ -2,4 +2,5 @@
 /back-end/node_modules
 /back-end/__pycache__ 
 /back-end/node_internal_api/node_modules
-
+/back-end/opaque-ts-doc-impl-example
+/back-end/.env
