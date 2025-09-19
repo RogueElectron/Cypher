@@ -1,92 +1,80 @@
-import {   
-  OpaqueClient,   
-  OpaqueServer,   
-  OpaqueConfig,   
-  OpaqueID,  
-  RegistrationRequest,  
-  RegistrationResponse,  
-  RegistrationRecord,  
-  KE1,  
-  KE2,  
-  KE3,  
-  CredentialFile  
+import { 
+  OpaqueID, 
+  OpaqueServer,
+  getOpaqueConfig
 } from '@cloudflare/opaque-ts';
 
-require('dotenv').config();
+import express from 'express'
 
-const express = require('express');
-const app = express();
+import dotenv from 'dotenv';
 
-class LocalOpaqueServer {    
-  constructor() {  
-      this.config = new OpaqueConfig(OpaqueID.OPAQUE_P256);  
-      this.users = new Map(); // DONT FORGET TO MAEK A REAL DATABASE
-      this.init();  
-  }  
+dotenv.config();
 
-  async init() {      
-      this.oprfSeed = new Uint8Array(Buffer.from(process.env.OPRF_SEED, 'hex'));
+const app = express()
 
-      this.serverKeypair = {                                  
-        private_key: process.env.AKE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-        public_key: process.env.AKE_PUBLIC_KEY.replace(/\\n/g, '\n')
-      } // this is very sketchy
+// Helper function to convert PEM to Uint8Array
+function pemToUint8Array(pem) {
+    const base64 = pem
+        .replace(/-----BEGIN [^-]+-----/g, '')
+        .replace(/-----END [^-]+-----/g, '')
+        .replace(/\s+/g, '');
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
+}
 
-      this.server = new OpaqueServer(  
-        this.config,  
-        Array.from(this.oprfSeed),  
-        {  
-            private_key: Array.from(this.serverKeypair.private_key),  
-            public_key: Array.from(this.serverKeypair.public_key)  
-        }  
-    );
-  }
-       // IMPORTANT, this is the code transpiled from the example implementationn
-     // Registration: handle client request  
-     // uhhh this has multiple problems in serilization and deserialization, fixing tomorrow, hopefully
-     async register(serializedRequest, userId) {  
-      const request = RegistrationRequest.deserialize(this.config, serializedRequest);  
-      const response = await this.server.registerInit(request, userId);  
-      return response.serialize();  
-  }  
-
-  // Registration: store user record  
-  storeUser(userId, record, clientIdentity) {  
-      const credentialFile = new CredentialFile(userId, record, clientIdentity);  
-      this.users.set(userId, new Uint8Array(credentialFile.serialize()));  
-      return true;  
-  }  
-
-  // Authentication: handle login request  
-  async login(serializedKE1, userId) {  
-      const ke1 = KE1.deserialize(this.config, serializedKE1);  
+// Initialize OPAQUE server
+async function initOpaqueServer() {
+    try {
+        const config = getOpaqueConfig(OpaqueID.OPAQUE_P256);
         
-      const userBytes = this.users.get(userId);  
-      if (!userBytes) throw new Error('User not found');  
+        // Generate OPRF seed as Uint8Array
+        const oprfSeed = new Uint8Array(config.prng.random(config.hash.Nh));
         
-      const credentialFile = CredentialFile.deserialize(this.config, Array.from(userBytes));  
+        // Generate a key pair using the config's AKE
+        const keyPair = config.ake.generateAuthKeyPair(); // insert 1000 yard stare gif
         
-      const ke2 = await this.server.authInit(  
-          ke1,  
-          credentialFile.record,  
-          credentialFile.credential_identifier,  
-          credentialFile.client_identity  
-      );  
+        // Convert keys to Uint8Array if they aren't already
+        const privateKey = keyPair.privateKey instanceof Uint8Array ? 
+            keyPair.privateKey : 
+            new TextEncoder().encode(JSON.stringify(keyPair.privateKey));
+            
+        const publicKey = keyPair.publicKey instanceof Uint8Array ?
+            keyPair.publicKey :
+            new TextEncoder().encode(JSON.stringify(keyPair.publicKey));
         
-      return ke2.serialize();  
-  }  
+        const server = new OpaqueServer(
+            config,
+            Array.from(oprfSeed),  // Convert Uint8Array to regular array
+            {
+                private_key: Array.from(privateKey),
+                public_key: Array.from(publicKey)
+            },
+            'server.example.com' // Server identity
+        );
+        
+        console.log('OPAQUE server initialized successfully');
+        return server;
+    } catch (error) {
+        console.error('Failed to initialize OPAQUE server:', error);
+        throw error;
+    }
+}
 
-  // Authentication: verify final message  
-  verify(serializedKE3) {  
-      const ke3 = KE3.deserialize(this.config, serializedKE3);  
-      const result = this.server.authFinish(ke3);  
-      return result.session_key;  
-  }  
-}  
+// Initialize the server
+let server;
+initOpaqueServer()
+    .then(s => {
+        server = s;
+        // Start your Express server here once OPAQUE is ready
+        // app.listen(...);
+    })
+    .catch(console.error);
 
-export { LocalOpaqueServer };
-
-
+/*
 // so this converts json to js objects
 
 app.use(express.json());
@@ -109,8 +97,9 @@ app.get('/login/init', (req, res) => {
 app.post('/login/finish', (req, res) => {
   
 });
-// to do, implement routing thru the python flask server
+
 // start server
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 });
+*/
