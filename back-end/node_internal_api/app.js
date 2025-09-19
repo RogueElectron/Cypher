@@ -43,7 +43,7 @@ class LocalOpaqueServer {
   }
        // IMPORTANT, this is the code transpiled from the example implementationn
      // Registration: handle client request  
-     // uhhh
+     // uhhh this has multiple problems in serilization and deserialization, fixing tomorrow, hopefully
      async register(serializedRequest, userId) {  
       const request = RegistrationRequest.deserialize(this.config, serializedRequest);  
       const response = await this.server.registerInit(request, userId);  
