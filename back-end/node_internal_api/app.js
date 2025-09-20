@@ -1,8 +1,16 @@
-import { Serializable } from '@cloudflare/opaque-ts/lib/src/messages.js';
-import { AKE3DHServer } from '@cloudflare/opaque-ts/lib/src/3dh_server.js';
-import { OpaqueCoreServer } from '@cloudflare/opaque-ts/lib/src/core_server.js';
-import { getOpaqueConfig } from '@cloudflare/opaque-ts/lib/src/config.js';
-
+import {  
+    OpaqueServer,  
+    OpaqueClient,    
+    OpaqueID,
+    getOpaqueConfig,
+    CredentialFile,  
+    RegistrationRequest,  
+    RegistrationResponse,  
+    RegistrationRecord,  
+    KE1,  
+    KE2,  
+    KE3  
+} from './node_modules/@cloudflare/opaque-ts/lib/src/index.js';
 // since you're back, you have a problem with the imports, and you need hte 'GetOpaqueConfig' think imported too, as well as OpaqueID 
 
 import express from 'express'
@@ -12,27 +20,44 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express()
-
 app.use(express.json());
 
+async function createLocalOpaqueServer() {  
+    // 1. Create configuration  
+    const config = new getOpaqueConfig(OpaqueID.OPAQUE_P256);  
+    // 2. Generate OPRF seed  
+    const oprfSeed = config.prng.random(config.hash.Nh);  
+      
+    // 3. Generate server AKE keypair  
+    const serverKeypairSeed = config.prng.random(config.constants.Nseed);
+    const serverAkeKeypair = await config.ake.deriveAuthKeyPair(serverKeypairSeed);
+      
+    const akeKeypairExport = {  
+        private_key: Array.from(serverAkeKeypair.private_key),  
+        public_key: Array.from(serverAkeKeypair.public_key)  
+    };  
+      
+    // 4. Set server identity  
+    const serverIdentity = 'Digitopia-opaque-server';  
+      
+    // Create your extended server  
+    const server = new LocalOpaqueServer(  
+        config,  
+        oprfSeed,  
+        akeKeypairExport,  
+        serverIdentity  
+    );  
+      
+    return server;  
+}  
+  
+
 // Initialize OPAQUE server
-export class LocalOpaqueServer {
+export class LocalOpaqueServer extends OpaqueServer{
     constructor(config, oprf_seed, ake_keypair_export, server_identity) {
-        this.config = config;
-        Serializable.check_bytes_arrays([
-            ake_keypair_export.public_key,
-            ake_keypair_export.private_key
-        ]);
-        this.ake_keypair = {
-            private_key: new Uint8Array(ake_keypair_export.private_key),
-            public_key: new Uint8Array(ake_keypair_export.public_key)
-        };
-        Serializable.check_bytes_array(oprf_seed);
-        this.server_identity = server_identity
-            ? new TextEncoder().encode(server_identity)
-            : this.ake_keypair.public_key;
-        this.opaque_core = new OpaqueCoreServer(config, new Uint8Array(oprf_seed));
-        this.ake = new AKE3DHServer(this.config);
+        super(config, oprf_seed, ake_keypair_export, server_identity);  
+        
+        // removed all logic here because it's already done automatically by the OpaqueServer
     }
 
     // register finish runs on the client side
@@ -55,20 +80,52 @@ export class LocalOpaqueServer {
     }
 }
 
-const localOpaqueServer = new LocalOpaqueServer(
-    getOpaqueConfig(OpaqueID.OPAQUE_P256), // config - you'll need to import this
-    new Uint8Array(32), // oprf_seed - 32 random bytes
-    {
-        public_key: new Uint8Array(32), // ake_keypair_export.public_key
-        private_key: new Uint8Array(32) // ake_keypair_export.private_key  
-    },
-    'opaque-test-server' // server_identity
-);
+// Initialize the server properly using the createLocalOpaqueServer function
+let localOpaqueServer;
+createLocalOpaqueServer().then(server => {
+    localOpaqueServer = server;
+    console.log('OPAQUE server initialized successfully');
+}).catch(error => {
+    console.error('Failed to initialize OPAQUE server:', error);
+});
 
 // registration routes
-app.post('/register/init', (req, res) => {
-    let OpaqueResponse = localOpaqueServer.registerInit(req.body.request, req.body.credential_identifier);
-    return OpaqueResponse, 200 
+app.post('/register/init', async (req, res) => {
+    if (!localOpaqueServer) {
+        return res.status(503).json({ error: 'Server not initialized yet' });
+    }
+    try {
+        // The client sends { username, registrationRequest }
+        // Need to convert the registrationRequest back to proper format
+        const { username, registrationRequest } = req.body;
+        
+        // Convert the data property back to Uint8Array if it was serialized as an object
+        if (registrationRequest && registrationRequest.data && typeof registrationRequest.data === 'object' && !Array.isArray(registrationRequest.data)) {
+            // Convert object back to array, then to Uint8Array
+            const dataArray = Object.values(registrationRequest.data);
+            registrationRequest.data = new Uint8Array(dataArray);
+        }
+        
+        let OpaqueResponse = await localOpaqueServer.registerInit(registrationRequest, username);
+        
+        console.log('OPAQUE Response:', OpaqueResponse);
+        console.log('Response keys:', Object.keys(OpaqueResponse));
+        console.log('Evaluation:', OpaqueResponse.evaluation);
+        console.log('Server public key:', OpaqueResponse.server_public_key);
+        
+        // Convert all Uint8Arrays in the response to arrays for JSON serialization
+        const serializedResponse = {
+            registrationResponse: {
+                evaluation: OpaqueResponse.evaluation ? Array.from(OpaqueResponse.evaluation) : null,
+                server_public_key: OpaqueResponse.server_public_key ? Array.from(OpaqueResponse.server_public_key) : null
+            }
+        };
+        
+        res.status(200).json(serializedResponse);
+    } catch (error) {
+        console.error('Registration error:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
 app.post('/register/finish', (req, res) => { // we porb won't need this

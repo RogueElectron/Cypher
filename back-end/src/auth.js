@@ -120,7 +120,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             const { registrationResponse } = await response.json();
-            const result = await client.registerFinish(registrationResponse, username, server_identity);
+            
+            // Convert arrays back to Uint8Arrays for the OPAQUE library
+            const reconstructedResponse = {
+                evaluation: new Uint8Array(registrationResponse.evaluation),
+                server_public_key: new Uint8Array(registrationResponse.server_public_key)
+            };
+            
+            const result = await client.registerFinish(reconstructedResponse, username, server_identity);
 
         });
     }
