@@ -23,7 +23,7 @@ export default defineConfig({
     https: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:5001',  // Changed from 3000 to 5001 to match Flask's port
+        target: 'http://localhost:5000',  // Changed from 3000 to 5001 to match Flask's port
         changeOrigin: true,
         secure: false
       }
