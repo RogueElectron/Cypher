@@ -1,6 +1,9 @@
 import { Serializable } from '@cloudflare/opaque-ts/lib/src/messages.js';
 import { AKE3DHServer } from '@cloudflare/opaque-ts/lib/src/3dh_server.js';
 import { OpaqueCoreServer } from '@cloudflare/opaque-ts/lib/src/core_server.js';
+import { getOpaqueConfig } from '@cloudflare/opaque-ts/lib/src/config.js';
+
+// since you're back, you have a problem with the imports, and you need hte 'GetOpaqueConfig' think imported too, as well as OpaqueID 
 
 import express from 'express'
 
@@ -52,10 +55,20 @@ export class LocalOpaqueServer {
     }
 }
 
+const localOpaqueServer = new LocalOpaqueServer(
+    getOpaqueConfig(OpaqueID.OPAQUE_P256), // config - you'll need to import this
+    new Uint8Array(32), // oprf_seed - 32 random bytes
+    {
+        public_key: new Uint8Array(32), // ake_keypair_export.public_key
+        private_key: new Uint8Array(32) // ake_keypair_export.private_key  
+    },
+    'opaque-test-server' // server_identity
+);
+
 // registration routes
-app.get('/register/init', (req, res) => {
-    
-    
+app.post('/register/init', (req, res) => {
+    let OpaqueResponse = localOpaqueServer.registerInit(req.body.request, req.body.credential_identifier);
+    return OpaqueResponse, 200 
 });
 
 app.post('/register/finish', (req, res) => { // we porb won't need this

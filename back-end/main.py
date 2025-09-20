@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import requests
 import os
 
-node_api_port = int(os.getenv('NODE_API_PORT', 3000))  # Default to 3000 to match Node.js server port
+node_api_port = 3000  # Default to 3000 to match Node.js server port
 node_api_url = f"http://127.0.0.1:{node_api_port}"
 
 load_dotenv()
@@ -43,29 +43,17 @@ def serve_register():
 
 @app.route('/api/register/init', methods=['POST'])
 def handle_register_init():
-
+    
+    print('we got da request')
     response = requests.post(node_api_url + '/register/init', json=request.json)
-    return response.content, response.status_code
+    return response.content, 200
 
-@app.route('/api/register/finish', methods=['POST'])
-def handle_register_finish():
-
-    response = requests.post(node_api_url + '/register/finish', json=request.json)
-    return response.content, response.status_code
-
-@app.route('/api/login/init', methods=['POST'])
-def handle_login_init():
-
-    response = requests.post(node_api_url + '/login/start', json=request.json)
-    return response.content, response.status_code
 
 @app.route('/api/login/finish', methods=['POST'])
 def handle_login_finish():
 
     response = requests.post(node_api_url + '/login/finish', json=request.json)
     return response.content, response.status_code
-
-
 
 
 # logout page
@@ -77,6 +65,6 @@ def handle_logout():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    app.run(debug=True, port=5000)
 
 #choom i need me some preem bds after this
