@@ -10,6 +10,8 @@ dotenv.config();
 
 const app = express()
 
+app.use(express.json());
+
 // Initialize OPAQUE server
 export class LocalOpaqueServer {
     constructor(config, oprf_seed, ake_keypair_export, server_identity) {
@@ -29,21 +31,33 @@ export class LocalOpaqueServer {
         this.opaque_core = new OpaqueCoreServer(config, new Uint8Array(oprf_seed));
         this.ake = new AKE3DHServer(this.config);
     }
+
+    // register finish runs on the client side
+    registerInit(request, credential_identifier) {
+        return this.opaque_core.createRegistrationResponse(request, this.ake_keypair.public_key, new TextEncoder().encode(credential_identifier));
+    }
+
+    async authInit(ke1, record, credential_identifier, client_identity, context) {
+        const credential_identifier_u8array = new TextEncoder().encode(credential_identifier);
+        const response = await this.opaque_core.createCredentialResponse(ke1.request, record, this.ake_keypair.public_key, credential_identifier_u8array);
+        const te = new TextEncoder();
+        // eslint-disable-next-line no-undefined
+        const client_identity_u8array = client_identity ? te.encode(client_identity) : undefined;
+        const context_u8array = context ? te.encode(context) : new Uint8Array(0);
+        return this.ake.response(this.ake_keypair.private_key, this.server_identity, ke1, response, context_u8array, record.client_public_key, client_identity_u8array);
+    }
+    
+    authFinish(ke3, expected) {
+        return this.ake.finish(ke3.auth_finish, expected);
+    }
 }
-// Initialize the server
-
-/*
-// so this converts json to js objects
-
-app.use(express.json());
-
 
 // registration routes
 app.get('/register/init', (req, res) => {
  
 });
 
-app.post('/register/finish', (req, res) => {
+app.post('/register/finish', (req, res) => { // we porb won't need this
   
 });
 
