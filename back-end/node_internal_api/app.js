@@ -1,8 +1,6 @@
-import { 
-  OpaqueID, 
-  OpaqueServer,
-  getOpaqueConfig
-} from '@cloudflare/opaque-ts';
+import { Serializable } from '@cloudflare/opaque-ts/lib/src/messages.js';
+import { AKE3DHServer } from '@cloudflare/opaque-ts/lib/src/3dh_server.js';
+import { OpaqueCoreServer } from '@cloudflare/opaque-ts/lib/src/core_server.js';
 
 import express from 'express'
 
@@ -12,67 +10,27 @@ dotenv.config();
 
 const app = express()
 
-// Helper function to convert PEM to Uint8Array
-function pemToUint8Array(pem) {
-    const base64 = pem
-        .replace(/-----BEGIN [^-]+-----/g, '')
-        .replace(/-----END [^-]+-----/g, '')
-        .replace(/\s+/g, '');
-    const binary = atob(base64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
-        bytes[i] = binary.charCodeAt(i);
-    }
-    return bytes;
-}
-
 // Initialize OPAQUE server
-async function initOpaqueServer() {
-    try {
-        const config = getOpaqueConfig(OpaqueID.OPAQUE_P256);
-        
-        // Generate OPRF seed as Uint8Array
-        const oprfSeed = new Uint8Array(config.prng.random(config.hash.Nh));
-        
-        // Generate a key pair using the config's AKE
-        const keyPair = config.ake.generateAuthKeyPair(); // insert 1000 yard stare gif
-        
-        // Convert keys to Uint8Array if they aren't already
-        const privateKey = keyPair.privateKey instanceof Uint8Array ? 
-            keyPair.privateKey : 
-            new TextEncoder().encode(JSON.stringify(keyPair.privateKey));
-            
-        const publicKey = keyPair.publicKey instanceof Uint8Array ?
-            keyPair.publicKey :
-            new TextEncoder().encode(JSON.stringify(keyPair.publicKey));
-        
-        const server = new OpaqueServer(
-            config,
-            Array.from(oprfSeed),  // Convert Uint8Array to regular array
-            {
-                private_key: Array.from(privateKey),
-                public_key: Array.from(publicKey)
-            },
-            'server.example.com' // Server identity
-        );
-        
-        console.log('OPAQUE server initialized successfully');
-        return server;
-    } catch (error) {
-        console.error('Failed to initialize OPAQUE server:', error);
-        throw error;
+export class LocalOpaqueServer {
+    constructor(config, oprf_seed, ake_keypair_export, server_identity) {
+        this.config = config;
+        Serializable.check_bytes_arrays([
+            ake_keypair_export.public_key,
+            ake_keypair_export.private_key
+        ]);
+        this.ake_keypair = {
+            private_key: new Uint8Array(ake_keypair_export.private_key),
+            public_key: new Uint8Array(ake_keypair_export.public_key)
+        };
+        Serializable.check_bytes_array(oprf_seed);
+        this.server_identity = server_identity
+            ? new TextEncoder().encode(server_identity)
+            : this.ake_keypair.public_key;
+        this.opaque_core = new OpaqueCoreServer(config, new Uint8Array(oprf_seed));
+        this.ake = new AKE3DHServer(this.config);
     }
 }
-
 // Initialize the server
-let server;
-initOpaqueServer()
-    .then(s => {
-        server = s;
-        // Start your Express server here once OPAQUE is ready
-        // app.listen(...);
-    })
-    .catch(console.error);
 
 /*
 // so this converts json to js objects
