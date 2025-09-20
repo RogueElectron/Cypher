@@ -1,13 +1,7 @@
 {% extends "base.html" %}
 
 {% block links %}
-<script type="module">
-    import cloudflareopaqueTs from 'https://cdn.jsdelivr.net/npm/@cloudflare/opaque-ts@0.7.5/+esm'
-</script>
-<script type="module">
-    import scrypt from 'https://cdn.jsdelivr.net/npm/@noble/hashes/scrypt.js'
-</script>
-<script type="module" src="{{ url_for('static', filename='auth.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='dist/auth.js') }}"></script>
 {% endblock %}
 
 {% block title %}Register{% endblock %}

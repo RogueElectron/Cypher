@@ -1,15 +1,15 @@
 
-import { KE1, KE3 } from 'https://cdn.jsdelivr.net/npm/@cloudflare/opaque-ts@0.7.5/lib/src/messages.js';
-import { ScryptMemHardFn } from 'https://cdn.jsdelivr.net/npm/@cloudflare/opaque-ts@0.7.5/lib/src/thecrypto.js';
-import { AKE3DHClient } from 'https://cdn.jsdelivr.net/npm/@cloudflare/opaque-ts@0.7.5/lib/src/3dh_client.js';
-import { OpaqueCoreClient } from 'https://cdn.jsdelivr.net/npm/@cloudflare/opaque-ts@0.7.5/lib/src/core_client.js';
+import { 
+  OpaqueClient as CoreOpaqueClient,
+  ScryptMemHardFn,
+  getOpaqueConfig,
+  OpaqueID
+} from '@cloudflare/opaque-ts';
 
-export class OpaqueClient {
+export class OpaqueClient extends CoreOpaqueClient {
     constructor(config, memHard = ScryptMemHardFn) {
-        this.config = config;
+        super(config, memHard);
         this.status = OpaqueClient.States.NEW;
-        this.opaque_core = new OpaqueCoreClient(config, memHard);
-        this.ake = new AKE3DHClient(this.config);
     }
     async registerInit(password) {
         if (this.status !== OpaqueClient.States.NEW) {
