@@ -107,12 +107,7 @@ app.post('/register/init', async (req, res) => {
         }
         
         let OpaqueResponse = await localOpaqueServer.registerInit(registrationRequest, username);
-        
-        console.log('OPAQUE Response:', OpaqueResponse);
-        console.log('Response keys:', Object.keys(OpaqueResponse));
-        console.log('Evaluation:', OpaqueResponse.evaluation);
-        console.log('Server public key:', OpaqueResponse.server_public_key);
-        
+     
         // Convert all Uint8Arrays in the response to arrays for JSON serialization
         const serializedResponse = {
             registrationResponse: {
@@ -128,9 +123,22 @@ app.post('/register/init', async (req, res) => {
     }
 });
 
-app.post('/register/finish', (req, res) => { // we porb won't need this
-  
-});
+app.post('/register/finish', async (req, res) => {
+    try {
+        const { username, registrationRecord } = req.body;
+
+        // ok so this should be forwarded to the flask server along with 
+        // client identity for storage and session management
+        res.status(200).json({
+            message: 'Registration completed successfully',
+            user: username
+        });
+
+    } catch (error) {
+        console.error('Registration finish error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});  
 
 // login routes
 app.get('/login/init', (req, res) => {

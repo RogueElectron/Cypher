@@ -128,7 +128,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
             
             const result = await client.registerFinish(reconstructedResponse, username, server_identity);
-
+            fetch('/api/register/finish', { // send Registration record along with identifier to the server for storage
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username,
+                    registrationRecord : result.record
+                })
+            });
         });
     }
 });
