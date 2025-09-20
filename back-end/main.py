@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import requests
 import os
 
-node_api_port = int(os.getenv('NODE_API_PORT', 3000))  # so it needs a default so i passed the one from the .env as default
+node_api_port = int(os.getenv('NODE_API_PORT', 3000))  # Default to 3000 to match Node.js server port
 node_api_url = f"http://127.0.0.1:{node_api_port}"
 
 load_dotenv()
@@ -77,6 +77,6 @@ def handle_logout():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5001)
 
 #choom i need me some preem bds after this

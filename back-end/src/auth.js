@@ -6,6 +6,9 @@ import {
   OpaqueID
 } from '@cloudflare/opaque-ts';
 
+// Configuration for Opaque
+const config = getOpaqueConfig(OpaqueID.OPAQUE_P256);
+
 export class OpaqueClient extends CoreOpaqueClient {
     constructor(config, memHard = ScryptMemHardFn) {
         super(config, memHard);
