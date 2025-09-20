@@ -54,7 +54,8 @@ export class LocalOpaqueServer {
 
 // registration routes
 app.get('/register/init', (req, res) => {
- 
+    
+    
 });
 
 app.post('/register/finish', (req, res) => { // we porb won't need this
@@ -71,7 +72,6 @@ app.post('/login/finish', (req, res) => {
 });
 
 // start server
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
+app.listen(3000, () => {
+  console.log(`Server running at http://localhost:3000`);
 });
-*/

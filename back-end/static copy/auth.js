@@ -1,8 +1,8 @@
 
-import { KE1, KE3 } from 'https://cdn.jsdelivr.net/npm/@cloudflare/opaque-ts@0.7.5/lib/src/messages.js';
-import { ScryptMemHardFn } from 'https://cdn.jsdelivr.net/npm/@cloudflare/opaque-ts@0.7.5/lib/src/thecrypto.js';
-import { AKE3DHClient } from 'https://cdn.jsdelivr.net/npm/@cloudflare/opaque-ts@0.7.5/lib/src/3dh_client.js';
-import { OpaqueCoreClient } from 'https://cdn.jsdelivr.net/npm/@cloudflare/opaque-ts@0.7.5/lib/src/core_client.js';
+import { KE1, KE3 } from './messages.js';
+import { ScryptMemHardFn } from './thecrypto.js';
+import { AKE3DHClient } from './3dh_client.js';
+import { OpaqueCoreClient } from './core_client.js';
 
 export class OpaqueClient {
     constructor(config, memHard = ScryptMemHardFn) {
@@ -92,6 +92,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // the clients, easy, right?
     
     const registerForm = document.getElementById('register-form'); 
+
     if (registerForm) {
         registerForm.addEventListener('submit', async (event) => {
             event.preventDefault();

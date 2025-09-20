@@ -1,5 +1,15 @@
 {% extends "base.html" %}
 
+{% block links %}
+<script type="module">
+    import cloudflareopaqueTs from 'https://cdn.jsdelivr.net/npm/@cloudflare/opaque-ts@0.7.5/+esm'
+</script>
+<script type="module">
+    import scrypt from 'https://cdn.jsdelivr.net/npm/@noble/hashes/scrypt.js'
+</script>
+<script type="module" src="{{ url_for('static', filename='auth.js') }}"></script>
+{% endblock %}
+
 {% block title %}Register{% endblock %}
 
 {% block content %}
@@ -9,7 +19,7 @@
             <div class="card border-secondary">
                 <div class="card-body p-4">
                     <h3 class="card-title text-center">Register</h3>
-                    <form id="register-form" method="post">
+                    <form id="register-form" action="javascript:void(0);" method="post">
                         <div class="mb-3">
                             <label for="username" class="form-label">Username</label>
                             <input type="text" class="form-control" id="username" name="username" required>
