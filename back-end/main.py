@@ -46,7 +46,7 @@ def handle_register_init():
     
     print('we got da request')
     response = requests.post(node_api_url + '/register/init', json=request.json)
-    return response.content, 200
+    return response.content, response.status_code
 
 
 @app.route('/api/login/finish', methods=['POST'])
