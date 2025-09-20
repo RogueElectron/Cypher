@@ -44,15 +44,15 @@ def serve_register():
 @app.route('/api/register/init', methods=['POST'])
 def handle_register_init():
     
-    print('we got da request')
+    print('we got da request') #debug
     response = requests.post(node_api_url + '/register/init', json=request.json)
     return response.content, response.status_code
 
 
-@app.route('/api/login/finish', methods=['POST'])
-def handle_login_finish():
-
-    response = requests.post(node_api_url + '/login/finish', json=request.json)
+@app.route('/api/register/finish', methods=['POST'])
+def handle_register_finish():
+    print('we got da 2nd request') #debug
+    response = requests.post(node_api_url + '/register/finish', json=request.json)
     return response.content, response.status_code
 
 
