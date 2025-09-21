@@ -4,6 +4,9 @@ import base64
 from dotenv import load_dotenv
 import requests
 import os
+import json
+import sqlite3
+import datetime
 
 node_api_port = 3000  # Default to 3000 to match Node.js server port
 node_api_url = f"http://127.0.0.1:{node_api_port}"
@@ -12,6 +15,70 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)  # enable CORS for all routes
 
+# Database setup
+DATABASE_PATH = 'cypher_users.db'
+
+def init_database():
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            registration_record TEXT NOT NULL
+        )
+    ''')
+    
+    conn.commit()
+    conn.close()
+
+def store_user_registration(username, registration_record):
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        # TODO input sanitization, both ways, out and in, second order sqli is no joke
+        record_json = json.dumps(registration_record)
+        
+        cursor.execute('''
+            INSERT INTO users (username, registration_record)
+            VALUES (?, ?)
+        ''', (username, record_json))
+        
+        conn.commit()
+        conn.close()
+        return True
+    except sqlite3.IntegrityError:
+        # Username already exists
+        conn.close()
+        return False
+    except Exception as e:
+        print(f"Database error: {e}")
+        conn.close()
+        return False
+
+def get_user_registration(username):
+    # for the authentication part
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT registration_record FROM users WHERE username = ?
+        ''', (username,))
+        
+        result = cursor.fetchone()
+        conn.close()
+        
+        if result:
+            return json.loads(result[0])
+        return None
+    except Exception as e:
+        print(f"Database error: {e}")
+        return None
+
+# init db on startup
+init_database()
 
 #root
 @app.route('/')
@@ -49,20 +116,52 @@ def handle_register_init():
     return response.content, response.status_code
 
 
-@app.route('/api/register/finish', methods=['POST'])
+@app.route('/api/register/finish', methods=['POST']) # we can just store it instead of passing it around
 def handle_register_finish():
     print('we got da 2nd request') #debug
-    response = requests.post(node_api_url + '/register/finish', json=request.json)
-    return response.content, response.status_code
+    # request.json is already parsed by flask
+    username = request.json['username']
+    registrationRecord = request.json['registrationRecord']
+    
+    print(f"Storing registration for user: {username}")
+    
+    # Store the registration record in SQLite
+    success = store_user_registration(username, registrationRecord)
+    
+    if success:
+        print(f"Successfully stored registration for {username}")
+        return jsonify({
+            "status": "success", 
+            "message": "Registration completed and stored successfully"
+        }), 200
+    else:
+        print(f"Failed to store registration for {username} - user may already exist")
+        return jsonify({
+            "status": "error", 
+            "message": "Registration failed - username may already exist"
+        }), 400
 
+@app.route('/api/login/init', methods=['POST'])
+def handle_login_init():
+    print('we got da request') #debug
+    
 
-# logout page
-@app.route('/api/logout', methods=['POST'])
-def handle_logout():
-
-    if request.method == 'POST':
-        return "" ## we will implement logout with a button, no need for a whole page
-
+#@app.route('/api/user/<username>', methods=['GET'])
+#def check_user_exists(username):
+#    user_record = get_user_registration(username) # blasphemous username enumenration
+#    if user_record:
+#    return jsonify({
+#            "status": "success",
+#            "exists": True,
+#            "message": f"User {username} exists"
+#        }), 200
+#    else:
+#        return jsonify({
+#            "status": "success",
+#            "exists": False,
+#            "message": f"User {username} does not exist"
+#        }), 200
+    
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
