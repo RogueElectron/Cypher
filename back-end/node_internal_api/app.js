@@ -122,36 +122,20 @@ app.post('/register/init', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+// the amount of vulnerabiliteis on this is disgusting
+// although this is a demo and they barely gave us 
+// enough time to make it works
 
-app.post('/register/finish', async (req, res) => {
-    try {
-        const { username, registrationRecord } = req.body;
-
-        fetch('http://localhost:5000/api/internal/register/store', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ username, registrationRecord })
-        });
-        // ok so this should be forwarded to the flask server along with 
-        // client identity for storage and session management
-
-
-        res.status(200).json({
-            message: 'Registration completed successfully',
-            user: username
-        });
-
-    } catch (error) {
-        console.error('Registration finish error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});  
 
 // login routes
 app.get('/login/init', (req, res) => {
-  
+    // here we will recieve username, registrationrecord and ke1 from flask server
+    const { username, registrationRecord, ke1 } = req.query;
+
+    let authInitResponse = localOpaqueServer.authInit(ke1, registrationRecord, username, 'Digitopia-opaque-client'); //ke1, record, credential_identifier, client_identity
+    
+    // authinit returns ke2 and 'expected' in an object, ke2 is sent to client and expected is held on for the login/finish step
+    res.status(200).json(authInitResponse.ke2); // 'expected' MUST NOT BE SENT TO THE CLIENT
 });
 
 app.post('/login/finish', (req, res) => {

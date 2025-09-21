@@ -119,7 +119,7 @@ def handle_register_init():
 @app.route('/api/register/finish', methods=['POST']) # we can just store it instead of passing it around
 def handle_register_finish():
     print('we got da 2nd request') #debug
-    # request.json is already parsed by flask
+    # json responses are already parsed by flask
     username = request.json['username']
     registrationRecord = request.json['registrationRecord']
     
@@ -143,25 +143,27 @@ def handle_register_finish():
 
 @app.route('/api/login/init', methods=['POST'])
 def handle_login_init():
+    ke1 = request.json['ke1']
+    username = request.json['username']
+    registrationRecord = get_user_registration(username)
+    
+    response = requests.post(node_api_url + '/login/init', json={
+        'ke1': ke1,
+        'username': username,
+        'registrationRecord': registrationRecord
+    })
+    print('we got da request') #debug
+    return response.content, response.status_code
+
+
+    
+
+@app.route('/api/login/init', methods=['POST'])
+def handle_logout():
+    
     print('we got da request') #debug
     
 
-#@app.route('/api/user/<username>', methods=['GET'])
-#def check_user_exists(username):
-#    user_record = get_user_registration(username) # blasphemous username enumenration
-#    if user_record:
-#    return jsonify({
-#            "status": "success",
-#            "exists": True,
-#            "message": f"User {username} exists"
-#        }), 200
-#    else:
-#        return jsonify({
-#            "status": "success",
-#            "exists": False,
-#            "message": f"User {username} does not exist"
-#        }), 200
-    
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
