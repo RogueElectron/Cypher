@@ -127,8 +127,17 @@ app.post('/register/finish', async (req, res) => {
     try {
         const { username, registrationRecord } = req.body;
 
+        fetch('http://localhost:5000/api/internal/register/store', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, registrationRecord })
+        });
         // ok so this should be forwarded to the flask server along with 
         // client identity for storage and session management
+
+
         res.status(200).json({
             message: 'Registration completed successfully',
             user: username
