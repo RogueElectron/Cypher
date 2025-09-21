@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block links %}
-<script type="module" src="{{ url_for('static', filename='dist/login.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='dist/auth.js') }}"></script>
 {% endblock %}
 
 {% block title %}Login{% endblock %}
@@ -13,7 +13,7 @@
             <div class="card border-secondary">
                 <div class="card-body p-4">
                     <h3 class="card-title text-center">Login</h3>
-                    <form method="post">
+                    <form id="login-form" method="post" action="javascript:void(0)">
                         <div class="mb-3">
                             <label for="username" class="form-label">Username</label>
                             <input type="text" class="form-control" id="username" name="username" required>
