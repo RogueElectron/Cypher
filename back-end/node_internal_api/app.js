@@ -128,18 +128,33 @@ app.post('/register/init', async (req, res) => {
 
 
 // login routes
-app.get('/login/init', (req, res) => {
+app.post('/login/init', (req, res) => {
     // here we will recieve username, registrationrecord and ke1 from flask server
-    const { username, registrationRecord, ke1 } = req.query;
+    console.log('Received request body:', JSON.stringify(req.body, null, 2));
+    const { username, registrationRecord, ke1 } = req.body;
+    
+    console.log('Extracted values:');
+    console.log('username:', username);
+    console.log('registrationRecord:', registrationRecord);
+    console.log('ke1:', ke1);
+    console.log('ke1 type:', typeof ke1);
 
     let authInitResponse = localOpaqueServer.authInit(ke1, registrationRecord, username, 'Digitopia-opaque-client'); //ke1, record, credential_identifier, client_identity
     
+    global.expected = authInitResponse.expected;
     // authinit returns ke2 and 'expected' in an object, ke2 is sent to client and expected is held on for the login/finish step
     res.status(200).json(authInitResponse.ke2); // 'expected' MUST NOT BE SENT TO THE CLIENT
 });
 
 app.post('/login/finish', (req, res) => {
-  
+    // if returns session key then authentication successful
+    // if returns error then client provided wrong password
+    try {
+        let sessionKey = localOpaqueServer.authFinish(req.body.ke3, global.expected); // now here's the bummer, we need to keep th
+        console.log(sessionKey, 'ladies and gentlemen, we got him');
+    } catch (error) {
+        res.status(200).json({ error: 'invalid password or username' });
+    }
 });
 
 // start server

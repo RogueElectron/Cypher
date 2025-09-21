@@ -24,8 +24,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 },
                 body: JSON.stringify({
                     ke1: ke1,
-                    username: username, // if have enough time, make sure there's a 
-                                        // consistent request format to all api endpoints 
+                    username: username // if have enough time, make sure there's a
+                                       // consistent request format to all api endpoints
                 }),
             });
             // this returns ke2, the client must proccess it and arrive to the same 
@@ -37,7 +37,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             // if the password is correct the client and server
             // will arrive to the same session key
             const authFinishResponse = await client.authFinish(ke2, serverIdentity, username);
+            console.log(authFinishResponse.sessionKey, 'session key');
+            fetch('/api/login/finish', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username,
+                    ke3: authFinishResponse.ke3
+                }),
+            });    
             
-            
+        });
     }
 });

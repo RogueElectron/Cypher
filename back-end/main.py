@@ -89,7 +89,7 @@ def serve_index():
 # remember to add the 2fa api
 
 # login page
-@app.route('/api/login', methods=['POST'])     
+@app.route('/api/login', methods=['GET'])     
 def serve_login():
     if request.method == 'GET':
         return render_template('login.html')
@@ -158,11 +158,24 @@ def handle_login_init():
 
     
 
-@app.route('/api/login/init', methods=['POST'])
+@app.route('/api/login/finish', methods=['POST'])
+def handle_login_finish():
+    username = request.json['username']
+    ke3 = request.json['ke3']
+    
+    response = requests.post(node_api_url + '/login/finish', json={
+        'username': username,
+        'ke3': ke3
+    })
+    print('we got da login finish request') #debug
+    return response.content, response.status_code
+    
+
+@app.route('/api/logout', methods=['POST'])
 def handle_logout():
     
-    print('we got da request') #debug
-    
+    #placeholder
+    return ''    
 
 
 if __name__ == '__main__':
