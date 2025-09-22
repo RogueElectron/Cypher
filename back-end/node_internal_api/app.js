@@ -126,13 +126,14 @@ app.post('/login/init', async (req, res) => {
 });
 
 app.post('/login/finish', (req, res) => {
-    ke3Base64 = req.body.ke3Base64
 
-    const ke3Bytes = new Uint8Array(atob(ke3Base64).split('').map(c => c.charCodeAt(0))); 
-    const ke3 = KE3.deserialize(cfg, Array.from(ke3Bytes));
+    const ke3Base64 = req.body.ke3Base64;  
+  
+    const ke3Bytes = new Uint8Array(atob(ke3Base64).split('').map(c => c.charCodeAt(0)));   
+    const ke3 = KE3.deserialize(cfg, Array.from(ke3Bytes));  
     try {
 
-        let sessionKey = localOpaqueServer.authFinish(req.body.ke3);
+        let sessionKey = localOpaqueServer.authFinish(ke3);
         return res.status(200).json('Successfully logged in')
     } catch (error) {
         return res.status(200).json('Incorrect password or username') // we need protection against user enum
