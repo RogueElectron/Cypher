@@ -121,50 +121,32 @@ def handle_register_finish():
     print('we got da 2nd request') #debug
     # json responses are already parsed by flask
     username = request.json['username']
-    registrationRecord = request.json['registrationRecord']
+    record = request.json['registrationRecord']
     
     print(f"Storing registration for user: {username}")
     
     # Store the registration record in SQLite
-    success = store_user_registration(username, registrationRecord)
+    store_user_registration(username, record)
+    print('record', record)
+    return '', 200
     
-    if success:
-        print(f"Successfully stored registration for {username}")
-        return jsonify({
-            "status": "success", 
-            "message": "Registration completed and stored successfully"
-        }), 200
-    else:
-        print(f"Failed to store registration for {username} - user may already exist")
-        return jsonify({
-            "status": "error", 
-            "message": "Registration failed - username may already exist"
-        }), 400
-
 @app.route('/api/login/init', methods=['POST'])
 def handle_login_init():
-    ke1 = request.json['ke1']
     username = request.json['username']
-    registrationRecord = get_user_registration(username)
-    
+    ke1Base64 = request.json['ke1Base64']
+    record = get_user_registration(username)
     response = requests.post(node_api_url + '/login/init', json={
-        'ke1': ke1,
-        'username': username,
-        'registrationRecord': registrationRecord
+        'username' : username,
+        'ke1Base64' : ke1Base64,
+        'record' : record
     })
-    print('we got da request') #debug
-    return response.content, response.status_code
-
-
-    
+    return response.content, response.status_code 
 
 @app.route('/api/login/finish', methods=['POST'])
 def handle_login_finish():
-    username = request.json['username']
     ke3 = request.json['ke3']
     
     response = requests.post(node_api_url + '/login/finish', json={
-        'username': username,
         'ke3': ke3
     })
     print('we got da login finish request') #debug
