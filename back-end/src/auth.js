@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log(ke2)
             
             const ke3 = await client.authFinish(ke2)
-            console.log('we got ke3')
+            console.log('we got ke3', ke3)
             console.log(ke3)
             const ke3Serialized = ke3.serialize();  
             const ke3Base64 = btoa(String.fromCharCode(...ke3Serialized))
