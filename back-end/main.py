@@ -38,12 +38,11 @@ def store_user_registration(username, registration_record):
         conn = sqlite3.connect(DATABASE_PATH)
         cursor = conn.cursor()
         # TODO input sanitization, both ways, out and in, second order sqli is no joke
-        record_json = json.dumps(registration_record)
         
         cursor.execute('''
             INSERT INTO users (username, registration_record)
             VALUES (?, ?)
-        ''', (username, record_json))
+        ''', (username, registration_record))
         
         conn.commit()
         conn.close()
@@ -71,7 +70,7 @@ def get_user_registration(username):
         conn.close()
         
         if result:
-            return json.loads(result[0])
+            return result[0]
         return None
     except Exception as e:
         print(f"Database error: {e}")
