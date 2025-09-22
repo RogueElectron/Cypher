@@ -106,19 +106,21 @@ app.post('/login/init', async (req, res) => {
     console.log('second message');
     // console.log(ke1)
     // Decode from base64  
+    console.log('base64 record', record)
     const recordBytes = new Uint8Array(atob(record).split('').map(c => c.charCodeAt(0)));  
-    console.log('1')
+    console.log('record bytes', recordBytes)
     const recordArray = Array.from(recordBytes);  
-    console.log('2')
-    const registrationRecord = RegistrationRecord.deserialize(cfg, recordArray);  
-    console.log('3')
+    console.log('record array', recordArray)
+    const deserregistrationRecord = RegistrationRecord.deserialize(cfg, recordArray);  
+    console.log('record', deserregistrationRecord)
 
-
-    const ke2 = await localOpaqueServer.authInit(ke1, registrationRecord, username);
-    const ke2serialized = ke2.serialize()
+    const authinitresult = await localOpaqueServer.authInit(ke1, deserregistrationRecord, username);
+    const ke2 = authinitresult.ke2;
+    const ke2Serialized = ke2.serialize()
     const ke2Base64 = btoa(String.fromCharCode(...ke2Serialized))  
 
-    console.log('ke2, we got it');
+    console.log('ke2, we got it', ke2Base64);
+
     res.status(200).json({ ke2Base64 : ke2Base64 });
 
 });
@@ -127,7 +129,7 @@ app.post('/login/finish', (req, res) => {
     ke3Base64 = req.body.ke3Base64
 
     const ke3Bytes = new Uint8Array(atob(ke3Base64).split('').map(c => c.charCodeAt(0))); 
-    const ke3 = KE1.deserialize(cfg, Array.from(ke3Bytes));
+    const ke3 = KE3.deserialize(cfg, Array.from(ke3Bytes));
     try {
 
         let sessionKey = localOpaqueServer.authFinish(req.body.ke3);
