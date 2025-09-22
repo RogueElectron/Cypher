@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const ke3 = await client.authFinish(ke2)
             console.log('we got ke3', ke3)
             console.log(ke3)
-            const ke3Serialized = ke3.serialize();  
+            const ke3Serialized = ke3.serialize(); // PROBLEM here, serialize method not recognized, investigating  
             const ke3Base64 = btoa(String.fromCharCode(...ke3Serialized))
 
             const result = await fetch('/api/login/finish', {
