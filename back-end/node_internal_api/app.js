@@ -128,7 +128,7 @@ app.post('/login/init', async (req, res) => {
 app.post('/login/finish', (req, res) => {
 
     const ke3Base64 = req.body.ke3Base64;  
-  
+    const cfg = new getOpaqueConfig(OpaqueID.OPAQUE_P256);  //declare config in scope
     const ke3Bytes = new Uint8Array(atob(ke3Base64).split('').map(c => c.charCodeAt(0)));   
     const ke3 = KE3.deserialize(cfg, Array.from(ke3Bytes));  
     try {
