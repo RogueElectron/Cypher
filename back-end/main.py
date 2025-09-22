@@ -140,14 +140,16 @@ def handle_login_init():
         'ke1Base64' : ke1Base64,
         'record' : record
     })
+    print(response.content)
+
     return response.content, response.status_code 
 
 @app.route('/api/login/finish', methods=['POST'])
 def handle_login_finish():
-    ke3 = request.json['ke3']
+    ke3Base64 = request.json['ke3Base64']
     
     response = requests.post(node_api_url + '/login/finish', json={
-        'ke3': ke3
+        'ke3Base64': ke3Base64
     })
     print('we got da login finish request') #debug
     return response.content, response.status_code

@@ -2,7 +2,8 @@ import {
     OpaqueClient,
     getOpaqueConfig,
     OpaqueID,
-    OpaqueServer
+    OpaqueServer,
+    KE2
   } from '@cloudflare/opaque-ts';
 
 const config = getOpaqueConfig(OpaqueID.OPAQUE_P256);
@@ -32,14 +33,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     ke1Base64: ke1Base64
                 })
             });
-
-            const ke2Bytes = new Uint8Array(atob(response.ke2Base64).split('').map(c => c.charCodeAt(0)))  
+            console.log('got response')
+            const responseData = await response.json();  
+            const ke2Base64 = responseData.ke2Base64; 
+            const ke2Bytes = new Uint8Array(atob(ke2Base64).split('').map(c => c.charCodeAt(0)))  
             const ke2 = KE2.deserialize(config, Array.from(ke2Bytes))
 
             console.log('we got ke2')
             console.log(ke2)
             
-            const ke3 = client.authFinish(ke2)
+            const ke3 = await client.authFinish(ke2)
             console.log('we got ke3')
             console.log(ke3)
             const ke3Serialized = ke3.serialize();  
