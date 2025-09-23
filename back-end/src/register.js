@@ -52,6 +52,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             const result = await client.registerFinish(reconstructedResponse, username, server_identity);
             const record = result.record
+            console.log('record', record)
             const serializedRecord = record.serialize();   
    
             const recordBase64 = btoa(String.fromCharCode(...serializedRecord));  

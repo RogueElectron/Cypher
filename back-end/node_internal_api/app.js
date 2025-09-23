@@ -21,7 +21,7 @@ app.use(express.json());
 
 async function createLocalOpaqueServer() {  
     // 1. Create configuration  
-    const cfg = new getOpaqueConfig(OpaqueID.OPAQUE_P256);  
+    const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);  
     // 2. Generate OPRF seed  
     const oprfSeed = cfg.prng.random(cfg.hash.Nh);  
       
@@ -99,7 +99,7 @@ app.post('/register/init', async (req, res) => {
 app.post('/login/init', async (req, res) => {
     // here we will recieve username, registrationrecord and ke1 from flask server
     console.log('Received request body:', JSON.stringify(req.body));
-    const cfg = new getOpaqueConfig(OpaqueID.OPAQUE_P256);  
+    const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);  
     const { ke1Base64, record, username } = req.body;
     const ke1Bytes = new Uint8Array(atob(ke1Base64).split('').map(c => c.charCodeAt(0))); 
     const ke1 = KE1.deserialize(cfg, Array.from(ke1Bytes));
@@ -114,8 +114,9 @@ app.post('/login/init', async (req, res) => {
     const deserregistrationRecord = RegistrationRecord.deserialize(cfg, recordArray);  
     console.log('record', deserregistrationRecord)
 
-    const authinitresult = await localOpaqueServer.authInit(ke1, deserregistrationRecord, username);
+    const authinitresult = await localOpaqueServer.authInit(ke1, deserregistrationRecord, username, username);
     const ke2 = authinitresult.ke2;
+    console.log('ke2', ke2)
     const ke2Serialized = ke2.serialize()
     const ke2Base64 = btoa(String.fromCharCode(...ke2Serialized))  
 
@@ -128,18 +129,19 @@ app.post('/login/init', async (req, res) => {
 app.post('/login/finish', (req, res) => {
 
     const ke3Base64 = req.body.ke3Base64;  
-    const cfg = new getOpaqueConfig(OpaqueID.OPAQUE_P256);  //declare config in scope
+    const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);  //declare config in scope
     const ke3Bytes = new Uint8Array(atob(ke3Base64).split('').map(c => c.charCodeAt(0)));   
     const ke3 = KE3.deserialize(cfg, Array.from(ke3Bytes));  
     try {
 
         let sessionKey = localOpaqueServer.authFinish(ke3);
         return res.status(200).json('Successfully logged in')
+        console.log(sessionKey, 'ladies and gentlemen, we got him');
+
     } catch (error) {
         return res.status(200).json('Incorrect password or username') // we need protection against user enum
     }
 
-    console.log(sessionKey, 'ladies and gentlemen, we got him');
 });
 
 // start server
