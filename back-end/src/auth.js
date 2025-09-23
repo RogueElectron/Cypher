@@ -3,7 +3,8 @@ import {
     getOpaqueConfig,
     OpaqueID,
     OpaqueServer,
-    KE2
+    KE2,
+    KE3
   } from '@cloudflare/opaque-ts';
 
 const config = getOpaqueConfig(OpaqueID.OPAQUE_P256);
@@ -41,10 +42,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             console.log('we got ke2')
             console.log(ke2)
-            
-            const ke3 = await client.authFinish(ke2)
-            console.log('we got ke3', ke3)
-            console.log(ke3)
+            const authfinishresult = await client.authFinish(ke2)
+            const ke3 = authfinishresult.ke3
+            console.log('authfinishresult', authfinishresult)
+            console.log('ke3 type:', typeof ke3);
+            console.log('ke3:', ke3);
             const ke3Serialized = ke3.serialize(); // PROBLEM here, serialize method not recognized, investigating  
             const ke3Base64 = btoa(String.fromCharCode(...ke3Serialized))
 

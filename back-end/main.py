@@ -43,7 +43,7 @@ def store_user_registration(username, registration_record):
             INSERT INTO users (username, registration_record)
             VALUES (?, ?)
         ''', (username, registration_record))
-        
+        print('record stored', registration_record)
         conn.commit()
         conn.close()
         return True
@@ -55,6 +55,7 @@ def store_user_registration(username, registration_record):
         print(f"Database error: {e}")
         conn.close()
         return False
+
 
 def get_user_registration(username):
     # for the authentication part
@@ -71,7 +72,6 @@ def get_user_registration(username):
         
         if result:
             return result[0]
-        return None
     except Exception as e:
         print(f"Database error: {e}")
         return None
