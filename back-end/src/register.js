@@ -2,7 +2,8 @@
 import { 
   OpaqueClient,
   getOpaqueConfig,
-  OpaqueID
+  OpaqueID,
+  CredentialFile
 } from '@cloudflare/opaque-ts';
 
 //so we were basically reinventing the wheel here, extending the OpqueClient class 
@@ -51,11 +52,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
             
             const result = await client.registerFinish(reconstructedResponse, username, server_identity);
-            const record = result.record
-            console.log('record', record)
-            const serializedRecord = record.serialize();   
-   
-            const recordBase64 = btoa(String.fromCharCode(...serializedRecord));  
+            const credential_file = new CredentialFile(  
+                username,  // username or email  
+                result.record,                 // RegistrationRecord from registerFinish  
+                username         // optional client identity string  
+            );
+
+            const serializedCredentialFile = credential_file.serialize();  
+            const credentialFileBase64 = btoa(String.fromCharCode(...serializedCredentialFile)); 
 
             fetch('/api/register/finish', {
                 method: 'POST',
@@ -64,7 +68,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 },
                 body: JSON.stringify({
                     username: username,
-                    registrationRecord: recordBase64
+                    credentialFileB64: credentialFileBase64
                 })
             });
 

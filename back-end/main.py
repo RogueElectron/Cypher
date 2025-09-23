@@ -26,7 +26,7 @@ def init_database():
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
-            registration_record TEXT NOT NULL
+            credentialfileb64 TEXT NOT NULL
         )
     ''')
     
@@ -40,7 +40,7 @@ def store_user_registration(username, registration_record):
         # TODO input sanitization, both ways, out and in, second order sqli is no joke
         
         cursor.execute('''
-            INSERT INTO users (username, registration_record)
+            INSERT INTO users (username, credentialfileb64)
             VALUES (?, ?)
         ''', (username, registration_record))
         print('record stored', registration_record)
@@ -64,7 +64,7 @@ def get_user_registration(username):
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT registration_record FROM users WHERE username = ?
+            SELECT credentialfileb64 FROM users WHERE username = ?
         ''', (username,))
         
         result = cursor.fetchone()
@@ -120,13 +120,13 @@ def handle_register_finish():
     print('we got da 2nd request') #debug
     # json responses are already parsed by flask
     username = request.json['username']
-    record = request.json['registrationRecord']
+    credentialFileB64 = request.json['credentialFileB64']
     
     print(f"Storing registration for user: {username}")
     
     # Store the registration record in SQLite
-    store_user_registration(username, record)
-    print('record', record)
+    store_user_registration(username, credentialFileB64)
+    print('record', credentialFileB64)
     return '', 200
     
 @app.route('/api/login/init', methods=['POST'])
@@ -137,8 +137,9 @@ def handle_login_init():
     response = requests.post(node_api_url + '/login/init', json={
         'username' : username,
         'ke1Base64' : ke1Base64,
-        'record' : record
+        'CredentialFileB64' : record
     })
+
     print(response.content)
 
     return response.content, response.status_code 
