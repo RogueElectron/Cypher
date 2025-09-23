@@ -100,21 +100,18 @@ app.post('/login/init', async (req, res) => {
     // here we will recieve username, registrationrecord and ke1 from flask server
     console.log('Received request body:', JSON.stringify(req.body));
     const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);  
-    const { ke1Base64, record, username } = req.body;
+    const { ke1Base64, CredentialFileB64, username } = req.body;
     const ke1Bytes = new Uint8Array(atob(ke1Base64).split('').map(c => c.charCodeAt(0))); 
     const ke1 = KE1.deserialize(cfg, Array.from(ke1Bytes));
     console.log('second message');
     // console.log(ke1)
     // Decode from base64  
-    console.log('base64 record', record)
-    const recordBytes = new Uint8Array(atob(record).split('').map(c => c.charCodeAt(0)));  
-    console.log('record bytes', recordBytes)
-    const recordArray = Array.from(recordBytes);  
-    console.log('record array', recordArray)
-    const deserregistrationRecord = RegistrationRecord.deserialize(cfg, recordArray);  
-    console.log('record', deserregistrationRecord)
+    console.log('base64 record', CredentialFileB64)
+    const credentialFileBytes = new Uint8Array(atob(CredentialFileB64).split('').map(c => c.charCodeAt(0)));  
+    const deserializedCredentialFile = CredentialFile.deserialize(cfg, Array.from(credentialFileBytes));  
+    const registrationRecord = deserializedCredentialFile.record;  
 
-    const authinitresult = await localOpaqueServer.authInit(ke1, deserregistrationRecord, username, username);
+    const authinitresult = await localOpaqueServer.authInit(ke1, registrationRecord, username, username);
     const ke2 = authinitresult.ke2;
     console.log('ke2', ke2)
     const ke2Serialized = ke2.serialize()
