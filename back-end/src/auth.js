@@ -7,8 +7,7 @@ import {
     KE3
   } from '@cloudflare/opaque-ts';
 
-const config = getOpaqueConfig(OpaqueID.OPAQUE_P256);
-const serverIdentity = 'Digitopia-opaque-server';
+const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);
 
 document.addEventListener('DOMContentLoaded', async () => {
     const loginForm = document.getElementById('login-form');
@@ -18,51 +17,41 @@ document.addEventListener('DOMContentLoaded', async () => {
             const formData = new FormData(loginForm);
             const username = formData.get('username');
             const password = formData.get('password'); 
-            const client = new OpaqueClient(config);
-            const ke1 = await client.authInit(password);  
-            const ke1Serialized = ke1.serialize();  
-            const ke1Base64 = btoa(String.fromCharCode(...ke1Serialized))
-            console.log(ke1);
+            const client = new OpaqueClient(cfg);
+            const ke1 = await client.authInit(password);
+            const ser_ke1 = ke1.serialize();
 
-            const response = await fetch('/api/login/init', {
+            const response = await fetch('http://localhost:3000/login/init', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     username: username,
-                    ke1Base64: ke1Base64
+                    serke1: ser_ke1
                 })
             });
-            console.log('got response')
+
             const responseData = await response.json();  
-            const ke2Base64 = responseData.ke2Base64; 
-            const ke2Bytes = new Uint8Array(atob(ke2Base64).split('').map(c => c.charCodeAt(0)))  
-            const ke2 = KE2.deserialize(config, Array.from(ke2Bytes))
+            const ser_ke2 = responseData.ser_ke2;
+            const deser_ke2 = KE2.deserialize(cfg, ser_ke2);
+            const finClient = await client.authFinish(deser_ke2);
+            console.log(finClient)
+            const ke3 = finClient.ke3;
+            console.log(ke3)
+            const ser_ke3 = ke3.serialize();
+            console.log(ser_ke3)
 
-            console.log('we got ke2')
-            console.log(ke2)
-            const authfinishresult = await client.authFinish(ke2)
-            const ke3 = authfinishresult.ke3
-            console.log('authfinishresult', authfinishresult)
-            console.log('ke3 type:', typeof ke3);
-            console.log('ke3:', ke3);
-            const ke3Serialized = ke3.serialize(); // PROBLEM here, serialize method not recognized, investigating  
-            const ke3Base64 = btoa(String.fromCharCode(...ke3Serialized))
-
-            const result = await fetch('/api/login/finish', {
+            const result = await fetch('http://localhost:3000/login/finish', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     username: username,
-                    ke3Base64: ke3Base64
+                    serke3: ser_ke3
                 })
-            });
-
-            console.log(result)
-            
+            });            
             
         });
     }

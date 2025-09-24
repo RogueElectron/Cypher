@@ -3,7 +3,9 @@ import {
   OpaqueClient,
   getOpaqueConfig,
   OpaqueID,
-  CredentialFile
+  CredentialFile,
+  RegistrationRequest,
+  RegistrationResponse
 } from '@cloudflare/opaque-ts';
 
 //so we were basically reinventing the wheel here, extending the OpqueClient class 
@@ -11,7 +13,7 @@ import {
 // i fixed it and took off about 70 lines of redundant code
 
 // Configuration for Opaque
-const config = getOpaqueConfig(OpaqueID.OPAQUE_P256);
+const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);
     
 document.addEventListener('DOMContentLoaded', async () => {
     // so the info sent from client is sent to the flask server, the flask forwards it to the node.js endpoint exposed by express,
@@ -22,52 +24,41 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (registerForm) {
         registerForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-            const server_identity = 'Digitopia-opaque-server'; 
             const formData = new FormData(registerForm);
             const username = formData.get('username');
             const password = formData.get('password');
-            const client = new OpaqueClient(config);
+            const client = new OpaqueClient(cfg);
             const request = await client.registerInit(password);
-            const response = await fetch('/api/register/init', {
+            const serRequest = request.serialize();
+            const response = await fetch('http://localhost:3000/register/init', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    username,
-                    registrationRequest: request
+                    username: username,
+                    registrationRequest: serRequest
                 })
             });
             
-            if (!response.ok) {
-                throw new Error('Registration failed');
-            }
 
             const { registrationResponse } = await response.json();
-            
-            // Convert arrays back to Uint8Arrays for the OPAQUE library
-            const reconstructedResponse = {
-                evaluation: new Uint8Array(registrationResponse.evaluation),
-                server_public_key: new Uint8Array(registrationResponse.server_public_key)
-            };
-            
-            const result = await client.registerFinish(reconstructedResponse, username, server_identity);
-            const credential_file = new CredentialFile(  
-                username,  // username or email  
-                result.record                // RegistrationRecord from registerFinish  
-            );
 
-            const serializedCredentialFile = credential_file.serialize();  
-            const credentialFileBase64 = btoa(String.fromCharCode(...serializedCredentialFile)); 
+            const deSerRegResponse = RegistrationResponse.deserialize(cfg, registrationResponse);
 
-            fetch('/api/register/finish', {
+            
+            const rec = await client.registerFinish(deSerRegResponse, username);
+            const record = rec.record;
+            const serRec = record.serialize();
+
+            fetch('http://localhost:3000/register/finish', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     username: username,
-                    credentialFileB64: credentialFileBase64
+                    record: serRec
                 })
             });
 
