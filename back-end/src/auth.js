@@ -326,6 +326,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     authLiveViz.updateSecurityStatus('Authentication complete! Session established securely without password exposure.');
                     
                     showAlert(`Login successful! Welcome back, ${username}!`, 'success');
+                    
                     loginForm.reset();
                     
                 } else {

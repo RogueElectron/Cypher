@@ -11,7 +11,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         register: 'src/register.js',
-        auth: 'src/auth.js'
+        auth: 'src/auth.js',
+        totp: 'src/totp.js'
       },
       output: {
         entryFileNames: '[name].js',
