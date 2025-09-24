@@ -99,9 +99,8 @@ def serve_register():
     if request.method == 'GET':
         return render_template('register.html')
 
-
-# register page
-@app.route('/api/register', methods=['GET'])
+# logout handler
+@app.route('/api/logout', methods=['POST'])
 def handle_logout():
     pass
 

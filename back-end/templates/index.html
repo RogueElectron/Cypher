@@ -3,12 +3,49 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-5">
-    <div class="row">
-        <div class="col-md-8 offset-md-2 text-center">
-            <h1 class="mb-4 text-light">Cypher</h1>
-            <p class="lead text-light">A revolutionary authentication platform</p>
+<div class="hero-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <h1 class="hero-title">Cypher</h1>
+                <p class="hero-subtitle">Next-generation OPAQUE authentication platform with zero-knowledge security</p>
+                <div class="hero-buttons">
+                    <a href="{{ url_for('serve_register') }}" class="btn btn-primary btn-lg glow">Get Started</a>
+                    <a href="{{ url_for('serve_login') }}" class="btn btn-outline-light btn-lg">Sign In</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Feature Cards -->
+        <div class="row mt-5 pt-5">
+            <div class="col-md-4 mb-4">
+                <div class="glass-card p-4 text-center h-100">
+                    <div class="mb-3">
+                        <i class="bi bi-shield-lock-fill" style="font-size: 3rem; color: #667eea;"></i>
+                    </div>
+                    <h5 class="text-white mb-3">Zero-Knowledge Security</h5>
+                    <p class="text-secondary">Your passwords never leave your device. Complete privacy guaranteed.</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="glass-card p-4 text-center h-100">
+                    <div class="mb-3">
+                        <i class="bi bi-lightning-charge-fill" style="font-size: 3rem; color: #f5576c;"></i>
+                    </div>
+                    <h5 class="text-white mb-3">Lightning Fast</h5>
+                    <p class="text-secondary">Optimized OPAQUE protocol for instant authentication.</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="glass-card p-4 text-center h-100">
+                    <div class="mb-3">
+                        <i class="bi bi-globe" style="font-size: 3rem; color: #00f2fe;"></i>
+                    </div>
+                    <h5 class="text-white mb-3">Universal Access</h5>
+                    <p class="text-secondary">Secure authentication that works everywhere, every time.</p>
+                </div>
+            </div>
         </div>
     </div>
-</div>    
+</div>
 {% endblock %}
