@@ -1,8 +1,6 @@
 /cyvenv
 /back-end/node_modules
-/back-end/node_internal_api/node_modules
 /back-end/__pycache__ 
+/back-end/node_internal_api/node_modules
 /back-end/.env
-/back-end/opaque-ts-doc-impl-example/server.js
-/back-end/opaque-ts-doc-impl-example/server.ts
-/back-end/opaque-ts-doc-impl-example/client.ts
+/back-end/cypher_users.db

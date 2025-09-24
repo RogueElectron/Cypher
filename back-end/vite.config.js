@@ -10,6 +10,7 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       input: {
+        register: 'src/register.js',
         auth: 'src/auth.js'
       },
       output: {

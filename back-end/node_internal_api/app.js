@@ -1,21 +1,18 @@
-import {  
-    OpaqueServer,  
-    OpaqueClient,    
-    OpaqueID,
-    getOpaqueConfig,
-    CredentialFile,  
-    RegistrationRequest,  
-    RegistrationResponse,  
-    RegistrationRecord,  
-    KE1,  
-    KE2,  
-    KE3  
-} from './node_modules/@cloudflare/opaque-ts/lib/src/index.js';
-// since you're back, you have a problem with the imports, and you need hte 'GetOpaqueConfig' think imported too, as well as OpaqueID 
-
+import {    
+    OpaqueServer,      
+    OpaqueID,  
+    getOpaqueConfig,  // Fixed: Use OpaqueConfig instead of getOpaqueConfig  
+    CredentialFile,    
+    RegistrationRequest,    
+    RegistrationResponse,    
+    RegistrationRecord,    
+    KE1,    
+    KE2,    
+    KE3   
+} from './node_modules/@cloudflare/opaque-ts/lib/src/index.js';  
 import express from 'express'
 
-import dotenv from 'dotenv';
+import dotenv, { config } from 'dotenv';
 
 dotenv.config();
 
@@ -24,13 +21,13 @@ app.use(express.json());
 
 async function createLocalOpaqueServer() {  
     // 1. Create configuration  
-    const config = new getOpaqueConfig(OpaqueID.OPAQUE_P256);  
+    const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);  
     // 2. Generate OPRF seed  
-    const oprfSeed = config.prng.random(config.hash.Nh);  
+    const oprfSeed = cfg.prng.random(cfg.hash.Nh);  
       
     // 3. Generate server AKE keypair  
-    const serverKeypairSeed = config.prng.random(config.constants.Nseed);
-    const serverAkeKeypair = await config.ake.deriveAuthKeyPair(serverKeypairSeed);
+    const serverKeypairSeed = cfg.prng.random(cfg.constants.Nseed);
+    const serverAkeKeypair = await cfg.ake.deriveAuthKeyPair(serverKeypairSeed);
       
     const akeKeypairExport = {  
         private_key: Array.from(serverAkeKeypair.private_key),  
@@ -39,10 +36,9 @@ async function createLocalOpaqueServer() {
       
     // 4. Set server identity  
     const serverIdentity = 'Digitopia-opaque-server';  
-      
     // Create your extended server  
-    const server = new LocalOpaqueServer(  
-        config,  
+    const server = new OpaqueServer(  
+        cfg,  
         oprfSeed,  
         akeKeypairExport,  
         serverIdentity  
@@ -50,44 +46,16 @@ async function createLocalOpaqueServer() {
       
     return server;  
 }  
+
+let localOpaqueServer; 
   
-
-// Initialize OPAQUE server
-export class LocalOpaqueServer extends OpaqueServer{
-    constructor(config, oprf_seed, ake_keypair_export, server_identity) {
-        super(config, oprf_seed, ake_keypair_export, server_identity);  
-        
-        // removed all logic here because it's already done automatically by the OpaqueServer
-    }
-
-    // register finish runs on the client side
-    registerInit(request, credential_identifier) {
-        return this.opaque_core.createRegistrationResponse(request, this.ake_keypair.public_key, new TextEncoder().encode(credential_identifier));
-    }
-
-    async authInit(ke1, record, credential_identifier, client_identity, context) {
-        const credential_identifier_u8array = new TextEncoder().encode(credential_identifier);
-        const response = await this.opaque_core.createCredentialResponse(ke1.request, record, this.ake_keypair.public_key, credential_identifier_u8array);
-        const te = new TextEncoder();
-        // eslint-disable-next-line no-undefined
-        const client_identity_u8array = client_identity ? te.encode(client_identity) : undefined;
-        const context_u8array = context ? te.encode(context) : new Uint8Array(0);
-        return this.ake.response(this.ake_keypair.private_key, this.server_identity, ke1, response, context_u8array, record.client_public_key, client_identity_u8array);
-    }
-    
-    authFinish(ke3, expected) {
-        return this.ake.finish(ke3.auth_finish, expected);
-    }
-}
-
-// Initialize the server properly using the createLocalOpaqueServer function
-let localOpaqueServer;
-createLocalOpaqueServer().then(server => {
-    localOpaqueServer = server;
-    console.log('OPAQUE server initialized successfully');
-}).catch(error => {
-    console.error('Failed to initialize OPAQUE server:', error);
+createLocalOpaqueServer().then(server => {  
+    localOpaqueServer = server;  
+    console.log('OPAQUE server initialized');  
+}).catch(error => {  
+    console.error('Failed to initialize OPAQUE server:', error);  
 });
+
 
 // registration routes
 app.post('/register/init', async (req, res) => {
@@ -122,31 +90,55 @@ app.post('/register/init', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+// the amount of vulnerabiliteis on this is disgusting
+// although this is a demo and they barely gave us 
+// enough time to make it works
 
-app.post('/register/finish', async (req, res) => {
-    try {
-        const { username, registrationRecord } = req.body;
-
-        // ok so this should be forwarded to the flask server along with 
-        // client identity for storage and session management
-        res.status(200).json({
-            message: 'Registration completed successfully',
-            user: username
-        });
-
-    } catch (error) {
-        console.error('Registration finish error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});  
 
 // login routes
-app.get('/login/init', (req, res) => {
-  
+app.post('/login/init', async (req, res) => {
+    // here we will recieve username, registrationrecord and ke1 from flask server
+    console.log('Received request body:', JSON.stringify(req.body));
+    const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);  
+    const { ke1Base64, CredentialFileB64, username } = req.body;
+    const ke1Bytes = new Uint8Array(atob(ke1Base64).split('').map(c => c.charCodeAt(0))); 
+    const ke1 = KE1.deserialize(cfg, Array.from(ke1Bytes));
+    console.log('second message');
+    // console.log(ke1)
+    // Decode from base64  
+    console.log('base64 record', CredentialFileB64)
+    const credentialFileBytes = new Uint8Array(atob(CredentialFileB64).split('').map(c => c.charCodeAt(0)));  
+    const deserializedCredentialFile = CredentialFile.deserialize(cfg, Array.from(credentialFileBytes));  
+    const registrationRecord = deserializedCredentialFile.record;  
+
+    const authinitresult = await localOpaqueServer.authInit(ke1, registrationRecord, username, username);
+    const ke2 = authinitresult.ke2;
+    console.log('ke2', ke2)
+    const ke2Serialized = ke2.serialize()
+    const ke2Base64 = btoa(String.fromCharCode(...ke2Serialized))  
+
+    console.log('ke2, we got it', ke2Base64);
+
+    res.status(200).json({ ke2Base64 : ke2Base64 });
+
 });
 
 app.post('/login/finish', (req, res) => {
-  
+
+    const ke3Base64 = req.body.ke3Base64;  
+    const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);  //declare config in scope
+    const ke3Bytes = new Uint8Array(atob(ke3Base64).split('').map(c => c.charCodeAt(0)));   
+    const ke3 = KE3.deserialize(cfg, Array.from(ke3Bytes));  
+    try {
+
+        let sessionKey = localOpaqueServer.authFinish(ke3);
+        return res.status(200).json('Successfully logged in')
+        console.log(sessionKey, 'ladies and gentlemen, we got him');
+
+    } catch (error) {
+        return res.status(200).json('Incorrect password or username') // we need protection against user enum
+    }
+
 });
 
 // start server

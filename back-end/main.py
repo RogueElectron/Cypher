@@ -4,6 +4,9 @@ import base64
 from dotenv import load_dotenv
 import requests
 import os
+import json
+import sqlite3
+import datetime
 
 node_api_port = 3000  # Default to 3000 to match Node.js server port
 node_api_url = f"http://127.0.0.1:{node_api_port}"
@@ -12,6 +15,69 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)  # enable CORS for all routes
 
+# Database setup
+DATABASE_PATH = 'cypher_users.db'
+
+def init_database():
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            credentialfileb64 TEXT NOT NULL
+        )
+    ''')
+    
+    conn.commit()
+    conn.close()
+
+def store_user_registration(username, registration_record):
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        # TODO input sanitization, both ways, out and in, second order sqli is no joke
+        
+        cursor.execute('''
+            INSERT INTO users (username, credentialfileb64)
+            VALUES (?, ?)
+        ''', (username, registration_record))
+        print('record stored', registration_record)
+        conn.commit()
+        conn.close()
+        return True
+    except sqlite3.IntegrityError:
+        # Username already exists
+        conn.close()
+        return False
+    except Exception as e:
+        print(f"Database error: {e}")
+        conn.close()
+        return False
+
+
+def get_user_registration(username):
+    # for the authentication part
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT credentialfileb64 FROM users WHERE username = ?
+        ''', (username,))
+        
+        result = cursor.fetchone()
+        conn.close()
+        
+        if result:
+            return result[0]
+    except Exception as e:
+        print(f"Database error: {e}")
+        return None
+
+# init db on startup
+init_database()
 
 #root
 @app.route('/')
@@ -22,7 +88,7 @@ def serve_index():
 # remember to add the 2fa api
 
 # login page
-@app.route('/api/login', methods=['POST'])     
+@app.route('/api/login', methods=['GET'])     
 def serve_login():
     if request.method == 'GET':
         return render_template('login.html')
@@ -49,19 +115,51 @@ def handle_register_init():
     return response.content, response.status_code
 
 
-@app.route('/api/register/finish', methods=['POST'])
+@app.route('/api/register/finish', methods=['POST']) # we can just store it instead of passing it around
 def handle_register_finish():
     print('we got da 2nd request') #debug
-    response = requests.post(node_api_url + '/register/finish', json=request.json)
+    # json responses are already parsed by flask
+    username = request.json['username']
+    credentialFileB64 = request.json['credentialFileB64']
+    
+    print(f"Storing registration for user: {username}")
+    
+    # Store the registration record in SQLite
+    store_user_registration(username, credentialFileB64)
+    print('record', credentialFileB64)
+    return '', 200
+    
+@app.route('/api/login/init', methods=['POST'])
+def handle_login_init():
+    username = request.json['username']
+    ke1Base64 = request.json['ke1Base64']
+    record = get_user_registration(username)
+    response = requests.post(node_api_url + '/login/init', json={
+        'username' : username,
+        'ke1Base64' : ke1Base64,
+        'CredentialFileB64' : record
+    })
+
+    print(response.content)
+
+    return response.content, response.status_code 
+
+@app.route('/api/login/finish', methods=['POST'])
+def handle_login_finish():
+    ke3Base64 = request.json['ke3Base64']
+    
+    response = requests.post(node_api_url + '/login/finish', json={
+        'ke3Base64': ke3Base64
+    })
+    print('we got da login finish request') #debug
     return response.content, response.status_code
+    
 
-
-# logout page
 @app.route('/api/logout', methods=['POST'])
 def handle_logout():
-
-    if request.method == 'POST':
-        return "" ## we will implement logout with a button, no need for a whole page
+    
+    #placeholder
+    return ''    
 
 
 if __name__ == '__main__':
