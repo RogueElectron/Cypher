@@ -99,68 +99,11 @@ def serve_register():
     if request.method == 'GET':
         return render_template('register.html')
 
-# OPAQUE routing
-# so choom this just forwards it to the node js api
-# TODO IMPLEMENT INPUT SANITIZATION
-# TODO implement error handling
-# TODO implement timeout
-# TODO use urljoin 
-# TODO implement header forwarding 
 
-@app.route('/api/register/init', methods=['POST'])
-def handle_register_init():
-    
-    print('we got da request') #debug
-    response = requests.post(node_api_url + '/register/init', json=request.json)
-    return response.content, response.status_code
-
-
-@app.route('/api/register/finish', methods=['POST']) # we can just store it instead of passing it around
-def handle_register_finish():
-    print('we got da 2nd request') #debug
-    # json responses are already parsed by flask
-    username = request.json['username']
-    credentialFileB64 = request.json['credentialFileB64']
-    
-    print(f"Storing registration for user: {username}")
-    
-    # Store the registration record in SQLite
-    store_user_registration(username, credentialFileB64)
-    print('record', credentialFileB64)
-    return '', 200
-    
-@app.route('/api/login/init', methods=['POST'])
-def handle_login_init():
-    username = request.json['username']
-    ke1Base64 = request.json['ke1Base64']
-    record = get_user_registration(username)
-    response = requests.post(node_api_url + '/login/init', json={
-        'username' : username,
-        'ke1Base64' : ke1Base64,
-        'CredentialFileB64' : record
-    })
-
-    print(response.content)
-
-    return response.content, response.status_code 
-
-@app.route('/api/login/finish', methods=['POST'])
-def handle_login_finish():
-    ke3Base64 = request.json['ke3Base64']
-    
-    response = requests.post(node_api_url + '/login/finish', json={
-        'ke3Base64': ke3Base64
-    })
-    print('we got da login finish request') #debug
-    return response.content, response.status_code
-    
-
-@app.route('/api/logout', methods=['POST'])
+# register page
+@app.route('/api/register', methods=['GET'])
 def handle_logout():
-    
-    #placeholder
-    return ''    
-
+    pass
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@cloudflare/opaque-ts": "^0.7.5",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "express": "^4.18.2"
   },
