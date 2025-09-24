@@ -137,9 +137,9 @@ app.post('/login/finish', async (req, res) => {
     const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);  
     const { serke3: ser_ke3, username } = req.body;
     const deser_ke3 = KE3.deserialize(cfg, ser_ke3);
-    const finServer = server.authFinish(deser_ke3);
-    // At the end, server and client MUST arrive to the same session key.
-    const { session_key: session_key_server } = finServer;
+    const finServer = await server.authFinish(deser_ke3);
+    console.log('cause', finServer.cause, 'session_key', finServer.session_key, 'message', finServer.message, 'name', finServer.name)
+    res.status(200).json(() => {}); //return nothing in body
 });
 
 
