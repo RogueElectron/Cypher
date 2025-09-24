@@ -111,7 +111,7 @@ app.post('/login/init', async (req, res) => {
     const deserializedCredentialFile = CredentialFile.deserialize(cfg, Array.from(credentialFileBytes));  
     const registrationRecord = deserializedCredentialFile.record;  
 
-    const authinitresult = await localOpaqueServer.authInit(ke1, registrationRecord, username, username);
+    const authinitresult = await localOpaqueServer.authInit(ke1, registrationRecord, username);
     const ke2 = authinitresult.ke2;
     console.log('ke2', ke2)
     const ke2Serialized = ke2.serialize()
@@ -123,7 +123,7 @@ app.post('/login/init', async (req, res) => {
 
 });
 
-app.post('/login/finish', (req, res) => {
+app.post('/login/finish', async (req, res) => {
 
     const ke3Base64 = req.body.ke3Base64;  
     const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);  //declare config in scope
@@ -131,7 +131,7 @@ app.post('/login/finish', (req, res) => {
     const ke3 = KE3.deserialize(cfg, Array.from(ke3Bytes));  
     try {
 
-        let sessionKey = localOpaqueServer.authFinish(ke3);
+        let sessionKey = await localOpaqueServer.authFinish(ke3);
         return res.status(200).json('Successfully logged in')
         console.log(sessionKey, 'ladies and gentlemen, we got him');
 
