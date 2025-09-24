@@ -54,8 +54,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const result = await client.registerFinish(reconstructedResponse, username, server_identity);
             const credential_file = new CredentialFile(  
                 username,  // username or email  
-                result.record,                 // RegistrationRecord from registerFinish  
-                username         // optional client identity string  
+                result.record                // RegistrationRecord from registerFinish  
             );
 
             const serializedCredentialFile = credential_file.serialize();  
