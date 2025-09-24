@@ -134,6 +134,8 @@ def handle_login_init():
     username = request.json['username']
     ke1Base64 = request.json['ke1Base64']
     record = get_user_registration(username)
+    
+    print('record====', record)
     response = requests.post(node_api_url + '/login/init', json={
         'username' : username,
         'ke1Base64' : ke1Base64,
