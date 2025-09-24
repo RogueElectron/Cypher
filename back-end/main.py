@@ -14,10 +14,6 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)  # enable CORS for all routes
 
-
-# init db on startup
-init_database()
-
 #root
 @app.route('/')
 def serve_index():
