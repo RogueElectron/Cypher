@@ -88,51 +88,113 @@ app.post('/register/init', async (req, res) => {
         return res.status(503).json({ error: 'Server not initialized yet' });
     }
     try {
-
         const { username, registrationRequest: serRegistrationRequest } = req.body;
+        
+        if (!username || !serRegistrationRequest) {
+            return res.status(400).json({ 
+                error: 'Missing required fields: username and registrationRequest' 
+            });
+        }
+        
+        // Check if user already exists
+        const existingUser = database.lookup(username);
+        if (existingUser !== false) {
+            return res.status(409).json({ 
+                error: 'Username already exists' 
+            });
+        }
+        
         const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);  
-        const deSerReq = RegistrationRequest.deserialize(cfg, serRegistrationRequest)
-        const regResponse = await server.registerInit(deSerReq, username)
-        const serregresponse = regResponse.serialize()
+        const deSerReq = RegistrationRequest.deserialize(cfg, serRegistrationRequest);
+        const regResponse = await server.registerInit(deSerReq, username);
+        const serregresponse = regResponse.serialize();
 
-        res.status(200).json({registrationResponse: serregresponse})
+        res.status(200).json({registrationResponse: serregresponse});
     } catch (error) {
-        console.error('Registration error:', error);
-        res.status(500).json({ error: error.message });
+        console.error('Registration init error:', error);
+        res.status(500).json({ error: error.message || 'Registration initialization failed' });
     }
 });
 
 app.post('/register/finish', async (req, res) => {
-    const { record, username } = req.body;
-    const deserRec = RegistrationRecord.deserialize(cfg, record);
-    const credential_file = new CredentialFile(username, deserRec);
-    const success = database.store(username, Uint8Array.from(credential_file.serialize()));
-    res.status(200).json({success: success})
+    try {
+        const { record, username } = req.body;
+        
+        if (!record || !username) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Missing required fields: record and username' 
+            });
+        }
+        
+        // Check if user already exists
+        const existingUser = database.lookup(username);
+        if (existingUser !== false) {
+            return res.status(409).json({ 
+                success: false, 
+                error: 'Username already exists' 
+            });
+        }
+        
+        const deserRec = RegistrationRecord.deserialize(cfg, record);
+        const credential_file = new CredentialFile(username, deserRec);
+        const success = database.store(username, Uint8Array.from(credential_file.serialize()));
+        
+        if (success) {
+            console.log(`User ${username} registered successfully`);
+            res.status(200).json({ 
+                success: true, 
+                message: 'Registration completed successfully' 
+            });
+        } else {
+            throw new Error('Failed to store user credentials');
+        }
+    } catch (error) {
+        console.error('Registration finish error:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: error.message || 'Registration completion failed' 
+        });
+    }
 })
 
 app.post('/login/init', async (req, res) => {
+    try {
+        const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);  
+        const { serke1, username } = req.body;
+        
+        if (!serke1 || !username) {
+            return res.status(400).json({ 
+                error: 'Missing required fields: serke1 and username' 
+            });
+        }
+        
+        const credFileBytes = database.lookup(username);
 
-    const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);  
-    const { serke1, username } = req.body;
-    const credFileBytes = database.lookup(username);
+        if (credFileBytes === false) {
+            return res.status(404).json({ 
+                error: 'client not registered in database' 
+            });
+        }
+        
+        const credential_file = CredentialFile.deserialize(cfg, Array.from(credFileBytes));
+        const deser_ke1 = KE1.deserialize(cfg, serke1);
+        const responseke2 = await server.authInit(deser_ke1, credential_file.record, credential_file.credential_identifier);
+        const { ke2, expected } = responseke2;
+        
+        // Store expected for this user session (better approach would be to use sessions/redis)
+        global.userSessions = global.userSessions || new Map();
+        global.userSessions.set(username, expected);
+        const ser_ke2 = ke2.serialize();
 
-    if (credFileBytes === false) {
-        throw new Error('client not registered in database');
+        res.status(200).json({ ser_ke2 : ser_ke2 });
+        
+    } catch (error) {
+        console.error('Login init error:', error);
+        res.status(500).json({ 
+            error: error.message || 'Login initialization failed' 
+        });
     }
-    const credential_file = CredentialFile.deserialize(cfg, Array.from(credFileBytes));
-
-    const deser_ke1 = KE1.deserialize(cfg, serke1);
-    const responseke2 = await server.authInit(deser_ke1, credential_file.record, credential_file.credential_identifier);
-    const { ke2, expected } = responseke2;
-    
-    // Store expected for this user session (better approach would be to use sessions/redis)
-    global.userSessions = global.userSessions || new Map();
-    global.userSessions.set(username, expected);
-    const ser_ke2 = ke2.serialize();
-
-
-    res.status(200).json({ ser_ke2 : ser_ke2 });
-
 });
 
 
