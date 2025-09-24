@@ -36,12 +36,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const ser_ke2 = responseData.ser_ke2;
             const deser_ke2 = KE2.deserialize(cfg, ser_ke2);
             const finClient = await client.authFinish(deser_ke2);
-            console.log(finClient)
             const ke3 = finClient.ke3;
-            console.log(ke3)
             const ser_ke3 = ke3.serialize();
-            console.log(ser_ke3)
-
+            console.log('session', finClient.session_key)
             const result = await fetch('http://localhost:3000/login/finish', {
                 method: 'POST',
                 headers: {

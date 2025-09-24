@@ -123,7 +123,11 @@ app.post('/login/init', async (req, res) => {
 
     const deser_ke1 = KE1.deserialize(cfg, serke1);
     const responseke2 = await server.authInit(deser_ke1, credential_file.record, credential_file.credential_identifier);
-    const ke2 = responseke2.ke2
+    const { ke2, expected } = responseke2;
+    
+    // Store expected for this user session (better approach would be to use sessions/redis)
+    global.userSessions = global.userSessions || new Map();
+    global.userSessions.set(username, expected);
     const ser_ke2 = ke2.serialize();
 
 
@@ -134,12 +138,34 @@ app.post('/login/init', async (req, res) => {
 
 
 app.post('/login/finish', async (req, res) => {
-    const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);  
-    const { serke3: ser_ke3, username } = req.body;
-    const deser_ke3 = KE3.deserialize(cfg, ser_ke3);
-    const finServer = await server.authFinish(deser_ke3);
-    console.log('cause', finServer.cause, 'session_key', finServer.session_key, 'message', finServer.message, 'name', finServer.name)
-    res.status(200).json(() => {}); //return nothing in body
+    try {
+        const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);  
+        const { serke3: ser_ke3, username } = req.body;
+        
+        // Get the expected value for this user
+        const expected = global.userSessions?.get(username);
+        if (!expected) {
+            return res.status(400).json({ error: 'No active session found' });
+        }
+        
+        const deser_ke3 = KE3.deserialize(cfg, ser_ke3);
+        const finServer = await server.authFinish(deser_ke3, expected);
+        console.log('session', finServer.session_key)
+        
+        // Clean up the session
+        global.userSessions.delete(username);
+        
+        if (finServer.session_key) {
+            console.log('Login successful for user:', username);
+            res.status(200).json({ success: true, message: 'Login successful' });
+        } else {
+            console.log('Login failed:', finServer);
+            res.status(401).json({ success: false, message: 'Authentication failed' });
+        }
+    } catch (error) {
+        console.error('Login finish error:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
 
