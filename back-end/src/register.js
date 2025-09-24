@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const deSerRegResponse = RegistrationResponse.deserialize(cfg, registrationResponse);
 
             
-            const rec = await client.registerFinish(deSerRegResponse, username);
+            const rec = await client.registerFinish(deSerRegResponse);
             const record = rec.record;
             const serRec = record.serialize();
 
