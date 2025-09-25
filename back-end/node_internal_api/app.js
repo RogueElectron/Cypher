@@ -1,19 +1,24 @@
-import {    
-    OpaqueServer,      
-    OpaqueID,  
-    getOpaqueConfig,  
-    CredentialFile,    
-    RegistrationRequest,    
-    RegistrationResponse,    
-    RegistrationRecord,    
-    KE1,    
-    KE2,    
+import {
+    OpaqueServer,
+    OpaqueID,
+    getOpaqueConfig,
+    CredentialFile,
+    RegistrationRequest,
+    RegistrationResponse,
+    RegistrationRecord,
+    KE1,
+    KE2,
     KE3
-} from './node_modules/@cloudflare/opaque-ts/lib/src/index.js';  
-import express from 'express'
-import cors from 'cors'
-import { authenticator } from 'otplib'
-import QRCode from 'qrcode'
+} from './node_modules/@cloudflare/opaque-ts/lib/src/index.js';
+import fetch from 'node-fetch';
+import express from 'express';
+import cors from 'cors';
+import { authenticator } from 'otplib';
+import QRCode from 'qrcode';
+
+const app = express();
+
+
 
 function createKVStorage() {  // Simple KV storage for testing - not for production
     const storage = new Map(); // Wrapper around Map for basic key-value operations    
@@ -33,13 +38,13 @@ function createKVStorage() {  // Simple KV storage for testing - not for product
     };  
 }
 
-const app = express()
 
 // CORS setup for frontend communication
 app.use(cors({
     origin: ['http://127.0.0.1:5000', 'http://localhost:5000'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
 }));
 
 app.use(express.json());
@@ -199,18 +204,52 @@ app.post('/login/finish', async (req, res) => {
         
         const deser_ke3 = KE3.deserialize(cfg, ser_ke3);
         const finServer = await server.authFinish(deser_ke3, expected);
-        console.log('session', finServer.session_key)
         
-        // Clean up the session
+        // clean up the session
         global.userSessions.delete(username);
+
         
         if (finServer.session_key) {
             console.log('Login successful for user:', username);
-            res.status(200).json({ success: true, message: 'Login successful' });
+
+            try {
+                const createTokenResponse = await fetch('http://localhost:5000/api/create-token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username })
+                });
+
+                if (!createTokenResponse.ok) {
+                    throw new Error(`Token service responded with status ${createTokenResponse.status}`);
+                }
+
+                const tokenPayload = await createTokenResponse.json();
+                const passAuthToken = tokenPayload?.token;
+
+                if (!passAuthToken) {
+                    throw new Error('Token service returned an empty payload');
+                }
+
+                return res.status(200).json({
+                    success: true,
+                    message: 'Login successful',
+                    token: passAuthToken
+                });
+            } catch (tokenError) {
+                console.error('Token creation failed:', tokenError);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Contact server admin'
+                });
+            }
+
         } else {
             console.log('Login failed:', finServer);
             res.status(401).json({ success: false, message: 'Authentication failed' });
         }
+
     } catch (error) {
         console.error('Login finish error:', error);
         res.status(500).json({ error: error.message });
@@ -281,23 +320,54 @@ app.post('/totp/verify-setup', async (req, res) => {
 });
 
 app.post('/totp/verify-login', async (req, res) => {
+
     try {
-        const { username, token } = req.body;
+        const { username, token, passAuthToken } = req.body;
         
         if (!username || !token) {
             return res.status(400).json({ error: 'Username and token are required' });
         }
+
+        if (!passAuthToken) {
+            return res.status(401).json({ error: 'No authentication token found' });
+        }
         
+        try {
+            const verifyResponse = await fetch('http://localhost:5000/api/verify-token', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    token: passAuthToken,
+                    username
+                })
+            });
+
+            if (!verifyResponse.ok) {
+                throw new Error(`Token service responded with status ${verifyResponse.status}`);
+            }
+
+            const verifyData = await verifyResponse.json();
+
+            if (!verifyData.valid) {
+                return res.status(401).json({ error: 'Invalid or expired authentication token' });
+            }
+        } catch (verifyError) {
+            console.error('Token verification error:', verifyError);
+            return res.status(500).json({ error: 'Token verification failed' });
+        }
+
+        // if token is valid then proceed with TOTP verification
         const secret = totpSecrets.get(username);
         if (!secret) {
             return res.status(400).json({ error: 'No TOTP secret found for user' });
         }
         
-        // Allow tolerance for clock drift
         const isValid = authenticator.verify({ 
             token, 
             secret,
-            window: 1 // +-30 seconds tolerance 
+            window: 1 
         });
                 
         if (isValid) {

@@ -147,6 +147,7 @@ class AuthLiveVisualization {
 
 // Initialize live visualization
 let authLiveViz;
+let passAuthToken = null;
 
 // Sidebar toggle functionality
 function initSidebarToggle() {
@@ -252,6 +253,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     headers: {
                         'Content-Type': 'application/json'
                     },
+                    credentials: 'include',
                     body: JSON.stringify({
                         username: username,
                         serke1: ser_ke1
@@ -293,6 +295,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     headers: {
                         'Content-Type': 'application/json'
                     },
+                    credentials: 'include',
                     body: JSON.stringify({
                         username: username,
                         serke3: ser_ke3
@@ -307,6 +310,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const loginResult = await result.json();
                 
                 if (loginResult.success) {
+                    passAuthToken = loginResult.token; 
+                    // in production, this would be stored as a cookie, however
+                    // since our token is set from a port that isn't the same 
+                    // as the one serving the website, it is considered not same-site,
+                    // we cannot set same-site protection to none, without having 'secure' to true,
+                    // which is not possible in a demo, since https requires third party certificate
+                    // authority.
+                    
+                    if (!passAuthToken) {
+                        throw new Error('Password authentication token missing from response');
+                    }
+
                     authLiveViz.completeStep('send-ke3');
                     
                     authLiveViz.activateStep('totp-verify');
@@ -378,14 +393,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 
                 // server-side TOTP verification
+                if (!passAuthToken) {
+                    throw new Error('Password authentication token not found');
+                }
+
                 const verifyResponse = await fetch('http://localhost:3000/totp/verify-login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
+                    credentials: 'include',
                     body: JSON.stringify({
                         username: username,
-                        token: totpCode
+                        token: totpCode,
+                        passAuthToken: passAuthToken
                     })
                 });
                 
