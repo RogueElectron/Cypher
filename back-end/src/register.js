@@ -3,19 +3,13 @@ import {
   OpaqueClient,
   getOpaqueConfig,
   OpaqueID,
-  CredentialFile,
-  RegistrationRequest,
   RegistrationResponse
 } from '@cloudflare/opaque-ts';
 
-//so we were basically reinventing the wheel here, extending the OpqueClient class 
-// while making another one with the exact same funcitons, afer i noticed this
-// i fixed it and took off about 70 lines of redundant code
 
-// Configuration for Opaque
 const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);
 
-// Live visualization steps
+// Live visualization steps for registration
 const registrationSteps = [
     {
         id: 'input',
@@ -74,10 +68,9 @@ const registrationSteps = [
     }
 ];
 
-// Live visualization controller
+// Live visualization controller for registration
 class LiveVisualization {
     constructor() {
-        this.currentStep = 0;
         this.steps = registrationSteps;
         this.init();
     }
@@ -121,14 +114,6 @@ class LiveVisualization {
         });
     }
     
-    setProcessing(stepId) {
-        const element = document.getElementById(`step-${stepId}`);
-        if (element) {
-            element.classList.remove('active');
-            element.classList.add('processing');
-        }
-    }
-    
     completeStep(stepId) {
         const element = document.getElementById(`step-${stepId}`);
         if (element) {
@@ -156,7 +141,7 @@ class LiveVisualization {
 // Initialize live visualization
 let liveViz;
 
-// sidebar toggle stuff
+// Sidebar toggle functionality
 function initSidebarToggle() {
     const hideBtn = document.getElementById('hide-sidebar');
     const showBtn = document.getElementById('show-sidebar');
@@ -219,23 +204,16 @@ function validatePasswords(password, confirmPassword) {
 }
     
 document.addEventListener('DOMContentLoaded', async () => {
-    // Initialize live visualization
     liveViz = new LiveVisualization();
     
-    // init sidebar toggle
     initSidebarToggle();
-    
-    // so the info sent from client is sent to the flask server, the flask forwards it to the node.js endpoint exposed by express,
-    // the ts lib proccesses the requests and sends responses through the flask server which forwards it to 
-    // the clients, easy, right?
-    
+        
     const registerForm = document.getElementById('register-form'); 
     if (registerForm) {
         registerForm.addEventListener('submit', async (event) => {
             event.preventDefault();
             clearAlerts();
             
-            // Step 1: Password Input
             liveViz.activateStep('input');
             liveViz.updateSecurityStatus('Password entered locally - never transmitted in plaintext');
             
@@ -244,13 +222,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             const password = formData.get('password');
             const confirmPassword = formData.get('confirm_password');
             
-            // Validate inputs
             if (!username || !password || !confirmPassword) {
                 showAlert('Please fill in all fields!', 'error');
                 return;
             }
             
-            // Step 2: Validation
             liveViz.activateStep('validation');
             await new Promise(resolve => setTimeout(resolve, 500)); // Brief pause for visualization
             
@@ -260,15 +236,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             liveViz.completeStep('validation');
             
-            // Disable form during registration
             const submitButton = registerForm.querySelector('button[type="submit"]');
             const originalText = submitButton.textContent;
             submitButton.disabled = true;
             submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Registering...';
             
             try {
-                // Step 3: OPRF Initialization
-                liveViz.activateStep('oprf-init');
+                liveViz.activateStep('generate-keys');
                 liveViz.updateSecurityStatus('Generating cryptographic blinding - your password stays secure');
                 await new Promise(resolve => setTimeout(resolve, 800));
                 
@@ -276,10 +250,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const request = await client.registerInit(password);
                 const serRequest = request.serialize();
                 
-                liveViz.completeStep('oprf-init');
+                liveViz.completeStep('generate-keys');
                 
-                // Step 4: Send Registration Request
-                liveViz.activateStep('send-request');
+                liveViz.activateStep('registration-request');
                 liveViz.updateSecurityStatus('Sending blinded password to server - original password never leaves this device');
                 
                 const response = await fetch('http://localhost:3000/register/init', {
@@ -298,19 +271,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                     throw new Error(errorData.error || 'Registration failed');
                 }
 
-                liveViz.completeStep('send-request');
+                liveViz.completeStep('registration-request');
                 
-                // Step 5: Server Processing
-                liveViz.activateStep('server-processing');
+                liveViz.activateStep('server-response');
                 liveViz.updateSecurityStatus('Server processing blinded password - your actual password remains unknown');
                 
                 const { registrationResponse } = await response.json();
                 const deSerRegResponse = RegistrationResponse.deserialize(cfg, registrationResponse);
                 
-                liveViz.completeStep('server-processing');
+                liveViz.completeStep('server-response');
                 
-                // Step 6: Credential Generation
-                liveViz.activateStep('credential-generation');
+                liveViz.activateStep('finalize');
                 liveViz.updateSecurityStatus('Creating your secure credential file locally');
                 await new Promise(resolve => setTimeout(resolve, 600));
                 
@@ -318,11 +289,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const record = rec.record;
                 const serRec = record.serialize();
 
-                liveViz.completeStep('credential-generation');
-                
-                // Step 7: Final Registration
-                liveViz.activateStep('final-registration');
-                liveViz.updateSecurityStatus('Sending encrypted credential to server for storage');
+                liveViz.completeStep('finalize');
 
                 const finishResponse = await fetch('http://localhost:3000/register/finish', {
                     method: 'POST',
@@ -343,7 +310,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const finishResult = await finishResponse.json();
                 
                 if (finishResult.success) {
-                    liveViz.completeStep('final-registration');
                     
                     liveViz.activateStep('totp-setup');
                     liveViz.updateSecurityStatus('OPAQUE registration complete! Now setting up 2FA...');
@@ -365,7 +331,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.error('Registration error:', error);
                 showAlert(`Registration failed: ${error.message}`, 'error');
             } finally {
-                // Re-enable form
                 submitButton.disabled = false;
                 submitButton.textContent = originalText;
             }
@@ -393,12 +358,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             document.getElementById('totp-secret').textContent = result.secret;
             
-            window.currentTotpSecret = result.secret;
             window.currentUsername = username;
             
             displayServerQrCode(result.qrCode, result.otpauthUrl);
             
-            showCurrentTotpCode(result.secret);
+            showTotpInfo(result.secret);
             
             return result.secret;
             
@@ -409,42 +373,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
-    function generateRandomBase32Secret() {
-        const base32chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-        let secret = '';
-        for (let i = 0; i < 32; i++) {
-            secret += base32chars.charAt(Math.floor(Math.random() * base32chars.length));
-        }
-        return secret;
-    }
-    
-    function generateQrCode(secret) {
-        const username = document.getElementById('username').value;
-        const issuer = 'Cypher';
-        
-        // Create TOTP URI for authenticator apps
-        const totpUri = `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(username)}?secret=${secret}&issuer=${encodeURIComponent(issuer)}&algorithm=SHA1&digits=6&period=30`;
-        
-        const qrContainer = document.getElementById('qr-code');
-        qrContainer.innerHTML = `
-            <div class="text-center p-4" style="background: rgba(255,255,255,0.1); border-radius: 8px;">
-                <div class="mb-3">
-                    <canvas id="qr-canvas" style="border-radius: 8px; background: white; max-width: 200px; max-height: 200px;"></canvas>
-                </div>
-                <small class="text-secondary">scan with google authenticator, authy, or similar app</small>
-                <div class="mt-2">
-                    <small class="text-muted">or copy this URI:</small>
-                    <div class="mt-1">
-                        <input type="text" class="form-control form-control-sm" value="${totpUri}" readonly onclick="this.select()" style="font-size: 10px;">
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        // Generate actual QR code using qrcode.js library
-        generateActualQR(totpUri);
-    }
-    
     function displayServerQrCode(qrCodeDataURL, otpauthUrl) {
         const qrContainer = document.getElementById('qr-code');
         qrContainer.innerHTML = `
@@ -452,9 +380,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="mb-3">
                     <img src="${qrCodeDataURL}" alt="TOTP QR Code" style="border-radius: 8px; max-width: 200px; max-height: 200px;">
                 </div>
-                <small class="text-secondary">scan with google authenticator, authy, or similar app</small>
+                <small class="text-secondary">Scan with Google Authenticator, Authy, or similar app</small>
                 <div class="mt-2">
-                    <small class="text-muted">or copy this URI:</small>
+                    <small class="text-muted">Or copy this URI:</small>
                     <div class="mt-1">
                         <input type="text" class="form-control form-control-sm" value="${otpauthUrl}" readonly onclick="this.select()" style="font-size: 10px;">
                     </div>
@@ -463,51 +391,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
     }
     
-    function generateActualQR(totpUri) {
-        // Generate QR code using qrcode.js library
-        const canvas = document.getElementById('qr-canvas');
-        if (canvas && window.QRCode) {
-            QRCode.toCanvas(canvas, totpUri, {
-                width: 200,
-                height: 200,
-                color: {
-                    dark: '#000000',  // QR code color
-                    light: '#FFFFFF' // Background color
-                },
-                margin: 2,
-                errorCorrectionLevel: 'M'
-            }, function (error) {
-                if (error) {
-                    console.error('QR Code generation error:', error);
-                    // Fallback to text display
-                    const ctx = canvas.getContext('2d');
-                    ctx.fillStyle = '#667eea';
-                    ctx.font = '12px monospace';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('QR Code Error', 100, 100);
-                    ctx.fillText('Use URI below', 100, 120);
-                } else {
-                    console.log('QR code generated successfully!');
-                }
-            });
-        } else {
-            console.error('QRCode library not loaded or canvas not found');
-        }
-    }
-    
-    function showCurrentTotpCode(secret) {
-        // show a note that codes are generated server-side now
+    function showTotpInfo(secret) {
         const qrContainer = document.getElementById('qr-code');
-        const testingDiv = document.createElement('div');
-        testingDiv.className = 'mt-3 p-2 rounded';
-        testingDiv.style.background = 'rgba(245, 87, 108, 0.1)';
-        testingDiv.style.border = '1px solid rgba(245, 87, 108, 0.2)';
-        testingDiv.innerHTML = `
-            <small class="text-info"><i class="bi bi-info-circle me-1"></i>server-side TOTP:</small><br>
-            <span class="text-white">use your authenticator app for codes</span><br>
-            <small class="text-secondary">secret: <code>${secret}</code></small>
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'mt-3 p-2 rounded';
+        infoDiv.style.background = 'rgba(75, 172, 254, 0.1)';
+        infoDiv.style.border = '1px solid rgba(75, 172, 254, 0.2)';
+        infoDiv.innerHTML = `
+            <small class="text-info"><i class="bi bi-info-circle me-1"></i>TOTP Secret:</small><br>
+            <span class="text-white">Use your authenticator app for verification codes</span><br>
+            <small class="text-secondary">Secret: <code>${secret}</code></small>
         `;
-        qrContainer.appendChild(testingDiv);
+        qrContainer.appendChild(infoDiv);
     }
     
     
@@ -537,7 +432,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 liveViz.activateStep('totp-verify');
                 liveViz.updateSecurityStatus('Verifying 2FA code...');
                 
-                // time to verify with our server - no more client-side nonsense
+                // Server-side TOTP verification
                 const username = window.currentUsername;
                 if (!username) {
                     throw new Error('Username not found');
@@ -568,10 +463,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 showAlert('Registration complete! You can now log in with your credentials and 2FA.', 'success');
                 
-                // TODO: Send TOTP secret to backend for storage with user account
-                console.log('TOTP secret to store:', secret);
-                
-                // Redirect to login after delay
+
                 setTimeout(() => {
                     window.location.href = '/api/login';
                 }, 2000);

@@ -15,9 +15,8 @@ import cors from 'cors'
 import { authenticator } from 'otplib'
 import QRCode from 'qrcode'
 
-function createKVStorage() {  // yo this KVStorage thing is just for testing, not exported 
-    const storage = new Map(); // made a wrapper around map() that does what we need
-    let defaultKey = null;    // prototype only - gonna use real database later 💯
+function createKVStorage() {  // Simple KV storage for testing - not for production
+    const storage = new Map(); // Wrapper around Map for basic key-value operations    
       
     return {  
         store(key, value) {  
@@ -30,30 +29,13 @@ function createKVStorage() {  // yo this KVStorage thing is just for testing, no
             return value || false;  
         },  
           
-        set_default(key, value) {  
-            storage.set(key, value);  
-            defaultKey = key;  
-            return true;  
-        },  
-          
-        lookup_or_default(key) {  
-            if (!defaultKey) {  
-                throw new Error('no default entry has been set');  
-            }  
-              
-            const value = storage.get(key) || storage.get(defaultKey);  
-            if (!value) {  
-                throw new Error('no default entry has been set');  
-            }  
-              
-            return value;  
-        }  
+  
     };  
 }
 
 const app = express()
 
-// CORS setup - letting our frontend talk to us 
+// CORS setup for frontend communication
 app.use(cors({
     origin: ['http://127.0.0.1:5000', 'http://localhost:5000'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -62,16 +44,15 @@ app.use(cors({
 
 app.use(express.json());
 
-// OPAQUE setup - this crypto stuff is wild but it works 🔥
 const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);  
 const oprfSeed = cfg.prng.random(cfg.hash.Nh);  
 const serverKeypairSeed = cfg.prng.random(cfg.constants.Nseed);
 const serverAkeKeypair = await cfg.ake.deriveAuthKeyPair(serverKeypairSeed);
 
-// our ghetto database for now lmao
+// Demo storage using KV wrapper
 const database = createKVStorage();
 
-// TOTP secrets - this is where the magic happens ✨
+// TOTP secrets storage
 const totpSecrets = new Map();
 
 const akeKeypairExport = {  
@@ -102,7 +83,7 @@ app.post('/register/init', async (req, res) => {
             });
         }
         
-        // Check if user already exists
+        // check if user already exists
         const existingUser = database.lookup(username);
         if (existingUser !== false) {
             return res.status(409).json({ 
@@ -133,7 +114,7 @@ app.post('/register/finish', async (req, res) => {
             });
         }
         
-        // Check if user already exists
+        // check if user already exists
         const existingUser = database.lookup(username);
         if (existingUser !== false) {
             return res.status(409).json({ 
@@ -188,7 +169,7 @@ app.post('/login/init', async (req, res) => {
         const responseke2 = await server.authInit(deser_ke1, credential_file.record, credential_file.credential_identifier);
         const { ke2, expected } = responseke2;
         
-        // Store expected for this user session (better approach would be to use sessions/redis)
+        // Store expected for this user session (true session management comes after demo)
         global.userSessions = global.userSessions || new Map();
         global.userSessions.set(username, expected);
         const ser_ke2 = ke2.serialize();
@@ -246,20 +227,18 @@ app.post('/totp/setup', async (req, res) => {
             return res.status(400).json({ error: 'Username is required' });
         }
         
-        // generate that TOTP secret - this is the sauce 🔥
         const secret = authenticator.generateSecret();
         
-        // store it for this user - ez pz
         totpSecrets.set(username, secret);
         
-        // make the URI that authenticator apps understand
+        // Create URI for authenticator apps
         const service = 'Cypher';
         const otpauthUrl = authenticator.keyuri(username, service, secret);
         
-        // turn it into a QR code - no more placeholder BS
+        // Generate QR code
         const qrCodeDataURL = await QRCode.toDataURL(otpauthUrl);
         
-        console.log(`TOTP setup for user ${username} - WE'RE COOKING:`, { secret, otpauthUrl });
+        console.log(`TOTP setup for user ${username}:`, { secret, otpauthUrl });
         
         res.status(200).json({
             success: true,
@@ -287,11 +266,8 @@ app.post('/totp/verify-setup', async (req, res) => {
             return res.status(400).json({ error: 'No TOTP secret found for user' });
         }
         
-        // check if their code is legit
         const isValid = authenticator.verify({ token, secret });
-        
-        console.log(`TOTP verification for ${username} - ${isValid ? 'VALID ✅' : 'NOPE ❌'}:`, { token });
-        
+                
         if (isValid) {
             res.status(200).json({ success: true, message: 'TOTP verification successful' });
         } else {
@@ -317,15 +293,13 @@ app.post('/totp/verify-login', async (req, res) => {
             return res.status(400).json({ error: 'No TOTP secret found for user' });
         }
         
-        // wiggle room for clock drift
+        // Allow tolerance for clock drift
         const isValid = authenticator.verify({ 
             token, 
             secret,
-            window: 1 // +-30 seconds tolerance cause clocks be weird sometimes
+            window: 1 // +-30 seconds tolerance 
         });
-        
-        console.log(`TOTP login check for ${username} - ${isValid ? 'LET EM IN 🚪' : 'NAH FAM ❌'}:`, { token });
-        
+                
         if (isValid) {
             res.status(200).json({ success: true, message: 'TOTP login verification successful' });
         } else {

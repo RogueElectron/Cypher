@@ -2,7 +2,6 @@ import {
     OpaqueClient,
     getOpaqueConfig,
     OpaqueID,
-    OpaqueServer,
     KE2,
     KE3
   } from '@cloudflare/opaque-ts';
@@ -71,7 +70,7 @@ const authenticationSteps = [
         id: 'success',
         icon: 'bi-check-circle-fill',
         title: 'Authentication Complete',
-        description: 'Successfully authenticated with 2FA! Session established securely.',
+        description: 'Successfully authenticated with 2FA!',
         dataFlow: null
     }
 ];
@@ -79,7 +78,6 @@ const authenticationSteps = [
 // Live visualization controller for authentication
 class AuthLiveVisualization {
     constructor() {
-        this.currentStep = 0;
         this.steps = authenticationSteps;
         this.init();
     }
@@ -123,14 +121,6 @@ class AuthLiveVisualization {
         });
     }
     
-    setProcessing(stepId) {
-        const element = document.getElementById(`step-${stepId}`);
-        if (element) {
-            element.classList.remove('active');
-            element.classList.add('processing');
-        }
-    }
-    
     completeStep(stepId) {
         const element = document.getElementById(`step-${stepId}`);
         if (element) {
@@ -158,7 +148,7 @@ class AuthLiveVisualization {
 // Initialize live visualization
 let authLiveViz;
 
-// sidebar toggle stuff
+// Sidebar toggle functionality
 function initSidebarToggle() {
     const hideBtn = document.getElementById('hide-sidebar');
     const showBtn = document.getElementById('show-sidebar');
@@ -191,7 +181,7 @@ function showAlert(message, type = 'success') {
         </div>
     `;
     
-    // Auto-dismiss success messages after 5 seconds
+    // auto dismiss success messages after 5 seconds
     if (type === 'success') {
         setTimeout(() => {
             const alert = alertContainer.querySelector('.alert');
@@ -212,7 +202,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize live visualization
     authLiveViz = new AuthLiveVisualization();
     
-    // init sidebar toggle
+    // Initialize sidebar toggle
     initSidebarToggle();
     
     const loginForm = document.getElementById('login-form');
@@ -221,7 +211,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             event.preventDefault();
             clearAlerts();
             
-            // Step 1: Password Input
             authLiveViz.activateStep('input');
             authLiveViz.updateSecurityStatus('Password entered locally - never transmitted in plaintext');
             
@@ -229,26 +218,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             const username = formData.get('username');
             const password = formData.get('password');
             
-            // Validate inputs
             if (!username || !password) {
                 showAlert('Please fill in all fields!', 'error');
                 return;
             }
             
-            // Step 2: Validation
             authLiveViz.activateStep('validation');
             await new Promise(resolve => setTimeout(resolve, 400)); // Brief pause for visualization
             
             authLiveViz.completeStep('validation');
             
-            // Disable form during login
             const submitButton = loginForm.querySelector('button[type="submit"]');
             const originalText = submitButton.textContent;
             submitButton.disabled = true;
             submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Logging in...';
             
             try {
-                // Step 3: KE1 Generation
                 authLiveViz.activateStep('ke1-generation');
                 authLiveViz.updateSecurityStatus('Generating key exchange message without exposing password');
                 await new Promise(resolve => setTimeout(resolve, 600));
@@ -259,7 +244,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 authLiveViz.completeStep('ke1-generation');
                 
-                // Step 4: Send KE1
                 authLiveViz.activateStep('send-ke1');
                 authLiveViz.updateSecurityStatus('Sending authentication request - no password data transmitted');
 
@@ -281,7 +265,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 authLiveViz.completeStep('send-ke1');
                 
-                // Step 5: Server KE2 Response
                 authLiveViz.activateStep('server-ke2');
                 authLiveViz.updateSecurityStatus('Server responding with encrypted challenge using stored credentials');
 
@@ -291,7 +274,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 authLiveViz.completeStep('server-ke2');
                 
-                // Step 6: Verify Server
                 authLiveViz.activateStep('verify-server');
                 authLiveViz.updateSecurityStatus('Verifying server authenticity and generating session key');
                 await new Promise(resolve => setTimeout(resolve, 500));
@@ -303,7 +285,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 authLiveViz.completeStep('verify-server');
                 
-                // Step 7: Send KE3
                 authLiveViz.activateStep('send-ke3');
                 authLiveViz.updateSecurityStatus('Sending authentication proof to complete mutual authentication');
                 
@@ -328,11 +309,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (loginResult.success) {
                     authLiveViz.completeStep('send-ke3');
                     
-                    // Step 7: Show TOTP Verification
                     authLiveViz.activateStep('totp-verify');
                     authLiveViz.updateSecurityStatus('OPAQUE authentication complete! Now verifying 2FA...');
                     
-                    // Hide login form and show TOTP phase
                     console.log('Switching to TOTP phase...');
                     const loginForm = document.getElementById('login-form');
                     const totpPhase = document.getElementById('totp-phase');
@@ -354,7 +333,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.error('Login error:', error);
                 let errorMessage = error.message;
                 
-                // Handle specific error cases
                 if (error.message.includes('client not registered')) {
                     errorMessage = 'User not found. Please register first.';
                 } else if (error.message.includes('Authentication failed')) {
@@ -363,14 +341,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 showAlert(`Login failed: ${errorMessage}`, 'error');
             } finally {
-                // Re-enable form
                 submitButton.disabled = false;
                 submitButton.textContent = originalText;
             }
         });
     }
     
-    // server-side TOTP verification only - no more client-side crypto 💯
     
     // TOTP verification form handler
     const totpForm = document.getElementById('totp-verify-form');
@@ -382,13 +358,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             const formData = new FormData(totpForm);
             const totpCode = formData.get('totp_code');
             
-            // Validate TOTP code
             if (!totpCode || totpCode.length !== 6) {
                 showAlert('Please enter a valid 6-digit code!', 'error');
                 return;
             }
             
-            // Disable form during verification
+            // disable form during verification
             const submitButton = totpForm.querySelector('button[type="submit"]');
             const originalText = submitButton.innerHTML;
             submitButton.disabled = true;
@@ -397,7 +372,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 authLiveViz.updateSecurityStatus('Verifying 2FA code...');
                 
-                // grab username from the form
                 const username = document.getElementById('username').value;
                 if (!username) {
                     throw new Error('Username not found');
@@ -423,13 +397,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     throw new Error(verifyResult.error || 'Invalid TOTP code');
                 }
                 
-                // Step 8: Complete login
                 authLiveViz.activateStep('success');
                 authLiveViz.updateSecurityStatus('Login complete! Session established with 2FA verification.');
                 
                 showAlert('Login successful! Welcome back!', 'success');
                 
-                // Redirect to home after delay
                 setTimeout(() => {
                     window.location.href = '/';
                 }, 2000);
@@ -438,21 +410,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.error('TOTP verification error:', error);
                 showAlert(`2FA verification failed: ${error.message || 'Invalid code'}`, 'error');
             } finally {
-                // Re-enable form
+                // re-enable form
                 submitButton.disabled = false;
                 submitButton.innerHTML = originalText;
             }
         });
     }
     
-    // Format TOTP input
+    // format TOTP input
     const totpInput = document.getElementById('totp-code');
     if (totpInput) {
         totpInput.addEventListener('input', () => {
-            // Only allow numbers
+            // only allow numbers
             totpInput.value = totpInput.value.replace(/[^0-9]/g, '');
             
-            // Limit to 6 digits
+            // limit to 6 digits
             if (totpInput.value.length > 6) {
                 totpInput.value = totpInput.value.slice(0, 6);
             }

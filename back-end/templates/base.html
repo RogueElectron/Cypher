@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     
-    <!-- we don't need client-side TOTP libs anymore since we're doing real server-side validation now 🔥 -->
+    <!-- Server-side TOTP validation - no client-side libraries needed -->
 </head>
 <body>
     <!-- Animated Background -->
@@ -29,7 +29,7 @@
                     </li>
                 </ul>
                 <a class="navbar-brand position-absolute start-50 translate-middle-x" href="{{ url_for('serve_index') }}">
-                    <img src="{{ url_for('static', filename='svg/cypher.svg') }}" class="img-fluid" style="height: 35px;"> <!-- i have no idea if we should put this in the navbar and the homepage-->
+                    <img src="{{ url_for('static', filename='svg/cypher.svg') }}" class="img-fluid" style="height: 35px;">
                 </a>
                 <ul class="navbar-nav">
                     <li class="nav-item">
