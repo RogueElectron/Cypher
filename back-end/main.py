@@ -37,6 +37,12 @@ def serve_register():
     if request.method == 'GET':
         return render_template('register.html')
 
+# totp setup page
+@app.route('/api/totp', methods=['GET'])
+def serve_totp():
+    if request.method == 'GET':
+        return render_template('totp.html')
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
 

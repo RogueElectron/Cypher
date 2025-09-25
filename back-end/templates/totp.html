@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
 {% block links %}
-<script type="module" src="{{ url_for('static', filename='dist/auth.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='dist/totp.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='dist/totp_ui.js') }}"></script>
 {% endblock %}
 
-{% block title %}Login{% endblock %}
+{% block title %}TOTP Setup{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-5">
@@ -14,60 +14,74 @@
         <div class="col-lg-2 col-xl-3"></div>
         
         <!-- Main Form - Truly Centered -->
-        <div class="col-lg-6 col-xl-4">
+        <div class="col-lg-6 col-xl-4"> 
             <div class="glass-card p-5 main-form-card mx-auto" style="max-width: 500px;">
                 <div class="text-center mb-4">
-                    <h2 class="text-white mb-2">Welcome Back</h2>
-                    <p class="text-secondary">Sign in to your secure account</p>
+                    <h2 class="text-white mb-2">Two-Factor Authentication</h2>
+                    <p class="text-secondary">secure your account with time-based codes</p>
                 </div>
                 
                 <!-- Alert container for success/error messages -->
                 <div id="alert-container"></div>
                 
-                <form id="login-form" method="post" action="javascript:void(0)">
+                <!-- setup phase -->
+                <div id="setup-phase">
+                    <form id="totp-setup-form" action="javascript:void(0);" method="post">
                         <div class="mb-4">
-                            <label for="username" class="form-label">Username</label>
-                            <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username" required>
+                            <label class="form-label">scan qr code with your authenticator app</label>
+                            <div class="text-center p-4 glass-card">
+                                <div id="qr-code" class="mb-3">
+                                    <!-- qr code will be generated here -->
+                                    <div class="placeholder-glow">
+                                        <div class="placeholder" style="width: 200px; height: 200px; margin: 0 auto;"></div>
+                                    </div>
+                                </div>
+                                <small class="text-secondary">or enter this secret manually:</small>
+                                <div class="mt-2">
+                                    <code id="totp-secret" class="text-primary">loading...</code>
+                                </div>
+                            </div>
                         </div>
+                        
                         <div class="mb-4">
-                            <label for="password" class="form-label">Password</label>
-                            <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
+                            <label for="totp-code" class="form-label">enter verification code</label>
+                            <input type="text" class="form-control text-center" id="totp-code" name="totp_code" 
+                                   placeholder="000000" maxlength="6" pattern="[0-9]{6}" required>
+                            <small class="text-secondary">enter the 6-digit code from your app</small>
                         </div>
-                        <div class="d-grid mb-4">
-                            <button type="submit" class="btn btn-primary w-100">
-                            <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+                        
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-shield-check me-2"></i>enable 2fa
                         </button>
                     </form>
                 </div>
                 
-                <!-- TOTP Verification Phase (hidden initially) -->
-                <div id="totp-phase" style="display: none;">
-                    <div class="text-center mb-4">
-                        <h2 class="text-white mb-2">Two-Factor Authentication</h2>
-                        <p class="text-secondary">enter your 6-digit authentication code</p>
-                    </div>
-                    
+                <!-- verify phase -->
+                <div id="verify-phase" style="display: none;">
                     <form id="totp-verify-form" action="javascript:void(0);" method="post">
                         <div class="mb-4">
-                            <label for="totp-code" class="form-label">authentication code</label>
-                            <input type="text" class="form-control text-center" id="totp-code" name="totp_code" 
+                            <label for="verify-code" class="form-label">enter your 2fa code</label>
+                            <input type="text" class="form-control text-center" id="verify-code" name="verify_code" 
                                    placeholder="000000" maxlength="6" pattern="[0-9]{6}" required>
                             <small class="text-secondary">check your authenticator app</small>
                         </div>
                         
                         <button type="submit" class="btn btn-primary w-100">
-                            <i class="bi bi-shield-check me-2"></i>verify and sign in
+                            <i class="bi bi-check-circle me-2"></i>verify code
                         </button>
                     </form>
                 </div>
                 
-                <div class="text-center" id="back-link">
-                    <p class="text-secondary mb-0">Don't have an account? 
-                        <a href="{{ url_for('serve_register') }}" class="text-decoration-none" style="color: #667eea;">Create one here</a>
-                    </p>
+                <div class="text-center mt-4">
+                    <a href="{{ url_for('serve_index') }}" class="text-decoration-none text-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>back to home
+                    </a>
                 </div>
             </div>
         </div>
+        
+        <!-- Spacer for centering -->
+        <div class="col-lg-2 col-xl-1"></div>
         
         <!-- Live Visualization Sidebar -->
         <div class="d-none d-xl-block">
@@ -75,9 +89,9 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <div class="text-center flex-grow-1">
                         <h6 class="text-white mb-1">
-                            <i class="bi bi-shield-lock me-1"></i>Authentication Process
+                            <i class="bi bi-shield-lock me-1"></i>2FA Setup Process
                         </h6>
-                        <small class="text-secondary">Live OPAQUE visualization</small>
+                        <small class="text-secondary">time-based authentication</small>
                     </div>
                     <button class="btn btn-sm btn-outline-light ms-2" id="hide-sidebar" style="padding: 4px 8px; font-size: 12px;">
                         <i class="bi bi-x"></i>
@@ -85,7 +99,7 @@
                 </div>
                 
                 <!-- Process Steps -->
-                <div id="live-steps" class="live-steps-container flex-grow-1">
+                <div id="live-steps" class="live-steps-container">
                     <!-- Steps will be populated by JavaScript -->
                 </div>
                 
@@ -93,7 +107,7 @@
                 <div class="security-status mt-3 p-2 rounded" id="security-status">
                     <div class="d-flex align-items-center">
                         <i class="bi bi-shield-check text-success me-2" style="font-size: 14px;"></i>
-                        <small class="text-white">Zero-knowledge authentication in progress</small>
+                        <small class="text-white">adds an extra layer of security to your account</small>
                     </div>
                 </div>
             </div>
@@ -202,21 +216,15 @@
 }
 
 .step-title {
-    color: white;
-    font-weight: 600;
-    margin-bottom: 1px;
     font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 2px;
 }
 
 .step-description {
-    color: #b8b9c7;
     font-size: 11px;
-    line-height: 1.2;
-}
-
-.live-step.active .step-description,
-.live-step.processing .step-description {
-    color: white;
+    opacity: 0.8;
+    line-height: 1.3;
 }
 
 .security-status {
@@ -224,11 +232,9 @@
     border: 1px solid rgba(75, 172, 254, 0.2);
 }
 
-input[type="text"]#totp-code {
-    font-family: 'Courier New', monospace;
-    font-size: 18px;
-    letter-spacing: 4px;
-    font-weight: 600;
+/* totp specific styles */
+#qr-code canvas {
+    border-radius: 8px;
 }
 
 code {
@@ -239,11 +245,12 @@ code {
     letter-spacing: 1px;
 }
 
-.data-flow {
-    font-size: 12px;
-    color: #667eea;
-    font-weight: 500;
-    margin-top: 5px;
+input[type="text"]#totp-code,
+input[type="text"]#verify-code {
+    font-family: 'Courier New', monospace;
+    font-size: 18px;
+    letter-spacing: 4px;
+    font-weight: 600;
 }
 </style>
 {% endblock %}

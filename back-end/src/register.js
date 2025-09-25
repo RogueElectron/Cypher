@@ -19,58 +19,57 @@ const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);
 const registrationSteps = [
     {
         id: 'input',
-        icon: 'bi-keyboard',
-        title: 'Password Input',
-        description: 'Your password is entered locally and never transmitted in plaintext',
-        dataFlow: null
+        title: 'password input',
+        description: 'entering credentials locally',
+        icon: '1'
     },
     {
         id: 'validation',
-        icon: 'bi-check-circle',
-        title: 'Input Validation',
-        description: 'Checking password strength and confirmation match',
-        dataFlow: null
+        title: 'input validation',
+        description: 'checking password strength',
+        icon: '2'
     },
     {
-        id: 'oprf-init',
-        icon: 'bi-cpu',
-        title: 'OPRF Initialization',
-        description: 'Generating cryptographic blinding for your password',
-        dataFlow: null
+        id: 'generate-keys',
+        title: 'generate keys',
+        description: 'creating cryptographic keypair',
+        icon: '3'
     },
     {
-        id: 'send-request',
-        icon: 'bi-arrow-up-circle',
-        title: 'Send Registration Request',
-        description: 'Sending blinded password to server (original password stays here)',
-        dataFlow: 'Blinded Password → Server'
+        id: 'registration-request',
+        title: 'registration request',
+        description: 'sending RegistrationRequest to server',
+        icon: '4'
     },
     {
-        id: 'server-processing',
-        icon: 'bi-server',
-        title: 'Server Processing',
-        description: 'Server processes blinded password without seeing your actual password',
-        dataFlow: 'Server Response ← Server'
+        id: 'server-response',
+        title: 'server response',
+        description: 'receiving RegistrationResponse',
+        icon: '5'
     },
     {
-        id: 'credential-generation',
-        icon: 'bi-key',
-        title: 'Credential Generation',
-        description: 'Creating your secure credential file locally',
-        dataFlow: null
+        id: 'finalize',
+        title: 'finalize registration',
+        description: 'completing OPAQUE protocol',
+        icon: '6'
     },
     {
-        id: 'final-registration',
-        icon: 'bi-shield-check',
-        title: 'Complete Registration',
-        description: 'Sending encrypted credential to server for storage',
-        dataFlow: 'Encrypted Credential → Server'
+        id: 'totp-setup',
+        title: '2fa setup',
+        description: 'configuring time-based authentication',
+        icon: '7'
+    },
+    {
+        id: 'totp-verify',
+        title: 'verify 2fa',
+        description: 'confirming totp code works',
+        icon: '8'
     },
     {
         id: 'success',
-        icon: 'bi-check-circle-fill',
-        title: 'Registration Complete',
-        description: 'Account created successfully! Your password never left this device.',
+        icon: '✓',
+        title: 'registration complete',
+        description: 'account created with 2fa enabled',
         dataFlow: null
     }
 ];
@@ -346,12 +345,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (finishResult.success) {
                     liveViz.completeStep('final-registration');
                     
-                    // Step 8: Success
-                    liveViz.activateStep('success');
-                    liveViz.updateSecurityStatus('Registration complete! Your password never left this device and remains secure.');
+                    // Step 7: Show TOTP Setup
+                    liveViz.activateStep('totp-setup');
+                    liveViz.updateSecurityStatus('OPAQUE registration complete! Now setting up 2FA...');
                     
-                    showAlert(`Registration successful! Welcome, ${username}! You can now log in with your credentials.`, 'success');
-                    registerForm.reset();
+                    // Hide registration form and show TOTP phase
+                    document.getElementById('register-form').parentElement.style.display = 'none';
+                    document.getElementById('totp-phase').style.display = 'block';
+                    document.getElementById('back-link').style.display = 'none';
+                    
+                    // Generate TOTP secret (you'll implement this)
+                    generateTotpSecret();
+                    
+                    showAlert('OPAQUE registration successful! Please set up 2FA to complete registration.', 'success');
                 } else {
                     throw new Error('Registration failed - please try again');
                 }
@@ -363,6 +369,92 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Re-enable form
                 submitButton.disabled = false;
                 submitButton.textContent = originalText;
+            }
+        });
+    }
+    
+    // TOTP setup functions
+    function generateTotpSecret() {
+        // Generate a random TOTP secret (you'll implement proper generation)
+        const secret = 'JBSWY3DPEHPK3PXP'; // placeholder - replace with actual generation
+        document.getElementById('totp-secret').textContent = secret;
+        
+        // Generate QR code (you'll implement this)
+        generateQrCode(secret);
+    }
+    
+    function generateQrCode(secret) {
+        // Placeholder for QR code generation
+        const qrContainer = document.getElementById('qr-code');
+        qrContainer.innerHTML = `
+            <div class="text-center p-4" style="background: rgba(255,255,255,0.1); border-radius: 8px;">
+                <i class="bi bi-qr-code" style="font-size: 120px; color: #667eea;"></i>
+                <p class="text-secondary mt-2">QR Code will be generated here</p>
+            </div>
+        `;
+    }
+    
+    // TOTP verification form handler
+    const totpForm = document.getElementById('totp-verify-form');
+    if (totpForm) {
+        totpForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            clearAlerts();
+            
+            const formData = new FormData(totpForm);
+            const totpCode = formData.get('totp_code');
+            
+            // Validate TOTP code
+            if (!totpCode || totpCode.length !== 6) {
+                showAlert('Please enter a valid 6-digit code!', 'error');
+                return;
+            }
+            
+            // Disable form during verification
+            const submitButton = totpForm.querySelector('button[type="submit"]');
+            const originalText = submitButton.innerHTML;
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>verifying...';
+            
+            try {
+                liveViz.activateStep('totp-verify');
+                liveViz.updateSecurityStatus('Verifying 2FA code...');
+                
+                // Simulate TOTP verification (you'll implement actual verification)
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Step 8: Complete registration
+                liveViz.activateStep('success');
+                liveViz.updateSecurityStatus('Registration complete! Account secured with 2FA.');
+                
+                showAlert('Registration complete! You can now log in with your credentials and 2FA.', 'success');
+                
+                // Redirect to login after delay
+                setTimeout(() => {
+                    window.location.href = '/api/login';
+                }, 2000);
+                
+            } catch (error) {
+                console.error('TOTP verification error:', error);
+                showAlert(`2FA verification failed: ${error.message || 'Invalid code'}`, 'error');
+            } finally {
+                // Re-enable form
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
+            }
+        });
+    }
+    
+    // Format TOTP input
+    const totpInput = document.getElementById('totp-code');
+    if (totpInput) {
+        totpInput.addEventListener('input', () => {
+            // Only allow numbers
+            totpInput.value = totpInput.value.replace(/[^0-9]/g, '');
+            
+            // Limit to 6 digits
+            if (totpInput.value.length > 6) {
+                totpInput.value = totpInput.value.slice(0, 6);
             }
         });
     }
