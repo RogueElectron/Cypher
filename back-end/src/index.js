@@ -1,14 +1,9 @@
-/**
- * Index page functionality with session management
- */
-
 import { sessionManager } from './session-manager.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     const heroSection = document.querySelector('.hero-section');
     const container = heroSection.querySelector('.container');
     
-    // Load session and check if user is authenticated
     const hasSession = sessionManager.loadTokens();
     
     if (hasSession) {
@@ -16,18 +11,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             const currentUser = await sessionManager.getCurrentUser();
             
             if (currentUser) {
-                // User is authenticated - show welcome message
                 showAuthenticatedView(currentUser.username, container);
             } else {
-                // Token invalid - show default view
                 showUnauthenticatedView(container);
             }
         } catch (error) {
-            console.error('Session validation error:', error);
             showUnauthenticatedView(container);
         }
     } else {
-        // No session - show default view
         showUnauthenticatedView(container);
     }
 });
@@ -51,7 +42,6 @@ function showAuthenticatedView(username, container) {
             </div>
         </div>
         
-        <!-- Session info -->
         <div class="row mt-5 pt-5">
             <div class="col-lg-8 mx-auto">
                 <div class="glass-card p-4">
@@ -60,22 +50,22 @@ function showAuthenticatedView(username, container) {
                             <div class="mb-3">
                                 <i class="bi bi-shield-check text-success" style="font-size: 2rem;"></i>
                             </div>
-                            <h6 class="text-light">Authenticated</h6>
-                            <p class="text-secondary small mb-0">OPAQUE protocol</p>
+                            <h6 class="text-light">authenticated</h6>
+                            <p class="text-secondary small mb-0">opaque protocol</p>
                         </div>
                         <div class="col-md-4">
                             <div class="mb-3">
                                 <i class="bi bi-key text-primary" style="font-size: 2rem;"></i>
                             </div>
-                            <h6 class="text-light">Session Active</h6>
-                            <p class="text-secondary small mb-0">PASETO tokens</p>
+                            <h6 class="text-light">session active</h6>
+                            <p class="text-secondary small mb-0">paseto tokens</p>
                         </div>
                         <div class="col-md-4">
                             <div class="mb-3">
                                 <i class="bi bi-clock text-info" style="font-size: 2rem;"></i>
                             </div>
-                            <h6 class="text-light">Auto-refresh</h6>
-                            <p class="text-secondary small mb-0">Seamless experience</p>
+                            <h6 class="text-light">auto refresh</h6>
+                            <p class="text-secondary small mb-0">seamless experience</p>
                         </div>
                     </div>
                 </div>
@@ -83,7 +73,6 @@ function showAuthenticatedView(username, container) {
         </div>
     `;
     
-    // Add logout functionality
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', handleLogout);
@@ -91,7 +80,6 @@ function showAuthenticatedView(username, container) {
 }
 
 function showUnauthenticatedView(container) {
-    // Keep the original content for unauthenticated users
     container.innerHTML = `
         <div class="row">
             <div class="col-lg-8 mx-auto">
@@ -106,12 +94,11 @@ function showUnauthenticatedView(container) {
             </div>
         </div>
         
-        <!-- simple info section -->
         <div class="row mt-5 pt-5">
             <div class="col-lg-8 mx-auto">
                 <div class="glass-card p-4 text-center">
                     <p class="text-secondary mb-0">
-                        built with the OPAQUE protocol, your password never leaves your device
+                        built with the opaque protocol your password never leaves your device
                     </p>
                 </div>
             </div>
@@ -130,21 +117,16 @@ async function handleLogout() {
         try {
             await sessionManager.logout();
             
-            // Show success message briefly
-            logoutBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Logged out';
+            logoutBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>logged out';
             
-            // Refresh page after short delay
             setTimeout(() => {
                 window.location.reload();
             }, 1000);
             
         } catch (error) {
-            console.error('Logout error:', error);
-            
-            // Still clear the session even if server call failed
             sessionManager.clearSession();
             
-            logoutBtn.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>Logged out';
+            logoutBtn.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>logged out';
             setTimeout(() => {
                 window.location.reload();
             }, 1000);
@@ -152,7 +134,6 @@ async function handleLogout() {
     }
 }
 
-// Utility function to escape HTML
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;

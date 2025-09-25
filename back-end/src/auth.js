@@ -8,7 +8,6 @@ import {
 
 const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);
 
-// Utility function to get cookie value
 function getCookieValue(name) {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
@@ -16,7 +15,7 @@ function getCookieValue(name) {
     return null;
 }
 
-// Live visualization steps for authentication
+// opaque auth flow visualization steps
 const authenticationSteps = [
     {
         id: 'input',
@@ -153,10 +152,7 @@ class AuthLiveVisualization {
     }
 }
 
-// Initialize live visualization
 let authLiveViz;
-
-// Sidebar toggle functionality
 function initSidebarToggle() {
     const hideBtn = document.getElementById('hide-sidebar');
     const showBtn = document.getElementById('show-sidebar');
@@ -316,10 +312,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     return;
                 }
                 
-                // Store PassAuth token as cookie (3 minute expiry)
+                // store passauth token for 3 minutes
                 const passAuthCookie = `pass_auth_token=${tokenResult.token}; Max-Age=180; SameSite=Lax; Path=/`;
                 document.cookie = passAuthCookie;
-                console.log('PassAuth token stored as cookie');
                 
                 const result = await fetch('http://localhost:3000/login/finish', {
                     method: 'POST',
@@ -341,7 +336,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const loginResult = await result.json();
                 
                 if (loginResult.success) {
-                    console.log('Login successful - PassAuth token already stored in cookie');
 
                     authLiveViz.completeStep('send-ke3');
                     
@@ -399,7 +393,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
             
-            // disable form during verification
             const submitButton = totpForm.querySelector('button[type="submit"]');
             const originalText = submitButton.innerHTML;
             submitButton.disabled = true;
@@ -413,7 +406,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     throw new Error('Username not found');
                 }
                 
-                // Get PassAuth token from cookie
+                // get passauth token from cookie before it expires
                 const passAuthFromCookie = getCookieValue('pass_auth_token');
                 if (!passAuthFromCookie) {
                     throw new Error('Password authentication token not found or expired');
@@ -434,8 +427,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 const verifyResult = await verifyResponse.json();
                 
-                console.log('Login TOTP verification result:', verifyResult);
-                
                 if (!verifyResponse.ok || !verifyResult.success) {
                     const errorMessage = verifyResult.error || 'Invalid TOTP code';
                     showAlert(`Login failed: ${errorMessage}`, 'error');
@@ -443,28 +434,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                     return;
                 }
 
-                // Success case
                 authLiveViz.completeStep('totp-verify');
                 authLiveViz.updateSecurityStatus('Authentication complete! Session tokens created.');
                 
-                // Store session tokens
-                console.log('2FA verification result:', verifyResult);
+                // store session tokens and clear temp passauth token
                 if (verifyResult.access_token && verifyResult.refresh_token) {
-                    console.log('Storing session tokens...');
-                    // Import session manager dynamically
                     const { sessionManager } = await import('./session-manager.js');
                     sessionManager.setTokens(
                         verifyResult.access_token,
                         verifyResult.refresh_token,
                         verifyResult.expires_in || 900
                     );
-                    console.log('Session tokens stored');
                     
-                    // Clear PassAuth token as it's no longer needed
+                    // clear passauth token now that we have session tokens
                     document.cookie = 'pass_auth_token=; Max-Age=0; Path=/; SameSite=Lax';
-                    console.log('PassAuth token cleared');
-                } else {
-                    console.warn('No session tokens received from server');
                 }
                 
                 showAlert('Login successful! Welcome to Cypher.', 'success');
@@ -473,21 +456,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     window.location.href = '/';
                 }, 1500);
         } finally {
-            // re-enable form
             submitButton.disabled = false;
             submitButton.innerHTML = originalText;
         }
     });
 }
-
-// format TOTP input
+// restrict totp input to 6 digits only
 const totpInput = document.getElementById('totp-code');
 if (totpInput) {
     totpInput.addEventListener('input', () => {
-        // only allow numbers
         totpInput.value = totpInput.value.replace(/[^0-9]/g, '');
-        
-        // limit to 6 digits
         if (totpInput.value.length > 6) {
             totpInput.value = totpInput.value.slice(0, 6);
         }
