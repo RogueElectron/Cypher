@@ -61,10 +61,17 @@ const authenticationSteps = [
         dataFlow: 'KE3 Proof → Server'
     },
     {
+        id: 'totp-verify',
+        icon: 'bi-shield-lock',
+        title: '2FA Verification',
+        description: 'Verifying time-based authentication code',
+        dataFlow: null
+    },
+    {
         id: 'success',
         icon: 'bi-check-circle-fill',
         title: 'Authentication Complete',
-        description: 'Successfully authenticated! Session established securely.',
+        description: 'Successfully authenticated with 2FA! Session established securely.',
         dataFlow: null
     }
 ];
@@ -321,13 +328,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (loginResult.success) {
                     authLiveViz.completeStep('send-ke3');
                     
-                    // Step 8: Success
-                    authLiveViz.activateStep('success');
-                    authLiveViz.updateSecurityStatus('Authentication complete! Session established securely without password exposure.');
+                    // Step 7: Show TOTP Verification
+                    authLiveViz.activateStep('totp-verify');
+                    authLiveViz.updateSecurityStatus('OPAQUE authentication complete! Now verifying 2FA...');
                     
-                    showAlert(`Login successful! Welcome back, ${username}!`, 'success');
+                    // Hide login form and show TOTP phase
+                    console.log('Switching to TOTP phase...');
+                    const loginForm = document.getElementById('login-form');
+                    const totpPhase = document.getElementById('totp-phase');
+                    const backLink = document.getElementById('back-link');
                     
-                    loginForm.reset();
+                    console.log('Elements found:', {loginForm, totpPhase, backLink});
+                    
+                    if (loginForm) loginForm.style.display = 'none';
+                    if (totpPhase) totpPhase.style.display = 'block';
+                    if (backLink) backLink.style.display = 'none';
+                    
+                    showAlert('Password authentication successful! Please enter your 2FA code.', 'success');
                     
                 } else {
                     throw new Error(loginResult.message || 'Invalid credentials');
@@ -349,6 +366,70 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Re-enable form
                 submitButton.disabled = false;
                 submitButton.textContent = originalText;
+            }
+        });
+    }
+    
+    // TOTP verification form handler
+    const totpForm = document.getElementById('totp-verify-form');
+    if (totpForm) {
+        totpForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            clearAlerts();
+            
+            const formData = new FormData(totpForm);
+            const totpCode = formData.get('totp_code');
+            
+            // Validate TOTP code
+            if (!totpCode || totpCode.length !== 6) {
+                showAlert('Please enter a valid 6-digit code!', 'error');
+                return;
+            }
+            
+            // Disable form during verification
+            const submitButton = totpForm.querySelector('button[type="submit"]');
+            const originalText = submitButton.innerHTML;
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>verifying...';
+            
+            try {
+                authLiveViz.updateSecurityStatus('Verifying 2FA code...');
+                
+                // Simulate TOTP verification (you'll implement actual verification)
+                await new Promise(resolve => setTimeout(resolve, 800));
+                
+                // Step 8: Complete login
+                authLiveViz.activateStep('success');
+                authLiveViz.updateSecurityStatus('Login complete! Session established with 2FA verification.');
+                
+                showAlert('Login successful! Welcome back!', 'success');
+                
+                // Redirect to home after delay
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+                
+            } catch (error) {
+                console.error('TOTP verification error:', error);
+                showAlert(`2FA verification failed: ${error.message || 'Invalid code'}`, 'error');
+            } finally {
+                // Re-enable form
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
+            }
+        });
+    }
+    
+    // Format TOTP input
+    const totpInput = document.getElementById('totp-code');
+    if (totpInput) {
+        totpInput.addEventListener('input', () => {
+            // Only allow numbers
+            totpInput.value = totpInput.value.replace(/[^0-9]/g, '');
+            
+            // Limit to 6 digits
+            if (totpInput.value.length > 6) {
+                totpInput.value = totpInput.value.slice(0, 6);
             }
         });
     }

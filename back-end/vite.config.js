@@ -12,7 +12,8 @@ export default defineConfig({
       input: {
         register: 'src/register.js',
         auth: 'src/auth.js',
-        totp: 'src/totp.js'
+        totp: 'src/totp.js',
+        totp_ui: 'src/totp_ui.js'
       },
       output: {
         entryFileNames: '[name].js',

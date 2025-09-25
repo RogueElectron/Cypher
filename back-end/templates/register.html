@@ -2,7 +2,7 @@
 
 {% block links %}
 <script type="module" src="{{ url_for('static', filename='dist/register.js') }}"></script>
-<script type="module" src="{{ url_for('static'), filename='dist/totp.js'} }"></script>
+<script type="module" src="{{ url_for('static', filename='dist/totp.js') }}"></script>
 {% endblock %}
 
 {% block title %}Register{% endblock %}
@@ -41,12 +41,49 @@
                             <button type="submit" class="btn btn-primary btn-lg">Create Account</button>
                         </div>
                     </form>
-                    
-                    <div class="text-center">
-                        <p class="text-secondary mb-0">Already have an account? 
-                            <a href="{{ url_for('serve_login') }}" class="text-decoration-none" style="color: #667eea;">Sign in here</a>
-                        </p>
+                </div>
+                
+                <!-- TOTP Setup Phase (hidden initially) -->
+                <div id="totp-phase" style="display: none;">
+                    <div class="text-center mb-4">
+                        <h2 class="text-white mb-2">Setup Two-Factor Authentication</h2>
+                        <p class="text-secondary">scan the qr code with your authenticator app</p>
                     </div>
+                    
+                    <div class="mb-4">
+                        <div class="text-center p-4 glass-card">
+                            <div id="qr-code" class="mb-3">
+                                <!-- qr code will be generated here -->
+                                <div class="placeholder-glow">
+                                    <div class="placeholder" style="width: 200px; height: 200px; margin: 0 auto;"></div>
+                                </div>
+                            </div>
+                            <small class="text-secondary">or enter this secret manually:</small>
+                            <div class="mt-2">
+                                <code id="totp-secret" class="text-primary">loading...</code>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <form id="totp-verify-form" action="javascript:void(0);" method="post">
+                        <div class="mb-4">
+                            <label for="totp-code" class="form-label">enter verification code</label>
+                            <input type="text" class="form-control text-center" id="totp-code" name="totp_code" 
+                                   placeholder="000000" maxlength="6" pattern="[0-9]{6}" required>
+                            <small class="text-secondary">enter the 6-digit code from your app</small>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-shield-check me-2"></i>complete registration
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="text-center" id="back-link">
+                    <p class="text-secondary mb-0">Already have an account? 
+                        <a href="{{ url_for('serve_login') }}" class="text-decoration-none" style="color: #667eea;">Sign in here</a>
+                    </p>
+                </div>
             </div>
         </div>
         
@@ -202,7 +239,22 @@
 
 .security-status {
     background: rgba(75, 172, 254, 0.1);
-    border: 1px solid rgba(75, 172, 254, 0.3);
+    border: 1px solid rgba(75, 172, 254, 0.2);
+}
+
+input[type="text"]#totp-code {
+    font-family: 'Courier New', monospace;
+    font-size: 18px;
+    letter-spacing: 4px;
+    font-weight: 600;
+}
+
+code {
+    background: rgba(102, 126, 234, 0.1);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
 }
 
 .data-flow {
