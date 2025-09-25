@@ -168,8 +168,11 @@ function initSidebarToggle() {
 }
 
 // Utility functions for UI feedback
-function showAlert(message, type = 'success') {
-    const alertContainer = document.getElementById('alert-container');
+function showAlert(message, type = 'success', containerId = 'alert-container') {
+    const alertContainer = document.getElementById(containerId);
+    if (!alertContainer) {
+        return;
+    }
     const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
     const iconClass = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
     
@@ -194,8 +197,14 @@ function showAlert(message, type = 'success') {
 }
 
 function clearAlerts() {
-    const alertContainer = document.getElementById('alert-container');
-    alertContainer.innerHTML = '';
+    const defaultContainer = document.getElementById('alert-container');
+    if (defaultContainer) {
+        defaultContainer.innerHTML = '';
+    }
+    const totpContainer = document.getElementById('totp-alert-container');
+    if (totpContainer) {
+        totpContainer.innerHTML = '';
+    }
 }
 
 function validatePasswords(password, confirmPassword) {
@@ -399,17 +408,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     function showTotpInfo(secret) {
-        const qrContainer = document.getElementById('qr-code');
-        const infoDiv = document.createElement('div');
-        infoDiv.className = 'mt-3 p-2 rounded';
-        infoDiv.style.background = 'rgba(75, 172, 254, 0.1)';
-        infoDiv.style.border = '1px solid rgba(75, 172, 254, 0.2)';
-        infoDiv.innerHTML = `
-            <small class="text-info"><i class="bi bi-info-circle me-1"></i>TOTP Secret:</small><br>
-            <span class="text-white">Use your authenticator app for verification codes</span><br>
-            <small class="text-secondary">Secret: <code>${secret}</code></small>
-        `;
-        qrContainer.appendChild(infoDiv);
+        // Blue info box removed for streamlined UI
     }
     
     
@@ -439,45 +438,44 @@ document.addEventListener('DOMContentLoaded', async () => {
                 liveViz.activateStep('totp-verify');
                 liveViz.updateSecurityStatus('Verifying 2FA code...');
                 
-                // Server-side TOTP verification
                 const username = window.currentUsername;
                 if (!username) {
-                    throw new Error('Username not found');
+                    showAlert('Username not found. Please restart registration.', 'error', 'totp-alert-container');
+                    liveViz.updateSecurityStatus('TOTP verification failed. Please restart registration.', 'error');
+                    return;
                 }
-                
+
                 const verifyResponse = await fetch('http://localhost:3000/totp/verify-setup', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        username: username,
+                        username,
                         token: totpCode
                     })
                 });
-                
+
                 const verifyResult = await verifyResponse.json();
-                
-                console.log('TOTP verification result:', verifyResult);
-                
+
                 if (!verifyResponse.ok || !verifyResult.success) {
-                    throw new Error(verifyResult.error || 'Invalid TOTP code');
+                    const errorMessage = verifyResult.error || 'Invalid TOTP code';
+                    showAlert(`2FA verification failed: ${errorMessage}`, 'error', 'totp-alert-container');
+                    liveViz.updateSecurityStatus('TOTP verification failed. Please try again.', 'error');
+                    return;
                 }
-                
-                // Step 8: Complete registration
+
                 liveViz.activateStep('success');
                 liveViz.updateSecurityStatus('Registration complete! Account secured with 2FA.');
-                
-                showAlert('Registration complete! You can now log in with your credentials and 2FA.', 'success');
-                
+                showAlert('Registration complete! You can now log in with your credentials and 2FA.', 'success', 'totp-alert-container');
 
                 setTimeout(() => {
                     window.location.href = '/api/login';
                 }, 2000);
-                
             } catch (error) {
                 console.error('TOTP verification error:', error);
-                showAlert(`2FA verification failed: ${error.message || 'Invalid code'}`, 'error');
+                showAlert(`2FA verification failed: ${error.message || 'Invalid code'}`, 'error', 'totp-alert-container');
+                liveViz.updateSecurityStatus('TOTP verification failed. Please try again.', 'error');
             } finally {
                 // Re-enable form
                 submitButton.disabled = false;

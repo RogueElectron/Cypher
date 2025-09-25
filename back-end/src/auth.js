@@ -8,7 +8,14 @@ import {
 
 const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);
 
-// Live visualization steps for authentication
+function getCookieValue(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+}
+
+// opaque auth flow visualization steps
 const authenticationSteps = [
     {
         id: 'input',
@@ -145,10 +152,7 @@ class AuthLiveVisualization {
     }
 }
 
-// Initialize live visualization
 let authLiveViz;
-
-// Sidebar toggle functionality
 function initSidebarToggle() {
     const hideBtn = document.getElementById('hide-sidebar');
     const showBtn = document.getElementById('show-sidebar');
@@ -252,6 +256,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     headers: {
                         'Content-Type': 'application/json'
                     },
+                    credentials: 'include',
                     body: JSON.stringify({
                         username: username,
                         serke1: ser_ke1
@@ -288,11 +293,35 @@ document.addEventListener('DOMContentLoaded', async () => {
                 authLiveViz.activateStep('send-ke3');
                 authLiveViz.updateSecurityStatus('Sending authentication proof to complete mutual authentication');
                 
+                const createResponse = await fetch('/api/create-token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        username: username
+                    })
+                });
+                
+                const tokenResult = await createResponse.json();
+                
+                if (!createResponse.ok || !tokenResult.token) {
+                    showAlert('Failed to create authentication token', 'error');
+                    authLiveViz.updateSecurityStatus('Token creation failed', 'error');
+                    return;
+                }
+                
+                // store passauth token for 3 minutes
+                const passAuthCookie = `pass_auth_token=${tokenResult.token}; Max-Age=180; SameSite=Lax; Path=/`;
+                document.cookie = passAuthCookie;
+                
                 const result = await fetch('http://localhost:3000/login/finish', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
+                    credentials: 'include',
                     body: JSON.stringify({
                         username: username,
                         serke3: ser_ke3
@@ -307,6 +336,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const loginResult = await result.json();
                 
                 if (loginResult.success) {
+
                     authLiveViz.completeStep('send-ke3');
                     
                     authLiveViz.activateStep('totp-verify');
@@ -363,7 +393,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
             
-            // disable form during verification
             const submitButton = totpForm.querySelector('button[type="submit"]');
             const originalText = submitButton.innerHTML;
             submitButton.disabled = true;
@@ -377,57 +406,69 @@ document.addEventListener('DOMContentLoaded', async () => {
                     throw new Error('Username not found');
                 }
                 
-                // server-side TOTP verification
+                // get passauth token from cookie before it expires
+                const passAuthFromCookie = getCookieValue('pass_auth_token');
+                if (!passAuthFromCookie) {
+                    throw new Error('Password authentication token not found or expired');
+                }
+
                 const verifyResponse = await fetch('http://localhost:3000/totp/verify-login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
+                    credentials: 'include',
                     body: JSON.stringify({
                         username: username,
-                        token: totpCode
+                        token: totpCode,
+                        passAuthToken: passAuthFromCookie
                     })
                 });
                 
                 const verifyResult = await verifyResponse.json();
                 
-                console.log('Login TOTP verification result:', verifyResult);
-                
                 if (!verifyResponse.ok || !verifyResult.success) {
-                    throw new Error(verifyResult.error || 'Invalid TOTP code');
+                    const errorMessage = verifyResult.error || 'Invalid TOTP code';
+                    showAlert(`Login failed: ${errorMessage}`, 'error');
+                    authLiveViz.updateSecurityStatus('TOTP verification failed. Please try again.', 'error');
+                    return;
+                }
+
+                authLiveViz.completeStep('totp-verify');
+                authLiveViz.updateSecurityStatus('Authentication complete! Session tokens created.');
+                
+                // store session tokens and clear temp passauth token
+                if (verifyResult.access_token && verifyResult.refresh_token) {
+                    const { sessionManager } = await import('./session-manager.js');
+                    sessionManager.setTokens(
+                        verifyResult.access_token,
+                        verifyResult.refresh_token,
+                        verifyResult.expires_in || 900
+                    );
+                    
+                    // clear passauth token now that we have session tokens
+                    document.cookie = 'pass_auth_token=; Max-Age=0; Path=/; SameSite=Lax';
                 }
                 
-                authLiveViz.activateStep('success');
-                authLiveViz.updateSecurityStatus('Login complete! Session established with 2FA verification.');
-                
-                showAlert('Login successful! Welcome back!', 'success');
+                showAlert('Login successful! Welcome to Cypher.', 'success');
                 
                 setTimeout(() => {
                     window.location.href = '/';
-                }, 2000);
-                
-            } catch (error) {
-                console.error('TOTP verification error:', error);
-                showAlert(`2FA verification failed: ${error.message || 'Invalid code'}`, 'error');
-            } finally {
-                // re-enable form
-                submitButton.disabled = false;
-                submitButton.innerHTML = originalText;
-            }
-        });
-    }
-    
-    // format TOTP input
-    const totpInput = document.getElementById('totp-code');
-    if (totpInput) {
-        totpInput.addEventListener('input', () => {
-            // only allow numbers
-            totpInput.value = totpInput.value.replace(/[^0-9]/g, '');
-            
-            // limit to 6 digits
-            if (totpInput.value.length > 6) {
-                totpInput.value = totpInput.value.slice(0, 6);
-            }
-        });
-    }
+                }, 1500);
+        } finally {
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalText;
+        }
+    });
+}
+// restrict totp input to 6 digits only
+const totpInput = document.getElementById('totp-code');
+if (totpInput) {
+    totpInput.addEventListener('input', () => {
+        totpInput.value = totpInput.value.replace(/[^0-9]/g, '');
+        if (totpInput.value.length > 6) {
+            totpInput.value = totpInput.value.slice(0, 6);
+        }
+    });
+}
 });

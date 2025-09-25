@@ -11,7 +11,9 @@ export default defineConfig({
     rollupOptions: {
       input: {
         register: 'src/register.js',
-        auth: 'src/auth.js'
+        auth: 'src/auth.js',
+        index: 'src/index.js',
+        'session-manager': 'src/session-manager.js'
       },
       output: {
         entryFileNames: '[name].js',

@@ -1,6 +1,7 @@
 {
   "name": "node-internal-api",
   "version": "1.0.0",
+  "type": "module",
   "description": "internal api",
   "main": "app.js",
   "scripts": {
@@ -9,11 +10,15 @@
   },
   "dependencies": {
     "@cloudflare/opaque-ts": "^0.7.5",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "express": "^4.18.2",
+    "helmet": "^8.1.0",
+    "node-fetch": "^3.3.2",
     "otplib": "^12.0.1",
-    "qrcode": "^1.5.3"
+    "qrcode": "^1.5.3",
+    "xss-clean": "^0.1.4"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
