@@ -13,57 +13,65 @@ const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);
 const registrationSteps = [
     {
         id: 'input',
-        title: 'password input',
-        description: 'entering credentials locally',
-        icon: '1'
+        title: 'Password Input',
+        description: 'Your password is entered locally and never transmitted',
+        icon: 'bi-keyboard',
+        dataFlow: null
     },
     {
         id: 'validation',
-        title: 'input validation',
-        description: 'checking password strength',
-        icon: '2'
+        title: 'Input Validation',
+        description: 'Validating password strength and confirmation',
+        icon: 'bi-check-circle',
+        dataFlow: null
     },
     {
         id: 'generate-keys',
-        title: 'generate keys',
-        description: 'creating cryptographic keypair',
-        icon: '3'
+        title: 'Generate Keys',
+        description: 'Creating cryptographic keypair for secure registration',
+        icon: 'bi-cpu',
+        dataFlow: null
     },
     {
         id: 'registration-request',
-        title: 'registration request',
-        description: 'sending RegistrationRequest to server',
-        icon: '4'
+        title: 'Registration Request',
+        description: 'Sending encrypted registration data to server',
+        icon: 'bi-arrow-up-circle',
+        dataFlow: 'Registration Request → Server'
     },
     {
         id: 'server-response',
-        title: 'server response',
-        description: 'receiving RegistrationResponse',
-        icon: '5'
+        title: 'Server Response',
+        description: 'Server processing registration with OPAQUE protocol',
+        icon: 'bi-server',
+        dataFlow: 'Registration Response ← Server'
     },
     {
         id: 'finalize',
-        title: 'finalize registration',
-        description: 'completing OPAQUE protocol',
-        icon: '6'
+        title: 'Finalize Registration',
+        description: 'Completing OPAQUE protocol and storing credentials',
+        icon: 'bi-shield-check',
+        dataFlow: null
     },
     {
         id: 'totp-setup',
-        title: '2fa setup',
-        description: 'configuring time-based authentication',
-        icon: '7'
+        title: '2FA Setup',
+        description: 'Configuring time-based authentication',
+        icon: 'bi-shield-lock',
+        dataFlow: null
     },
     {
         id: 'totp-verify',
-        title: 'verify 2fa',
-        description: 'confirming totp code works',
-        icon: '8'
+        title: 'Verify 2FA',
+        description: 'Confirming TOTP code functionality',
+        icon: 'bi-check-circle-fill',
+        dataFlow: null
     },
     {
         id: 'success',
-        icon: '✓',
-        title: 'registration complete',
-        description: 'account created with 2fa enabled',
+        title: 'Registration Complete',
+        description: 'Account created successfully with 2FA enabled',
+        icon: 'bi-check-circle-fill',
         dataFlow: null
     }
 ];
