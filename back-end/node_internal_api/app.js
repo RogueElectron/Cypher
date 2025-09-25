@@ -12,10 +12,12 @@ import {
 } from './node_modules/@cloudflare/opaque-ts/lib/src/index.js';  
 import express from 'express'
 import cors from 'cors'
+import { authenticator } from 'otplib'
+import QRCode from 'qrcode'
 
-function createKVStorage() {  // the KVStorage is kept as a test utility and not exported at 
-    const storage = new Map(); // transpilation, i've made a wrapper around map() that mirrors it's behaviour
-    let defaultKey = null;    // this is only for the prototype, in the final version there will be a real database
+function createKVStorage() {  // yo this KVStorage thing is just for testing, not exported 
+    const storage = new Map(); // made a wrapper around map() that does what we need
+    let defaultKey = null;    // prototype only - gonna use real database later 💯
       
     return {  
         store(key, value) {  
@@ -51,7 +53,7 @@ function createKVStorage() {  // the KVStorage is kept as a test utility and not
 
 const app = express()
 
-// Enable CORS for all routes
+// CORS setup - letting our frontend talk to us 
 app.use(cors({
     origin: ['http://127.0.0.1:5000', 'http://localhost:5000'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -60,13 +62,17 @@ app.use(cors({
 
 app.use(express.json());
 
+// OPAQUE setup - this crypto stuff is wild but it works 🔥
 const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);  
 const oprfSeed = cfg.prng.random(cfg.hash.Nh);  
 const serverKeypairSeed = cfg.prng.random(cfg.constants.Nseed);
 const serverAkeKeypair = await cfg.ake.deriveAuthKeyPair(serverKeypairSeed);
 
-// Initialize database
+// our ghetto database for now lmao
 const database = createKVStorage();
+
+// TOTP secrets - this is where the magic happens ✨
+const totpSecrets = new Map();
 
 const akeKeypairExport = {  
     private_key: Array.from(serverAkeKeypair.private_key),  
@@ -226,6 +232,111 @@ app.post('/login/finish', async (req, res) => {
         }
     } catch (error) {
         console.error('Login finish error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// TOTP endpoints - the real deal server-side validation 🚀
+
+// setup TOTP for new users - generates secret and QR code
+app.post('/totp/setup', async (req, res) => {
+    try {
+        const { username } = req.body;
+        
+        if (!username) {
+            return res.status(400).json({ error: 'Username is required' });
+        }
+        
+        // generate that TOTP secret - this is the sauce 🔥
+        const secret = authenticator.generateSecret();
+        
+        // store it for this user - ez pz
+        totpSecrets.set(username, secret);
+        
+        // make the URI that authenticator apps understand
+        const service = 'Cypher';
+        const otpauthUrl = authenticator.keyuri(username, service, secret);
+        
+        // turn it into a QR code - no more placeholder BS
+        const qrCodeDataURL = await QRCode.toDataURL(otpauthUrl);
+        
+        console.log(`TOTP setup for user ${username} - WE'RE COOKING:`, { secret, otpauthUrl });
+        
+        res.status(200).json({
+            success: true,
+            secret: secret,
+            qrCode: qrCodeDataURL,
+            otpauthUrl: otpauthUrl
+        });
+        
+    } catch (error) {
+        console.error('TOTP setup error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// verify TOTP during registration - make sure they got it right
+app.post('/totp/verify-setup', async (req, res) => {
+    try {
+        const { username, token } = req.body;
+        
+        if (!username || !token) {
+            return res.status(400).json({ error: 'Username and token are required' });
+        }
+        
+        const secret = totpSecrets.get(username);
+        if (!secret) {
+            return res.status(400).json({ error: 'No TOTP secret found for user' });
+        }
+        
+        // check if their code is legit
+        const isValid = authenticator.verify({ token, secret });
+        
+        console.log(`TOTP verification for ${username} - ${isValid ? 'VALID ✅' : 'NOPE ❌'}:`, { token });
+        
+        if (isValid) {
+            res.status(200).json({ success: true, message: 'TOTP verification successful' });
+        } else {
+            res.status(400).json({ success: false, error: 'Invalid TOTP code' });
+        }
+        
+    } catch (error) {
+        console.error('TOTP verification error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// verify TOTP during login - the final boss check
+app.post('/totp/verify-login', async (req, res) => {
+    try {
+        const { username, token } = req.body;
+        
+        if (!username || !token) {
+            return res.status(400).json({ error: 'Username and token are required' });
+        }
+        
+        const secret = totpSecrets.get(username);
+        if (!secret) {
+            return res.status(400).json({ error: 'No TOTP secret found for user' });
+        }
+        
+        // check the code with some wiggle room for clock drift
+        const isValid = authenticator.verify({ 
+            token, 
+            secret,
+            window: 1 // ±30 seconds tolerance cause clocks be weird sometimes
+        });
+        
+        console.log(`TOTP login check for ${username} - ${isValid ? 'LET EM IN 🚪' : 'NAH FAM ❌'}:`, { token });
+        
+        if (isValid) {
+            res.status(200).json({ success: true, message: 'TOTP login verification successful' });
+        } else {
+            res.status(400).json({ success: false, error: 'Invalid TOTP code' });
+        }
+        
+    } catch (error) {
+        console.error('TOTP login verification error:', error);
         res.status(500).json({ error: error.message });
     }
 });
