@@ -370,21 +370,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
     
-    // TOTP verification function with time tolerance
-    function verifyWithTolerance(userSecret, userProvidedCode, windowTolerance = 1) {
-        var totp = new jsOTP.totp(30, 6);
-        var currentTime = new Date().getTime();
-        
-        // Check current window and adjacent windows
-        for (var i = -windowTolerance; i <= windowTolerance; i++) {
-            var timeOffset = currentTime + (i * 30 * 1000);
-            var code = totp.getOtp(userSecret, timeOffset);
-            if (code === userProvidedCode) {
-                return true;
-            }
-        }
-        return false;
-    }
+    // server-side TOTP verification only - no more client-side crypto 💯
     
     // TOTP verification form handler
     const totpForm = document.getElementById('totp-verify-form');
@@ -417,7 +403,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     throw new Error('Username not found');
                 }
                 
-                // server-side TOTP verification - this is the real deal now 💯
+                // server-side TOTP verification
                 const verifyResponse = await fetch('http://localhost:3000/totp/verify-login', {
                     method: 'POST',
                     headers: {

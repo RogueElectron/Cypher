@@ -236,9 +236,8 @@ app.post('/login/finish', async (req, res) => {
     }
 });
 
-// TOTP endpoints - the real deal server-side validation 🚀
+// TOTP endpoints
 
-// setup TOTP for new users - generates secret and QR code
 app.post('/totp/setup', async (req, res) => {
     try {
         const { username } = req.body;
@@ -275,7 +274,6 @@ app.post('/totp/setup', async (req, res) => {
     }
 });
 
-// verify TOTP during registration - make sure they got it right
 app.post('/totp/verify-setup', async (req, res) => {
     try {
         const { username, token } = req.body;
@@ -306,7 +304,6 @@ app.post('/totp/verify-setup', async (req, res) => {
     }
 });
 
-// verify TOTP during login - the final boss check
 app.post('/totp/verify-login', async (req, res) => {
     try {
         const { username, token } = req.body;
@@ -320,11 +317,11 @@ app.post('/totp/verify-login', async (req, res) => {
             return res.status(400).json({ error: 'No TOTP secret found for user' });
         }
         
-        // check the code with some wiggle room for clock drift
+        // wiggle room for clock drift
         const isValid = authenticator.verify({ 
             token, 
             secret,
-            window: 1 // ±30 seconds tolerance cause clocks be weird sometimes
+            window: 1 // +-30 seconds tolerance cause clocks be weird sometimes
         });
         
         console.log(`TOTP login check for ${username} - ${isValid ? 'LET EM IN 🚪' : 'NAH FAM ❌'}:`, { token });
