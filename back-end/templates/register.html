@@ -7,35 +7,260 @@
 {% block title %}Register{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-5"> 
-    <div class="row">              <!-- we still haven't made the OPAQUE logic-->
-        <div class="col-md-6 offset-md-3"> 
-            <div class="card border-secondary">
-                <div class="card-body p-4">
-                    <h3 class="card-title text-center">Register</h3>
-                    <form id="register-form" action="javascript:void(0);" method="post">
-                        <div class="mb-3">
+<div class="container-fluid py-5"> 
+    <div class="row min-vh-100 align-items-center">
+        <!-- Spacer for centering -->
+        <div class="col-lg-2 col-xl-3"></div>
+        
+        <!-- Main Form - Truly Centered -->
+        <div class="col-lg-6 col-xl-4"> 
+            <div class="glass-card p-5 main-form-card mx-auto" style="max-width: 500px;">
+                <div class="text-center mb-4">
+                    <h2 class="text-white mb-2">Create Account</h2>
+                    <p class="text-secondary">Join the future of secure authentication</p>
+                </div>
+                
+                <!-- Alert container for success/error messages -->
+                <div id="alert-container"></div>
+                
+                <form id="register-form" action="javascript:void(0);" method="post">
+                        <div class="mb-4">
                             <label for="username" class="form-label">Username</label>
-                            <input type="text" class="form-control" id="username" name="username" required>
+                            <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username" required>
                         </div>
-                        <div class="mb-3">
+                        <div class="mb-4">
                             <label for="password" class="form-label">Password</label>
-                            <input type="password" class="form-control" id="password" name="password" required>
+                            <input type="password" class="form-control" id="password" name="password" placeholder="Create a secure password" required>
                         </div>
-                        <div class="mb-3">
+                        <div class="mb-4">
                             <label for="confirm_password" class="form-label">Confirm Password</label>
-                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirm your password" required>
                         </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">Register</button>
+                        <div class="d-grid mb-4">
+                            <button type="submit" class="btn btn-primary btn-lg">Create Account</button>
                         </div>
                     </form>
                 </div>
-                <div class="card-footer text-center">
-                    <small>Already have an account? <a href="{{ url_for('serve_login') }}">Login here</a></small>
+                
+                <!-- TOTP Setup Phase (hidden initially) -->
+                <div id="totp-phase" style="display: none;">
+                    <div class="text-center mb-4">
+                        <h2 class="text-white mb-2">Setup Two-Factor Authentication</h2>
+                        <p class="text-secondary">scan the qr code with your authenticator app</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="text-center p-4 glass-card">
+                            <div id="qr-code" class="mb-3">
+                                <!-- qr code will be generated here -->
+                                <div class="placeholder-glow">
+                                    <div class="placeholder" style="width: 200px; height: 200px; margin: 0 auto;"></div>
+                                </div>
+                            </div>
+                            <small class="text-secondary">or enter this secret manually:</small>
+                            <div class="mt-2">
+                                <code id="totp-secret" class="text-primary">loading...</code>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <form id="totp-verify-form" action="javascript:void(0);" method="post">
+                        <div class="mb-4">
+                            <label for="totp-code" class="form-label">enter verification code</label>
+                            <input type="text" class="form-control text-center" id="totp-code" name="totp_code" 
+                                   placeholder="000000" maxlength="6" pattern="[0-9]{6}" required>
+                            <small class="text-secondary">enter the 6-digit code from your app</small>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-shield-check me-2"></i>complete registration
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="text-center" id="back-link">
+                    <p class="text-secondary mb-0">Already have an account? 
+                        <a href="{{ url_for('serve_login') }}" class="text-decoration-none" style="color: #667eea;">Sign in here</a>
+                    </p>
                 </div>
             </div>
         </div>
+        
+        <!-- Live Visualization Sidebar -->
+        <div class="d-none d-xl-block">
+            <div class="glass-card p-3 visualization-sidebar position-fixed" id="visualization-panel" style="right: 20px; top: 80px; width: 300px; max-height: calc(100vh - 120px); overflow-y: auto; z-index: 1000; transition: transform 0.3s ease;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="text-center flex-grow-1">
+                        <h6 class="text-white mb-1">
+                            <i class="bi bi-shield-lock me-1"></i>Security Process
+                        </h6>
+                        <small class="text-secondary">Live OPAQUE visualization</small>
+                    </div>
+                    <button class="btn btn-sm btn-outline-light ms-2" id="hide-sidebar" style="padding: 4px 8px; font-size: 12px;">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+                
+                <!-- Process Steps -->
+                <div id="live-steps" class="live-steps-container flex-grow-1">
+                    <!-- Steps will be populated by JavaScript -->
+                </div>
+                
+                <!-- Security Indicator -->
+                <div class="security-status mt-3 p-2 rounded" id="security-status">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-shield-check text-success me-2" style="font-size: 14px;"></i>
+                        <small class="text-white">Your password never leaves this device</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Show Sidebar Button (when hidden) -->
+            <button class="btn btn-primary position-fixed" id="show-sidebar" style="right: 20px; top: 80px; z-index: 1001; display: none; padding: 8px 12px;">
+                <i class="bi bi-eye"></i>
+            </button>
+        </div>
     </div>
 </div>
+
+<style>
+/* main form styling */
+.main-form-card {
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
+    border: 2px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.visualization-sidebar {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* live visualization styles */
+.live-steps-container {
+    min-height: auto;
+}
+
+.visualization-sidebar.hidden {
+    transform: translateX(320px);
+}
+
+.live-step {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+    transition: all 0.1s ease;
+    opacity: 0.5;
+}
+
+.live-step.active {
+    opacity: 1;
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.1);
+    transform: scale(1.02);
+}
+
+.live-step.completed {
+    opacity: 1;
+    border-color: #4facfe;
+    background: rgba(75, 172, 254, 0.1);
+}
+
+.live-step.processing {
+    opacity: 1;
+    border-color: #f5576c;
+    background: rgba(245, 87, 108, 0.1);
+    animation: subtle-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes subtle-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.step-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+    font-size: 12px;
+    transition: all 0.1s ease;
+}
+
+.live-step .step-icon {
+    background: rgba(255, 255, 255, 0.1);
+    color: #b8b9c7;
+}
+
+.live-step.active .step-icon {
+    background: #667eea;
+    color: white;
+}
+
+.live-step.completed .step-icon {
+    background: #4facfe;
+    color: white;
+}
+
+.live-step.processing .step-icon {
+    background: #f5576c;
+    color: white;
+}
+
+.step-content {
+    flex: 1;
+}
+
+.step-title {
+    color: white;
+    font-weight: 600;
+    margin-bottom: 1px;
+    font-size: 13px;
+}
+
+.step-description {
+    color: #b8b9c7;
+    font-size: 11px;
+    line-height: 1.2;
+}
+
+.live-step.active .step-description,
+.live-step.processing .step-description {
+    color: white;
+}
+
+.security-status {
+    background: rgba(75, 172, 254, 0.1);
+    border: 1px solid rgba(75, 172, 254, 0.2);
+}
+
+input[type="text"]#totp-code {
+    font-family: 'Courier New', monospace;
+    font-size: 18px;
+    letter-spacing: 4px;
+    font-weight: 600;
+}
+
+code {
+    background: rgba(102, 126, 234, 0.1);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+}
+
+.data-flow {
+    font-size: 12px;
+    color: #667eea;
+    font-weight: 500;
+    margin-top: 5px;
+}
+</style>
 {% endblock %}

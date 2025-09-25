@@ -3,12 +3,31 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-5">
-    <div class="row">
-        <div class="col-md-8 offset-md-2 text-center">
-            <h1 class="mb-4 text-light">Cypher</h1>
-            <p class="lead text-light">A revolutionary authentication platform</p>
+<div class="hero-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="text-center mb-4">
+                    <img src="{{ url_for('static', filename='svg/cypher.svg') }}" alt="Cypher" style="height: 120px; width: auto;">
+                </div>
+                <p class="hero-subtitle">Next-generation authentication platform with zero-knowledge security</p>
+                <div class="hero-buttons">
+                    <a href="{{ url_for('serve_register') }}" class="btn btn-primary btn-lg glow">Get Started</a>
+                    <a href="{{ url_for('serve_login') }}" class="btn btn-outline-light btn-lg">Sign In</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- simple info section -->
+        <div class="row mt-5 pt-5">
+            <div class="col-lg-8 mx-auto">
+                <div class="glass-card p-4 text-center">
+                    <p class="text-secondary mb-0">
+                        built with the OPAQUE protocol, your password never leaves your device
+                    </p>
+                </div>
+            </div>
         </div>
     </div>
-</div>    
+</div>
 {% endblock %}
