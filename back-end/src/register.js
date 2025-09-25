@@ -345,16 +345,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (finishResult.success) {
                     liveViz.completeStep('final-registration');
                     
-                    // Step 7: Show TOTP Setup
                     liveViz.activateStep('totp-setup');
                     liveViz.updateSecurityStatus('OPAQUE registration complete! Now setting up 2FA...');
                     
-                    // Hide registration form and show TOTP phase
+
                     document.getElementById('register-form').parentElement.style.display = 'none';
                     document.getElementById('totp-phase').style.display = 'block';
                     document.getElementById('back-link').style.display = 'none';
                     
-                    // Generate TOTP secret (you'll implement this)
+                    
                     generateTotpSecret();
                     
                     showAlert('OPAQUE registration successful! Please set up 2FA to complete registration.', 'success');
@@ -373,12 +372,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
     
-    // TOTP setup - this is where the magic happens ✨
+    // TOTP setup
     async function generateTotpSecret() {
         try {
             const username = document.getElementById('username').value;
             
-            // hit up our server for that sweet TOTP setup
             const response = await fetch('http://localhost:3000/totp/setup', {
                 method: 'POST',
                 headers: {
@@ -393,17 +391,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             const result = await response.json();
             
-            // show em the secret
             document.getElementById('totp-secret').textContent = result.secret;
             
-            // stash this for later verification
             window.currentTotpSecret = result.secret;
             window.currentUsername = username;
             
-            // display that beautiful server-generated QR code 🔥
             displayServerQrCode(result.qrCode, result.otpauthUrl);
             
-            // show current code for testing (cause we're nice like that)
             showCurrentTotpCode(result.secret);
             
             return result.secret;
@@ -452,7 +446,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     function displayServerQrCode(qrCodeDataURL, otpauthUrl) {
-        // show off that server-generated QR code - no more fake canvas BS
         const qrContainer = document.getElementById('qr-code');
         qrContainer.innerHTML = `
             <div class="text-center p-4" style="background: rgba(255,255,255,0.1); border-radius: 8px;">
@@ -503,45 +496,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     function showCurrentTotpCode(secret) {
-        // Show current TOTP code for testing purposes
-        const totp = new jsOTP.totp();
-        const currentCode = totp.getOtp(secret);
-        
-        // Add a testing helper
+        // show a note that codes are generated server-side now
         const qrContainer = document.getElementById('qr-code');
         const testingDiv = document.createElement('div');
         testingDiv.className = 'mt-3 p-2 rounded';
         testingDiv.style.background = 'rgba(245, 87, 108, 0.1)';
         testingDiv.style.border = '1px solid rgba(245, 87, 108, 0.2)';
         testingDiv.innerHTML = `
-            <small class="text-warning"><i class="bi bi-exclamation-triangle me-1"></i>testing only:</small><br>
-            <span class="text-white">current totp code: <strong>${currentCode}</strong></span><br>
-            <small class="text-secondary">refreshes every 30 seconds</small>
+            <small class="text-info"><i class="bi bi-info-circle me-1"></i>server-side TOTP:</small><br>
+            <span class="text-white">use your authenticator app for codes</span><br>
+            <small class="text-secondary">secret: <code>${secret}</code></small>
         `;
         qrContainer.appendChild(testingDiv);
-        
-        // Update code every 30 seconds
-        setInterval(() => {
-            const newCode = totp.getOtp(secret);
-            testingDiv.querySelector('strong').textContent = newCode;
-        }, 30000);
     }
     
-    // TOTP verification function with time tolerance
-    function verifyWithTolerance(userSecret, userProvidedCode, windowTolerance = 1) {
-        var totp = new jsOTP.totp(30, 6);
-        var currentTime = new Date().getTime();
-        
-        // Check current window and adjacent windows
-        for (var i = -windowTolerance; i <= windowTolerance; i++) {
-            var timeOffset = currentTime + (i * 30 * 1000);
-            var code = totp.getOtp(userSecret, timeOffset);
-            if (code === userProvidedCode) {
-                return true;
-            }
-        }
-        return false;
-    }
     
     // TOTP verification form handler
     const totpForm = document.getElementById('totp-verify-form');
