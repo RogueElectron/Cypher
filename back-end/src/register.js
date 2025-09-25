@@ -9,7 +9,6 @@ import {
 
 const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);
 
-// Live visualization steps for registration
 const registrationSteps = [
     {
         id: 'input',
