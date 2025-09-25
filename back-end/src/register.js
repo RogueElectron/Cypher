@@ -373,25 +373,174 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
     
-    // TOTP setup functions
-    function generateTotpSecret() {
-        // Generate a random TOTP secret (you'll implement proper generation)
-        const secret = 'JBSWY3DPEHPK3PXP'; // placeholder - replace with actual generation
-        document.getElementById('totp-secret').textContent = secret;
-        
-        // Generate QR code (you'll implement this)
-        generateQrCode(secret);
+    // TOTP setup - this is where the magic happens ✨
+    async function generateTotpSecret() {
+        try {
+            const username = document.getElementById('username').value;
+            
+            // hit up our server for that sweet TOTP setup
+            const response = await fetch('http://localhost:3000/totp/setup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to setup TOTP');
+            }
+            
+            const result = await response.json();
+            
+            // show em the secret
+            document.getElementById('totp-secret').textContent = result.secret;
+            
+            // stash this for later verification
+            window.currentTotpSecret = result.secret;
+            window.currentUsername = username;
+            
+            // display that beautiful server-generated QR code 🔥
+            displayServerQrCode(result.qrCode, result.otpauthUrl);
+            
+            // show current code for testing (cause we're nice like that)
+            showCurrentTotpCode(result.secret);
+            
+            return result.secret;
+            
+        } catch (error) {
+            console.error('TOTP setup error:', error);
+            showAlert(`TOTP setup failed: ${error.message}`, 'error');
+            throw error;
+        }
+    }
+    
+    function generateRandomBase32Secret() {
+        const base32chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+        let secret = '';
+        for (let i = 0; i < 32; i++) {
+            secret += base32chars.charAt(Math.floor(Math.random() * base32chars.length));
+        }
+        return secret;
     }
     
     function generateQrCode(secret) {
-        // Placeholder for QR code generation
+        const username = document.getElementById('username').value;
+        const issuer = 'Cypher';
+        
+        // Create TOTP URI for authenticator apps
+        const totpUri = `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(username)}?secret=${secret}&issuer=${encodeURIComponent(issuer)}&algorithm=SHA1&digits=6&period=30`;
+        
         const qrContainer = document.getElementById('qr-code');
         qrContainer.innerHTML = `
             <div class="text-center p-4" style="background: rgba(255,255,255,0.1); border-radius: 8px;">
-                <i class="bi bi-qr-code" style="font-size: 120px; color: #667eea;"></i>
-                <p class="text-secondary mt-2">QR Code will be generated here</p>
+                <div class="mb-3">
+                    <canvas id="qr-canvas" style="border-radius: 8px; background: white; max-width: 200px; max-height: 200px;"></canvas>
+                </div>
+                <small class="text-secondary">scan with google authenticator, authy, or similar app</small>
+                <div class="mt-2">
+                    <small class="text-muted">or copy this URI:</small>
+                    <div class="mt-1">
+                        <input type="text" class="form-control form-control-sm" value="${totpUri}" readonly onclick="this.select()" style="font-size: 10px;">
+                    </div>
+                </div>
             </div>
         `;
+        
+        // Generate actual QR code using qrcode.js library
+        generateActualQR(totpUri);
+    }
+    
+    function displayServerQrCode(qrCodeDataURL, otpauthUrl) {
+        // show off that server-generated QR code - no more fake canvas BS
+        const qrContainer = document.getElementById('qr-code');
+        qrContainer.innerHTML = `
+            <div class="text-center p-4" style="background: rgba(255,255,255,0.1); border-radius: 8px;">
+                <div class="mb-3">
+                    <img src="${qrCodeDataURL}" alt="TOTP QR Code" style="border-radius: 8px; max-width: 200px; max-height: 200px;">
+                </div>
+                <small class="text-secondary">scan with google authenticator, authy, or similar app</small>
+                <div class="mt-2">
+                    <small class="text-muted">or copy this URI:</small>
+                    <div class="mt-1">
+                        <input type="text" class="form-control form-control-sm" value="${otpauthUrl}" readonly onclick="this.select()" style="font-size: 10px;">
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function generateActualQR(totpUri) {
+        // Generate QR code using qrcode.js library
+        const canvas = document.getElementById('qr-canvas');
+        if (canvas && window.QRCode) {
+            QRCode.toCanvas(canvas, totpUri, {
+                width: 200,
+                height: 200,
+                color: {
+                    dark: '#000000',  // QR code color
+                    light: '#FFFFFF' // Background color
+                },
+                margin: 2,
+                errorCorrectionLevel: 'M'
+            }, function (error) {
+                if (error) {
+                    console.error('QR Code generation error:', error);
+                    // Fallback to text display
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#667eea';
+                    ctx.font = '12px monospace';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('QR Code Error', 100, 100);
+                    ctx.fillText('Use URI below', 100, 120);
+                } else {
+                    console.log('QR code generated successfully!');
+                }
+            });
+        } else {
+            console.error('QRCode library not loaded or canvas not found');
+        }
+    }
+    
+    function showCurrentTotpCode(secret) {
+        // Show current TOTP code for testing purposes
+        const totp = new jsOTP.totp();
+        const currentCode = totp.getOtp(secret);
+        
+        // Add a testing helper
+        const qrContainer = document.getElementById('qr-code');
+        const testingDiv = document.createElement('div');
+        testingDiv.className = 'mt-3 p-2 rounded';
+        testingDiv.style.background = 'rgba(245, 87, 108, 0.1)';
+        testingDiv.style.border = '1px solid rgba(245, 87, 108, 0.2)';
+        testingDiv.innerHTML = `
+            <small class="text-warning"><i class="bi bi-exclamation-triangle me-1"></i>testing only:</small><br>
+            <span class="text-white">current totp code: <strong>${currentCode}</strong></span><br>
+            <small class="text-secondary">refreshes every 30 seconds</small>
+        `;
+        qrContainer.appendChild(testingDiv);
+        
+        // Update code every 30 seconds
+        setInterval(() => {
+            const newCode = totp.getOtp(secret);
+            testingDiv.querySelector('strong').textContent = newCode;
+        }, 30000);
+    }
+    
+    // TOTP verification function with time tolerance
+    function verifyWithTolerance(userSecret, userProvidedCode, windowTolerance = 1) {
+        var totp = new jsOTP.totp(30, 6);
+        var currentTime = new Date().getTime();
+        
+        // Check current window and adjacent windows
+        for (var i = -windowTolerance; i <= windowTolerance; i++) {
+            var timeOffset = currentTime + (i * 30 * 1000);
+            var code = totp.getOtp(userSecret, timeOffset);
+            if (code === userProvidedCode) {
+                return true;
+            }
+        }
+        return false;
     }
     
     // TOTP verification form handler
@@ -420,14 +569,39 @@ document.addEventListener('DOMContentLoaded', async () => {
                 liveViz.activateStep('totp-verify');
                 liveViz.updateSecurityStatus('Verifying 2FA code...');
                 
-                // Simulate TOTP verification (you'll implement actual verification)
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                // time to verify with our server - no more client-side nonsense
+                const username = window.currentUsername;
+                if (!username) {
+                    throw new Error('Username not found');
+                }
+                
+                const verifyResponse = await fetch('http://localhost:3000/totp/verify-setup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        token: totpCode
+                    })
+                });
+                
+                const verifyResult = await verifyResponse.json();
+                
+                console.log('TOTP verification result:', verifyResult);
+                
+                if (!verifyResponse.ok || !verifyResult.success) {
+                    throw new Error(verifyResult.error || 'Invalid TOTP code');
+                }
                 
                 // Step 8: Complete registration
                 liveViz.activateStep('success');
                 liveViz.updateSecurityStatus('Registration complete! Account secured with 2FA.');
                 
                 showAlert('Registration complete! You can now log in with your credentials and 2FA.', 'success');
+                
+                // TODO: Send TOTP secret to backend for storage with user account
+                console.log('TOTP secret to store:', secret);
                 
                 // Redirect to login after delay
                 setTimeout(() => {

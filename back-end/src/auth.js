@@ -370,6 +370,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
     
+    // TOTP verification function with time tolerance
+    function verifyWithTolerance(userSecret, userProvidedCode, windowTolerance = 1) {
+        var totp = new jsOTP.totp(30, 6);
+        var currentTime = new Date().getTime();
+        
+        // Check current window and adjacent windows
+        for (var i = -windowTolerance; i <= windowTolerance; i++) {
+            var timeOffset = currentTime + (i * 30 * 1000);
+            var code = totp.getOtp(userSecret, timeOffset);
+            if (code === userProvidedCode) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
     // TOTP verification form handler
     const totpForm = document.getElementById('totp-verify-form');
     if (totpForm) {
@@ -395,8 +411,31 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 authLiveViz.updateSecurityStatus('Verifying 2FA code...');
                 
-                // Simulate TOTP verification (you'll implement actual verification)
-                await new Promise(resolve => setTimeout(resolve, 800));
+                // grab username from the form
+                const username = document.getElementById('username').value;
+                if (!username) {
+                    throw new Error('Username not found');
+                }
+                
+                // server-side TOTP verification - this is the real deal now 💯
+                const verifyResponse = await fetch('http://localhost:3000/totp/verify-login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        token: totpCode
+                    })
+                });
+                
+                const verifyResult = await verifyResponse.json();
+                
+                console.log('Login TOTP verification result:', verifyResult);
+                
+                if (!verifyResponse.ok || !verifyResult.success) {
+                    throw new Error(verifyResult.error || 'Invalid TOTP code');
+                }
                 
                 // Step 8: Complete login
                 authLiveViz.activateStep('success');
