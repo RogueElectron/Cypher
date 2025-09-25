@@ -15,9 +15,31 @@ import express from 'express';
 import cors from 'cors';
 import { authenticator } from 'otplib';
 import QRCode from 'qrcode';
+import xss from 'xss-clean';
+import helmet from 'helmet';
+
 
 const app = express();
-
+app.use(xss())
+app.use(
+    helmet({
+      hsts: false,
+      contentSecurityPolicy: {
+        useDefaults: true,
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'"], 
+          styleSrc: ["'self'", "'unsafe-inline'"], 
+          imgSrc: ["'self'", "data:"], 
+          objectSrc: ["'none'"], 
+          upgradeInsecureRequests: [] 
+        }
+      },
+      crossOriginEmbedderPolicy: false,
+      crossOriginOpenerPolicy: false,
+      crossOriginResourcePolicy: { policy: "same-origin" }, 
+    })
+  );
 
 
 function createKVStorage() {  // Simple KV storage for testing - not for production
