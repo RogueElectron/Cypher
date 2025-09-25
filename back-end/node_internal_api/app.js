@@ -76,20 +76,12 @@ const oprfSeed = cfg.prng.random(cfg.hash.Nh);
 const serverKeypairSeed = cfg.prng.random(cfg.constants.Nseed);
 const serverAkeKeypair = await cfg.ake.deriveAuthKeyPair(serverKeypairSeed);
 
-// Demo storage using KV wrapper
 const database = createKVStorage();
-
-// TOTP secrets storage
 const totpSecrets = new Map();
-
-// Track unverified accounts with timestamps
 const unverifiedAccounts = new Map();
-
-// Cleanup unverified accounts after 5 minutes
-const VERIFICATION_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+const VERIFICATION_TIMEOUT = 5 * 60 * 1000;
 
 function cleanupUnverifiedAccount(username) {
-    console.log(`Cleaning up unverified account: ${username}`);
     const userData = database.lookup(username);
     if (userData !== false) {
         database.delete(username);
@@ -423,10 +415,9 @@ app.post('/totp/verify-login', async (req, res) => {
             if (unverifiedAccounts.has(username)) {
                 clearTimeout(unverifiedAccounts.get(username));
                 unverifiedAccounts.delete(username);
-                console.log(`Account ${username} verified successfully`);
             }
             
-            // Create session tokens after successful 2FA  
+            // call flask to create session tokens
             try {
                 const sessionResponse = await fetch('http://localhost:5000/api/create-session', {
                     method: 'POST',
