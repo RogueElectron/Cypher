@@ -1,47 +1,27 @@
-from flask import Flask, send_from_directory, request, session, render_template, url_for, jsonify
-from flask_cors import CORS
-import base64
-from dotenv import load_dotenv
-import requests
-import os
-import json
-import datetime
-import pyotp
-import time
+from flask import Flask, render_template
 
-
-node_api_port = 3000  # Default to 3000 to match Node.js server port
-node_api_url = f"http://127.0.0.1:{node_api_port}"
-
-load_dotenv()
 app = Flask(__name__)
-CORS(app)  # enable CORS for all routes
 
-#root
+# Root page
 @app.route('/')
 def serve_index():
     return render_template('index.html')
 
 
-# remember to add the 2fa api
-
-# login page
+# Login page
 @app.route('/api/login', methods=['GET'])     
 def serve_login():
-    if request.method == 'GET':
-        return render_template('login.html')
+    return render_template('login.html')
 
-# register page
+# Register page
 @app.route('/api/register', methods=['GET'])
 def serve_register():
-    if request.method == 'GET':
-        return render_template('register.html')
+    return render_template('register.html')
 
-# totp setup page
+# TOTP setup page
 @app.route('/api/totp', methods=['GET'])
 def serve_totp():
-    if request.method == 'GET':
-        return render_template('totp.html')
+    return render_template('totp.html')
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
