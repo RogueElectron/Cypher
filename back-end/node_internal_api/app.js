@@ -82,6 +82,32 @@ const database = createKVStorage();
 // TOTP secrets storage
 const totpSecrets = new Map();
 
+// Track unverified accounts with timestamps
+const unverifiedAccounts = new Map();
+
+// Cleanup unverified accounts after 5 minutes
+const VERIFICATION_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+
+function cleanupUnverifiedAccount(username) {
+    console.log(`Cleaning up unverified account: ${username}`);
+    const userData = database.lookup(username);
+    if (userData !== false) {
+        database.delete(username);
+    }
+    totpSecrets.delete(username);
+    unverifiedAccounts.delete(username);
+}
+
+function scheduleAccountCleanup(username) {
+    const timeoutId = setTimeout(() => {
+        if (unverifiedAccounts.has(username)) {
+            cleanupUnverifiedAccount(username);
+        }
+    }, VERIFICATION_TIMEOUT);
+    
+    unverifiedAccounts.set(username, timeoutId);
+}
+
 const akeKeypairExport = {  
     private_key: Array.from(serverAkeKeypair.private_key),  
     public_key: Array.from(serverAkeKeypair.public_key)  
@@ -156,6 +182,7 @@ app.post('/register/finish', async (req, res) => {
         
         if (success) {
             console.log(`User ${username} registered successfully`);
+            scheduleAccountCleanup(username);
             res.status(200).json({ 
                 success: true, 
                 message: 'Registration completed successfully' 
@@ -393,7 +420,48 @@ app.post('/totp/verify-login', async (req, res) => {
         });
                 
         if (isValid) {
-            res.status(200).json({ success: true, message: 'TOTP login verification successful' });
+            if (unverifiedAccounts.has(username)) {
+                clearTimeout(unverifiedAccounts.get(username));
+                unverifiedAccounts.delete(username);
+                console.log(`Account ${username} verified successfully`);
+            }
+            
+            // Create session tokens after successful 2FA  
+            try {
+                const sessionResponse = await fetch('http://localhost:5000/api/create-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username
+                    })
+                });
+                
+                if (sessionResponse.ok) {
+                    const sessionData = await sessionResponse.json();
+                    
+                    res.status(200).json({ 
+                        success: true, 
+                        message: 'TOTP login verification successful - session created',
+                        access_token: sessionData.access_token,
+                        refresh_token: sessionData.refresh_token,
+                        expires_in: sessionData.expires_in
+                    });
+                } else {
+                    console.error('Session creation failed');
+                    res.status(200).json({ 
+                        success: true, 
+                        message: 'TOTP verification successful but session creation failed' 
+                    });
+                }
+            } catch (sessionError) {
+                console.error('Session creation error:', sessionError);
+                res.status(200).json({ 
+                    success: true, 
+                    message: 'TOTP verification successful but session creation failed' 
+                });
+            }
         } else {
             res.status(400).json({ success: false, error: 'Invalid TOTP code' });
         }

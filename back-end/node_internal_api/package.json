@@ -1,6 +1,7 @@
 {
   "name": "node-internal-api",
   "version": "1.0.0",
+  "type": "module",
   "description": "internal api",
   "main": "app.js",
   "scripts": {

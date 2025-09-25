@@ -415,40 +415,56 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.log('Login TOTP verification result:', verifyResult);
                 
                 if (!verifyResponse.ok || !verifyResult.success) {
-                    throw new Error(verifyResult.error || 'Invalid TOTP code');
+                    const errorMessage = verifyResult.error || 'Invalid TOTP code';
+                    showAlert(`Login failed: ${errorMessage}`, 'error');
+                    authLiveViz.updateSecurityStatus('TOTP verification failed. Please try again.', 'error');
+                    return;
+                }
+
+                // Success case
+                authLiveViz.completeStep('totp-verify');
+                authLiveViz.updateSecurityStatus('Authentication complete! Session tokens created.');
+                
+                // Store session tokens
+                console.log('2FA verification result:', verifyResult);
+                if (verifyResult.access_token && verifyResult.refresh_token) {
+                    console.log('Storing session tokens...');
+                    // Import session manager dynamically
+                    const { sessionManager } = await import('./session-manager.js');
+                    sessionManager.setTokens(
+                        verifyResult.access_token,
+                        verifyResult.refresh_token,
+                        verifyResult.expires_in || 900
+                    );
+                    console.log('Session tokens stored');
+                } else {
+                    console.warn('No session tokens received from server');
                 }
                 
-                authLiveViz.activateStep('success');
-                authLiveViz.updateSecurityStatus('Login complete! Session established with 2FA verification.');
-                
-                showAlert('Login successful! Welcome back!', 'success');
+                showAlert('Login successful! Welcome to Cypher.', 'success');
                 
                 setTimeout(() => {
                     window.location.href = '/';
-                }, 2000);
-                
-            } catch (error) {
-                console.error('TOTP verification error:', error);
-                showAlert(`2FA verification failed: ${error.message || 'Invalid code'}`, 'error');
-            } finally {
-                // re-enable form
-                submitButton.disabled = false;
-                submitButton.innerHTML = originalText;
-            }
-        });
-    }
-    
-    // format TOTP input
-    const totpInput = document.getElementById('totp-code');
-    if (totpInput) {
-        totpInput.addEventListener('input', () => {
-            // only allow numbers
-            totpInput.value = totpInput.value.replace(/[^0-9]/g, '');
-            
-            // limit to 6 digits
-            if (totpInput.value.length > 6) {
-                totpInput.value = totpInput.value.slice(0, 6);
-            }
-        });
-    }
+                }, 1500);
+        } finally {
+            // re-enable form
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalText;
+        }
+    });
+}
+
+// format TOTP input
+const totpInput = document.getElementById('totp-code');
+if (totpInput) {
+    totpInput.addEventListener('input', () => {
+        // only allow numbers
+        totpInput.value = totpInput.value.replace(/[^0-9]/g, '');
+        
+        // limit to 6 digits
+        if (totpInput.value.length > 6) {
+            totpInput.value = totpInput.value.slice(0, 6);
+        }
+    });
+}
 });
