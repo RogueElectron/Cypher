@@ -1,6 +1,10 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, jsonify
+import paseto
+from paseto.keys.symmetric_key import SymmetricKey
+from paseto.protocols.v4 import ProtocolVersion4
 
 app = Flask(__name__)
+key = SymmetricKey.generate(protocol=ProtocolVersion4)
 
 # Root page
 @app.route('/')
@@ -22,6 +26,64 @@ def serve_register():
 @app.route('/api/totp', methods=['GET'])
 def serve_totp():
     return render_template('totp.html')
+
+@app.route('/api/create-token', methods=['POST'])
+def create_token():
+    data = request.get_json()
+    username = data.get('username')
+    
+    if not username:
+        return jsonify({'error': 'Username required'}), 400
+    
+    claims = {
+        'username': username,
+        'pass_authed': True
+    }
+    
+    token = paseto.create(
+        key=key,
+        purpose='local',
+        claims=claims,
+        exp_seconds=180
+    )
+    
+    return jsonify({'token': token})
+
+@app.route('/api/verify-token', methods=['POST'])
+def verify_token():
+    data = request.get_json()
+    token = data.get('token')
+    username = data.get('username')
+    
+    if not token:
+        return jsonify({'error': 'Token required'}), 400
+    
+    if not username:
+        return jsonify({'error': 'Username required'}), 400
+    
+    try:
+        parsed = paseto.parse(
+            key=key,
+            purpose='local',
+            token=token
+        )
+        
+        token_username = parsed['message'].get('username')
+        pass_authed = parsed['message'].get('pass_authed')
+        
+        if token_username != username:
+            return jsonify({'valid': False, 'error': 'Token username mismatch'}), 401
+        
+        if pass_authed is not True:
+            return jsonify({'valid': False, 'error': 'Token pass_authed claim missing'}), 401
+        
+        return jsonify({
+            'valid': True,
+            'claims': parsed['message']
+        })
+        
+    except (paseto.ExpireError, paseto.ValidationError):
+        return jsonify({'valid': False, 'error': 'Invalid or expired token'}), 401
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
