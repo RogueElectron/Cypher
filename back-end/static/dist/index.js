@@ -1,19 +1,16 @@
-import{sessionManager as s}from"./session-manager.js";document.addEventListener("DOMContentLoaded",async()=>{const e=document.querySelector(".hero-section").querySelector(".container");if(s.loadTokens())try{const i=await s.getCurrentUser();i?c(i.username,e):o(e)}catch(i){console.error("Session validation error:",i),o(e)}else o(e)});function c(t,e){e.innerHTML=`
+import{sessionManager as s}from"./session-manager.js";document.addEventListener("DOMContentLoaded",async()=>{const t=document.querySelector(".hero-section").querySelector(".container");if(s.loadTokens())try{const i=await s.getCurrentUser();i?c(i.username,t):o(t)}catch(i){console.error("Session validation error:",i),o(t)}else o(t)});function c(e,t){t.innerHTML=`
         <div class="row">
             <div class="col-lg-8 mx-auto">
                 <div class="text-center mb-4">
                     <img src="/static/svg/cypher.svg" alt="Cypher" style="height: 120px; width: auto;">
                 </div>
                 <div class="text-center mb-4">
-                    <h2 class="text-light mb-3">Welcome back, ${a(t)}!</h2>
+                    <h2 class="text-light mb-3">Welcome back, ${a(e)}!</h2>
                     <p class="hero-subtitle">Your secure session is active</p>
                 </div>
-                <div class="hero-buttons">
+                <div class="hero-buttons d-flex justify-content-center">
                     <button id="logout-btn" class="btn btn-outline-light btn-lg" style="min-width: 150px; height: 48px;">
                         <i class="bi bi-box-arrow-right me-2"></i>Logout
-                    </button>
-                    <button class="btn btn-primary btn-lg glow" style="min-width: 150px; height: 48px;">
-                        <i class="bi bi-shield-check me-2"></i>Dashboard
                     </button>
                 </div>
             </div>
@@ -49,7 +46,7 @@ import{sessionManager as s}from"./session-manager.js";document.addEventListener(
                 </div>
             </div>
         </div>
-    `;const n=document.getElementById("logout-btn");n&&n.addEventListener("click",l)}function o(t){t.innerHTML=`
+    `;const n=document.getElementById("logout-btn");n&&n.addEventListener("click",l)}function o(e){e.innerHTML=`
         <div class="row">
             <div class="col-lg-8 mx-auto">
                 <div class="text-center mb-4">
@@ -73,4 +70,4 @@ import{sessionManager as s}from"./session-manager.js";document.addEventListener(
                 </div>
             </div>
         </div>
-    `}async function l(){const t=document.getElementById("logout-btn");if(t){t.innerHTML,t.disabled=!0,t.innerHTML='<span class="spinner-border spinner-border-sm me-2"></span>Logging out...';try{await s.logout(),t.innerHTML='<i class="bi bi-check-circle me-2"></i>Logged out',setTimeout(()=>{window.location.reload()},1e3)}catch(e){console.error("Logout error:",e),s.clearSession(),t.innerHTML='<i class="bi bi-exclamation-triangle me-2"></i>Logged out',setTimeout(()=>{window.location.reload()},1e3)}}}function a(t){const e=document.createElement("div");return e.textContent=t,e.innerHTML}
+    `}async function l(){const e=document.getElementById("logout-btn");if(e){e.innerHTML,e.disabled=!0,e.innerHTML='<span class="spinner-border spinner-border-sm me-2"></span>Logging out...';try{await s.logout(),e.innerHTML='<i class="bi bi-check-circle me-2"></i>Logged out',setTimeout(()=>{window.location.reload()},1e3)}catch(t){console.error("Logout error:",t),s.clearSession(),e.innerHTML='<i class="bi bi-exclamation-triangle me-2"></i>Logged out',setTimeout(()=>{window.location.reload()},1e3)}}}function a(e){const t=document.createElement("div");return t.textContent=e,t.innerHTML}

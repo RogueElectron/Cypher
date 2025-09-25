@@ -43,12 +43,9 @@ function showAuthenticatedView(username, container) {
                     <h2 class="text-light mb-3">Welcome back, ${escapeHtml(username)}!</h2>
                     <p class="hero-subtitle">Your secure session is active</p>
                 </div>
-                <div class="hero-buttons">
+                <div class="hero-buttons d-flex justify-content-center">
                     <button id="logout-btn" class="btn btn-outline-light btn-lg" style="min-width: 150px; height: 48px;">
                         <i class="bi bi-box-arrow-right me-2"></i>Logout
-                    </button>
-                    <button class="btn btn-primary btn-lg glow" style="min-width: 150px; height: 48px;">
-                        <i class="bi bi-shield-check me-2"></i>Dashboard
                     </button>
                 </div>
             </div>

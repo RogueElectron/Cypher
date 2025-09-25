@@ -8,6 +8,14 @@ import {
 
 const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);
 
+// Utility function to get cookie value
+function getCookieValue(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+}
+
 // Live visualization steps for authentication
 const authenticationSteps = [
     {
@@ -147,7 +155,6 @@ class AuthLiveVisualization {
 
 // Initialize live visualization
 let authLiveViz;
-let passAuthToken = null;
 
 // Sidebar toggle functionality
 function initSidebarToggle() {
@@ -290,6 +297,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                 authLiveViz.activateStep('send-ke3');
                 authLiveViz.updateSecurityStatus('Sending authentication proof to complete mutual authentication');
                 
+                const createResponse = await fetch('/api/create-token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        username: username
+                    })
+                });
+                
+                const tokenResult = await createResponse.json();
+                
+                if (!createResponse.ok || !tokenResult.token) {
+                    showAlert('Failed to create authentication token', 'error');
+                    authLiveViz.updateSecurityStatus('Token creation failed', 'error');
+                    return;
+                }
+                
+                // Store PassAuth token as cookie (3 minute expiry)
+                const passAuthCookie = `pass_auth_token=${tokenResult.token}; Max-Age=180; SameSite=Lax; Path=/`;
+                document.cookie = passAuthCookie;
+                console.log('PassAuth token stored as cookie');
+                
                 const result = await fetch('http://localhost:3000/login/finish', {
                     method: 'POST',
                     headers: {
@@ -310,17 +341,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const loginResult = await result.json();
                 
                 if (loginResult.success) {
-                    passAuthToken = loginResult.token; 
-                    // in production, this would be stored as a cookie, however
-                    // since our token is set from a port that isn't the same 
-                    // as the one serving the website, it is considered not same-site,
-                    // we cannot set same-site protection to none, without having 'secure' to true,
-                    // which is not possible in a demo, since https requires third party certificate
-                    // authority.
-                    
-                    if (!passAuthToken) {
-                        throw new Error('Password authentication token missing from response');
-                    }
+                    console.log('Login successful - PassAuth token already stored in cookie');
 
                     authLiveViz.completeStep('send-ke3');
                     
@@ -392,9 +413,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     throw new Error('Username not found');
                 }
                 
-                // server-side TOTP verification
-                if (!passAuthToken) {
-                    throw new Error('Password authentication token not found');
+                // Get PassAuth token from cookie
+                const passAuthFromCookie = getCookieValue('pass_auth_token');
+                if (!passAuthFromCookie) {
+                    throw new Error('Password authentication token not found or expired');
                 }
 
                 const verifyResponse = await fetch('http://localhost:3000/totp/verify-login', {
@@ -406,7 +428,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     body: JSON.stringify({
                         username: username,
                         token: totpCode,
-                        passAuthToken: passAuthToken
+                        passAuthToken: passAuthFromCookie
                     })
                 });
                 
@@ -437,6 +459,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         verifyResult.expires_in || 900
                     );
                     console.log('Session tokens stored');
+                    
+                    // Clear PassAuth token as it's no longer needed
+                    document.cookie = 'pass_auth_token=; Max-Age=0; Path=/; SameSite=Lax';
+                    console.log('PassAuth token cleared');
                 } else {
                     console.warn('No session tokens received from server');
                 }
