@@ -6,7 +6,7 @@ Welcome to the Cypher project documentation. This guide provides comprehensive i
 
 **Digitopia Jury?, these materials concern you.**
 
-- [**Business Model**]*(Documentation/Business-Model.md)* - complete business model
+- [**Business Model**](Documentation/Business-Model.md) - complete business model
 
 ## Documentation Index
 

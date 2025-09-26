@@ -25,7 +25,7 @@ In an era of rising data breaches and privacy legislation, our answer eliminates
 - Organizations need audit trails without compromising sensitive data
 - Legacy infrastructure is responsible for causing integration challenges to newer security requirements
 - **Literally life-ending breach aftermath**: Equifax exposed 147M Americans to identity theft and financial ruin; Anthem health care breach revealed 80M patient records including medical history and SSNs; T-Mobile's repeated data breaches exposed customer financial information enabling targeted fraud which literally destroyed families
-- **Career-ending accountability**: Executives individually charged with crimes for data security failures - GDPR makes executives individually accountable, not corporations
+- **Executive-level accountability**: Executives individually charged with crimes for data security failures - GDPR makes executives individually accountable, not corporations
 - **Existential business risk**: Target lost $290M and their CEO after their breach; Yahoo lost $350M of acquisition value from unseen breaches
 
 ---
@@ -115,20 +115,20 @@ Pricing matches customer value and level of engagement - from little support sel
 
 ## Go-to-Market Strategy: Regulatory-First Market Disruption
 
-### Essential Reality: Force Liability, Create Demand
+### Essential Reality: Leverage Liability, Create Demand
 
 No company will willingly implement something that costs money and slows them down — not until regulation forces their hand. Shareholders optimize for profits, and as long as fines are cheaper than real security, nothing changes.
 
 That’s exactly why our approach works. We get ahead of the curve: capturing startups when they’re just ideas and small dev teams, giving them the tools to grow securely from day one, and pushing enterprise companies to adopt our technology to avoid liability.
 
-By the time our regulation efforts change the industry, the industry will already be owned by us.
+By the time our regulation efforts change the industry, We will already be the standard. 
 
 ### Phase 1: Regulatory Influence and Liability Creation
 #### Target Regulatory Bodies and Liability Creation
 - **NIST Cybersecurity Framework**: Encourage clear zero-knowledge authentication requirements in subsequent revisions of CSF and NIST Privacy Framework 1.1 (public comment period through June 13, 2025)
 - **SEC Corporate Disclosure Rules**: Push for compulsory disclosure of authentication vulnerabilities as material cybersecurity threats
 - **FFIEC Banking Regulations**: Work with Federal Financial Institutions Examination Council to classify password authentication as not good enough for financial services
-- **HHS HIPAA Technical Safeguards**: Coerce Department of Health and Human Services to amend HIPAA specifications that demand zero-knowledge for security of patient data
+- **HHS HIPAA Technical Safeguards**: Persuade Department of Health and Human Services to amend HIPAA specifications that demand zero-knowledge for security of patient data
 - **FTC Data Protection Enforcement**: Provide technical input to Federal Trade Commission on consumer damage cases with authentication-related concerns
 - **GDPR Article 25 (Data Protection by Design)**: Work with European Data Protection Board to complete zero-knowledge as required technical means under privacy by design requirements
 
@@ -139,18 +139,12 @@ By the time our regulation efforts change the industry, the industry will alread
 - **Big Four Audit Methodology**: Train Deloitte, PwC, KPMG, and EY auditors to mark traditional authentication as material control failure
 - **Cyber Insurance Requirements**: Partner with top insurers (AIG, Chubb, AXA) to require zero-knowledge authentication for policy eligibility
 
-#### Patent Warfare Strategy
+#### IP defensibility Strategy
 - **OPAQUE + PASETO Integration Patents**: Patent specific combinations of OPAQUE protocol with PASETO token rotation methods
 - **TOTP Enhancement Patents**: Patent the methods of combining TOTP 2FA with zero-knowledge authentication processes
 - **Implementation Process Patents**: File continuation patents on deployment patterns, API integration methods of operation, and enterprise scale solutions
 - **Cryptographic Workflow Patents**: Patent the specific workflow of cryptographic operations that combine all three protocols
 - **Recovery and Backup Patents**: File patents on recovery systems for backup that maintain zero-knowledge features
-
-#### Talent Acquisition Strategy
-- **Ex-AUTH0/Okta Engineers**: Recruit top engineers from direct industry rivals with non-compete agreements and insider knowledge of system weaknesses
-- **Former Regulatory Staff**: Hire former NIST, NSA, and regulatory personnel as advisors and relationship managers for regulatory matters
-- **Cryptographers from Academia**: Recruit PhD researchers with knowledge in zero-knowledge proofs and authentication protocols
-- **Big Four Alumni**: Hire former auditors and compliance consultants with enterprise contacts and regulatory expertise
 
 #### Academic Capture Initiative
 - **PhD Program Awards**: Award zero-knowledge authentication research programs at top universities (MIT, Stanford, CMU, UC Berkeley)
@@ -202,12 +196,6 @@ By the time our regulation efforts change the industry, the industry will alread
 4. **Securities Regulations**: SEC cybersecurity disclosure requirements highlighting authentication vulnerabilities as material risks
 5. **Government Contracting**: Federal acquisition regulations calling for zero-knowledge authentication of contractor systems
 
-#### Corporate Liability Multiplication
-- **Officer and Director Insurance Exclusions**: Underwrite with D&O insurers to exclude coverage for failure of security through authentication
-- **Shareholder Derivative Lawsuits**: Technical support for shareholders suing directors for inadequate cybersecurity management
-- **Regulatory Personal Liability**: Leverage GDPR Article 83 personal fines and US officer liability rules for failure of authentication
-- **Professional Liability**: Coordinate professional liability insurers to exclude coverage for professionals counseling inadequate authentication
-
 ### Strategic Market Capture
 
 #### Developer Memory Embedding
@@ -226,7 +214,6 @@ By the time our regulation efforts change the industry, the industry will alread
 
 #### Real-Time Market Disruption
 - Become the standard authentication choice for emerging businesses and startups
-- Discombobulate enterprise boardrooms with "authentication modernization" discussion via developer influence
 - Establish technical dominance through continuous vulnerability research and proof-of-concept exploits
 - Encourage regulatory safe harbor positioning rendering legacy authentication legally risky
 
