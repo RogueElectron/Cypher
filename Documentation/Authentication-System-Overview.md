@@ -219,33 +219,33 @@ The system implements a multi-stage authentication process combining OPAQUE prot
 
 ```mermaid
 sequenceDiagram
-  participant Client
-  participant Node.js (:3000)
-  participant Flask (:5000)
+  participant C as Client
+  participant N as Node.js (:3000)
+  participant F as Flask (:5000)
 
-  note over Client,Flask (:5000): Registration Phase
-  Client->>Node.js (:3000): "POST /register/init"
-  Node.js (:3000)->>Node.js (:3000): "server.registerInit()"
-  Node.js (:3000)-->>Client: "registrationResponse"
-  Client->>Node.js (:3000): "POST /register/finish"
-  Node.js (:3000)->>Node.js (:3000): "database.store()"
-  Client->>Node.js (:3000): "POST /totp/setup"
-  Node.js (:3000)->>Node.js (:3000): "authenticator.generateSecret()"
-  Node.js (:3000)-->>Client: "QR code + secret"
-  note over Client,Flask (:5000): Login Phase
-  Client->>Node.js (:3000): "POST /login/init"
-  Node.js (:3000)->>Node.js (:3000): "server.authInit()"
-  Node.js (:3000)-->>Client: "KE2 response"
-  Client->>Node.js (:3000): "POST /login/finish"
-  Node.js (:3000)->>Node.js (:3000): "server.authFinish()"
-  Node.js (:3000)->>Flask (:5000): "POST /api/create-token"
-  Flask (:5000)-->>Node.js (:3000): "pass_auth_token"
-  Node.js (:3000)-->>Client: "temp token"
-  Client->>Node.js (:3000): "POST /totp/verify-login"
-  Node.js (:3000)->>Flask (:5000): "POST /api/verify-token"
-  Node.js (:3000)->>Flask (:5000): "POST /api/create-session"
-  Flask (:5000)-->>Node.js (:3000): "access + refresh tokens"
-  Node.js (:3000)-->>Client: "session tokens"
+  note over C,F: Registration Phase
+  C->>N: "POST /register/init"
+  N->>N: "server.registerInit()"
+  N-->>C: "registrationResponse"
+  C->>N: "POST /register/finish"
+  N->>N: "database.store()"
+  C->>N: "POST /totp/setup"
+  N->>N: "authenticator.generateSecret()"
+  N-->>C: "QR code + secret"
+  note over C,F: Login Phase
+  C->>N: "POST /login/init"
+  N->>N: "server.authInit()"
+  N-->>C: "KE2 response"
+  C->>N: "POST /login/finish"
+  N->>N: "server.authFinish()"
+  N->>F: "POST /api/create-token"
+  F-->>N: "pass_auth_token"
+  N-->>C: "temp token"
+  C->>N: "POST /totp/verify-login"
+  N->>F: "POST /api/verify-token"
+  N->>F: "POST /api/create-session"
+  F-->>N: "access + refresh tokens"
+  N-->>C: "session tokens"
 ```
 
 Sources: [back-end/node_internal_api/app.js L141](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/node_internal_api/app.js#L141-L141)
