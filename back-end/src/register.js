@@ -244,7 +244,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             
             liveViz.activateStep('validation');
-            await new Promise(resolve => setTimeout(resolve, 500)); // Brief pause for visualization
             
             if (!validatePasswords(password, confirmPassword)) {
                 return;
@@ -260,7 +259,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 liveViz.activateStep('generate-keys');
                 liveViz.updateSecurityStatus('Generating cryptographic blinding - your password stays secure');
-                await new Promise(resolve => setTimeout(resolve, 800));
                 
                 const client = new OpaqueClient(cfg);
                 const request = await client.registerInit(password);
@@ -299,7 +297,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 liveViz.activateStep('finalize');
                 liveViz.updateSecurityStatus('Creating your secure credential file locally');
-                await new Promise(resolve => setTimeout(resolve, 600));
                 
                 const rec = await client.registerFinish(deSerRegResponse);
                 const record = rec.record;
