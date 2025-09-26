@@ -228,7 +228,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             
             authLiveViz.activateStep('validation');
-            await new Promise(resolve => setTimeout(resolve, 400)); // Brief pause for visualization
             
             authLiveViz.completeStep('validation');
             
@@ -240,7 +239,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 authLiveViz.activateStep('ke1-generation');
                 authLiveViz.updateSecurityStatus('Generating key exchange message without exposing password');
-                await new Promise(resolve => setTimeout(resolve, 600));
                 
                 const client = new OpaqueClient(cfg);
                 const ke1 = await client.authInit(password);
@@ -281,7 +279,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 authLiveViz.activateStep('verify-server');
                 authLiveViz.updateSecurityStatus('Verifying server authenticity and generating session key');
-                await new Promise(resolve => setTimeout(resolve, 500));
                 
                 const finClient = await client.authFinish(deser_ke2);
                 const ke3 = finClient.ke3;
