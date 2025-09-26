@@ -7,7 +7,7 @@
 > * [back-end/static/dist/index.js](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/static/dist/index.js)
 > * [back-end/static/dist/session-manager.js](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/static/dist/session-manager.js)
 
-This document covers the session management system in Cypher, which handles user session persistence after successful authentication. The session management system is responsible for token lifecycle management, automatic token refresh, session validation, and logout procedures. This document focuses on post-authentication session handling; for authentication workflows, see [User Registration Process](/RogueElectron/Cypher/3.1-user-registration-process) and [User Login Process](/RogueElectron/Cypher/3.2-user-login-process).
+This document covers the session management system in Cypher, which handles user session persistence after successful authentication. The session management system is responsible for token lifecycle management, automatic token refresh, session validation, and logout procedures. This document focuses on post-authentication session handling; for authentication workflows, see [User Registration Process](/RogueElectron/Cypher/documentation/3.1-user-registration-process) and [User Login Process](/RogueElectron/Cypher/documentation/3.2-user-login-process).
 
 ## Token Types and Architecture
 

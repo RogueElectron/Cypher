@@ -7,7 +7,7 @@
 
 This document describes the cryptographic security architecture and authentication mechanisms implemented in the Cypher system. It covers the zero-knowledge authentication protocols, multi-factor authentication implementation, token-based session security, and data protection mechanisms.
 
-For information about the authentication workflows and user flows, see [Authentication Workflows](/RogueElectron/Cypher/3-authentication-workflows). For implementation details of individual services, see [Implementation Details](/RogueElectron/Cypher/4-implementation-details).
+For information about the authentication workflows and user flows, see [Authentication Workflows](/RogueElectron/Cypher/documentation/3-authentication-workflows). For implementation details of individual services, see [Implementation Details](/RogueElectron/Cypher/documentation/4-implementation-details).
 
 ## Zero-Knowledge Authentication Architecture
 

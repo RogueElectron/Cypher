@@ -8,7 +8,7 @@
 > * [back-end/static/dist/index.js](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/static/dist/index.js)
 > * [back-end/static/dist/session-manager.js](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/static/dist/session-manager.js)
 
-This document covers the client-side JavaScript architecture of the Cypher authentication system, including authentication logic, session management, live visualization components, and user interface controllers. For information about the backend services that these components interact with, see [Backend Services](/RogueElectron/Cypher/2.1-backend-services). For details about the build system and asset compilation, see [Build System and Assets](/RogueElectron/Cypher/5.1-build-system-and-assets).
+This document covers the client-side JavaScript architecture of the Cypher authentication system, including authentication logic, session management, live visualization components, and user interface controllers. For information about the backend services that these components interact with, see [Backend Services](/RogueElectron/Cypher/documentation/2.1-backend-services). For details about the build system and asset compilation, see [Build System and Assets](/RogueElectron/Cypher/documentation/5.1-build-system-and-assets).
 
 ## Architecture Overview
 
@@ -129,28 +129,28 @@ The authentication process integrates the OPAQUE protocol through the `@cloudfla
 
 ```mermaid
 sequenceDiagram
-  participant login-form
-  participant auth.js
-  participant OpaqueClient
-  participant authLiveViz
-  participant Node.js API :3000
-  participant Flask API :5000
+  participant L as login-form
+  participant A as auth.js
+  participant O as OpaqueClient
+  participant V as authLiveViz
+  participant N as Node.js API (:3000)
+  participant F as Flask API (:5000)
 
-  login-form->>auth.js: submit event
-  auth.js->>authLiveViz: activateStep('input')
-  auth.js->>OpaqueClient: new OpaqueClient(cfg)
-  auth.js->>OpaqueClient: authInit(password)
-  OpaqueClient-->>auth.js: ke1
-  auth.js->>authLiveViz: activateStep('send-ke1')
-  auth.js->>Node.js API :3000: POST /login/init {username, serke1}
-  Node.js API :3000-->>auth.js: {ser_ke2}
-  auth.js->>OpaqueClient: authFinish(deser_ke2)
-  OpaqueClient-->>auth.js: {ke3, session_key}
-  auth.js->>Flask API :5000: POST /api/create-token
-  Flask API :5000-->>auth.js: {token}
-  auth.js->>Node.js API :3000: POST /login/finish {username, serke3}
-  Node.js API :3000-->>auth.js: {success: true}
-  auth.js->>authLiveViz: activateStep('totp-verify')
+  L->>A: submit event
+  A->>V: activateStep('input')
+  A->>O: new OpaqueClient(cfg)
+  A->>O: authInit(password)
+  O-->>A: ke1
+  A->>V: activateStep('send-ke1')
+  A->>N: POST /login/init {username, serke1}
+  N-->>A: {ser_ke2}
+  A->>O: authFinish(deser_ke2)
+  O-->>A: {ke3, session_key}
+  A->>F: POST /api/create-token
+  F-->>A: {token}
+  A->>N: POST /login/finish {username, serke3}
+  N-->>A: {success: true}
+  A->>V: activateStep('totp-verify')
 ```
 
 Sources: [back-end/src/auth.js L240-L361](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/src/auth.js#L240-L361)
@@ -244,23 +244,23 @@ Registration uses the `OpaqueClient.registerInit()` and `OpaqueClient.registerFi
 
 ```mermaid
 sequenceDiagram
-  participant register-form
-  participant register.js
-  participant OpaqueClient
-  participant liveViz
-  participant Node.js API :3000
+  participant R as register-form
+  participant J as register.js
+  participant O as OpaqueClient
+  participant V as liveViz
+  participant N as Node.js API (:3000)
 
-  register-form->>register.js: submit event
-  register.js->>liveViz: activateStep('generate-keys')
-  register.js->>OpaqueClient: registerInit(password)
-  OpaqueClient-->>register.js: request
-  register.js->>Node.js API :3000: POST /register/init {username, registrationRequest}
-  Node.js API :3000-->>register.js: {registrationResponse}
-  register.js->>OpaqueClient: registerFinish(deSerRegResponse)
-  OpaqueClient-->>register.js: {record}
-  register.js->>Node.js API :3000: POST /register/finish {username, record}
-  Node.js API :3000-->>register.js: {success: true}
-  register.js->>liveViz: activateStep('totp-setup')
+  R->>J: submit event
+  J->>V: activateStep('generate-keys')
+  J->>O: registerInit(password)
+  O-->>J: request
+  J->>N: POST /register/init {username, registrationRequest}
+  N-->>J: {registrationResponse}
+  J->>O: registerFinish(deSerRegResponse)
+  O-->>J: {record}
+  J->>N: POST /register/finish {username, record}
+  N-->>J: {success: true}
+  J->>V: activateStep('totp-setup')
 ```
 
 Sources: [back-end/src/register.js L260-L345](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/src/register.js#L260-L345)
@@ -431,20 +431,20 @@ The logout functionality integrates with the `SessionManager.logout()` method an
 
 ```mermaid
 sequenceDiagram
-  participant logout-btn
-  participant handleLogout()
-  participant sessionManager
-  participant Flask API :5000
+  participant B as logout-btn
+  participant H as handleLogout()
+  participant S as sessionManager
+  participant F as Flask API (:5000)
 
-  logout-btn->>handleLogout(): click event
-  handleLogout()->>handleLogout(): Disable button, show spinner
-  handleLogout()->>sessionManager: logout()
-  sessionManager->>Flask API :5000: POST /api/logout
-  Flask API :5000-->>sessionManager: logout response
-  sessionManager->>sessionManager: clearSession()
-  sessionManager-->>handleLogout(): logout complete
-  handleLogout()->>handleLogout(): Update button text
-  handleLogout()->>handleLogout(): Reload page after 1s
+  B->>H: click event
+  H->>H: Disable button, show spinner
+  H->>S: logout()
+  S->>F: POST /api/logout
+  F-->>S: logout response
+  S->>S: clearSession()
+  S-->>H: logout complete
+  H->>H: Update button text
+  H->>H: Reload page after 1s
 ```
 
 Sources: [back-end/src/index.js L109-L135](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/src/index.js#L109-L135)

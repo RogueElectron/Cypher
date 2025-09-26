@@ -7,7 +7,7 @@
 
 This document covers the frontend build system for the Cypher authentication platform, including asset compilation, module bundling, and the relationship between source files and build artifacts. The build system uses Vite to compile client-side JavaScript modules into optimized bundles for production deployment.
 
-For information about backend service configuration and deployment, see [Setup and Dependencies](/RogueElectron/Cypher/5.2-setup-and-dependencies). For details about the client-side component architecture, see [Frontend Components](/RogueElectron/Cypher/2.2-frontend-components).
+For information about backend service configuration and deployment, see [Setup and Dependencies](/RogueElectron/Cypher/documentation/5.2-setup-and-dependencies). For details about the client-side component architecture, see [Frontend Components](/RogueElectron/Cypher/documentation/2.2-frontend-components).
 
 ## Build Configuration
 
@@ -110,16 +110,6 @@ The build system uses Rollup options [back-end/vite.config.js L11-L23](https://g
 * `chunkFileNames: '[name].js'` [back-end/vite.config.js L20](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/vite.config.js#L20-L20)  - Names dynamic import chunks
 * `assetFileNames: '[name].[ext]'` [back-end/vite.config.js L21](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/vite.config.js#L21-L21)  - Handles CSS and other assets
 
-### OPAQUE Client Integration
-
-The compiled modules demonstrate sophisticated dependency management, particularly for the OPAQUE cryptographic library. Both built files import OPAQUE functionality:
-
-```
-import{g as F,O as x,a as $,K as B}from"./opaque_client.js"
-```
-
-This import pattern shows how Vite processes and optimizes the OPAQUE protocol implementation, creating minified variable names while preserving functionality.
-
 **Module Dependency Graph**
 
 ```mermaid
@@ -171,26 +161,6 @@ Sources: [back-end/static/dist/auth.js L1](https://github.com/RogueElectron/Cyph
 
 ## Development Server Configuration
 
-### SSL and Proxy Setup
-
-The Vite development server includes SSL support through the `basicSsl()` plugin [back-end/vite.config.js L6](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/vite.config.js#L6-L6)
-
- and configures a proxy for API routes [back-end/vite.config.js L27-L34](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/vite.config.js#L27-L34)
-
-:
-
-```yaml
-proxy: {
-  '/api': {
-    target: 'http://localhost:5000',
-    changeOrigin: true,
-    secure: false
-  }
-}
-```
-
-This configuration ensures that `/api` requests from the development frontend are proxied to the Flask backend service running on port 5000, while maintaining HTTPS for the frontend development server.
-
 ### Build Artifacts Analysis
 
 The compiled JavaScript files demonstrate several build optimizations:
@@ -203,50 +173,7 @@ The compiled JavaScript files demonstrate several build optimizations:
 The auth.js build artifact [back-end/static/dist/auth.js L1-L24](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/static/dist/auth.js#L1-L24)
 
  shows how Vite processes complex authentication workflows, including live visualization steps and OPAQUE protocol integration, into optimized production code.
-
-**Build Optimization Pipeline**
-
-```mermaid
-flowchart TD
-
-parse["Parse ES6 Modules"]
-deps["Resolve Dependencies"]
-trans["Transform Syntax"]
-tree["Tree Shaking"]
-minify["Minification"]
-chunk["Code Splitting"]
-bundle["Bundle Creation"]
-assets["Asset Processing"]
-map["Source Maps"]
-
-trans --> tree
-chunk --> bundle
-
-subgraph output ["Output Generation"]
-    bundle
-    assets
-    map
-    bundle --> assets
-    assets --> map
-end
-
-subgraph optimize ["Optimization"]
-    tree
-    minify
-    chunk
-    tree --> minify
-    minify --> chunk
-end
-
-subgraph source ["Source Processing"]
-    parse
-    deps
-    trans
-    parse --> deps
-    deps --> trans
-end
-```
-
+ 
 Sources: [back-end/vite.config.js L8-L24](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/vite.config.js#L8-L24)
 
  [back-end/static/dist/auth.js L1-L24](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/static/dist/auth.js#L1-L24)

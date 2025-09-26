@@ -9,7 +9,7 @@
 
 This document describes the complete user login workflow in the Cypher authentication system, covering the dual-phase authentication process that combines OPAQUE zero-knowledge password authentication with TOTP two-factor authentication. The process involves coordination between the Node.js Internal API, Flask Session Service, and client-side authentication logic to establish secure user sessions.
 
-For information about user registration and TOTP setup, see [User Registration Process](/RogueElectron/Cypher/3.1-user-registration-process). For details on session token lifecycle and management after login, see [Session Management](/RogueElectron/Cypher/3.3-session-management).
+For information about user registration and TOTP setup, see [User Registration Process](/RogueElectron/Cypher/documentation/3.1-user-registration-process). For details on session token lifecycle and management after login, see [Session Management](/RogueElectron/Cypher/documentation/3.3-session-management).
 
 ## Overview
 

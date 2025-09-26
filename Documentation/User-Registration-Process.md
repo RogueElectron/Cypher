@@ -8,7 +8,7 @@
 
 This document details the complete user registration workflow in the Cypher authentication system, including OPAQUE protocol registration, TOTP two-factor authentication setup, and live visualization components. The registration process implements zero-knowledge password authentication where user passwords are never transmitted in plaintext to the server.
 
-For information about the login workflow, see [User Login Process](/RogueElectron/Cypher/3.2-user-login-process). For session management after registration, see [Session Management](/RogueElectron/Cypher/3.3-session-management).
+For information about the login workflow, see [User Login Process](/RogueElectron/Cypher/documentation/3.2-user-login-process). For session management after registration, see [Session Management](/RogueElectron/Cypher/documentation/3.3-session-management).
 
 ## Registration Flow Overview
 

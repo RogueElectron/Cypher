@@ -11,7 +11,7 @@
 
 This document provides technical documentation for the Node.js Internal API service, which handles cryptographic authentication operations in the Cypher authentication system. The service implements the OPAQUE password-authenticated key exchange protocol and TOTP two-factor authentication, running on port 3000 as part of the dual-backend architecture.
 
-For information about session token management and the Flask service integration, see [Flask Session Service](/RogueElectron/Cypher/4.2-flask-session-service). For client-side authentication workflow implementation, see [Client-Side Components](/RogueElectron/Cypher/4.3-client-side-components).
+For information about session token management and the Flask service integration, see [Flask Session Service](/RogueElectron/Cypher/documentation/4.2-flask-session-service). For client-side authentication workflow implementation, see [Client-Side Components](/RogueElectron/Cypher/documentation/4.3-client-side-components).
 
 ## Architecture Overview
 

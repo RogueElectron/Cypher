@@ -10,7 +10,7 @@
 
 This document provides a comprehensive guide to setting up the Cypher authentication system development environment and understanding its dependency architecture. It covers the installation process, dependency management for the dual-backend architecture, and configuration requirements for both development and production environments.
 
-For information about the build system and asset compilation, see [Build System and Assets](/RogueElectron/Cypher/5.1-build-system-and-assets). For implementation details of the individual services, see [Implementation Details](/RogueElectron/Cypher/4-implementation-details).
+For information about the build system and asset compilation, see [Build System and Assets](/RogueElectron/Cypher/documentation/5.1-build-system-and-assets). For implementation details of the individual services, see [Implementation Details](/RogueElectron/Cypher/documentation/4-implementation-details).
 
 ## System Prerequisites
 
@@ -294,22 +294,6 @@ end
 Production deployment serves pre-compiled static assets and runs both backend services without development tooling overhead.
 
 Sources: [back-end/setup.sh L63-L77](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/setup.sh#L63-L77)
-
-## Environment Configuration
-
-### Ignored Files and Security
-
-The `.gitignore` configuration ensures sensitive files and build artifacts remain excluded from version control:
-
-| Path Pattern | Purpose |
-| --- | --- |
-| `/cyvenv` | Python virtual environment |
-| `/back-end/node_modules` | Node.js dependencies |
-| `/back-end/__pycache__` | Python bytecode cache |
-| `/back-end/.env` | Environment variables |
-| `/back-end/cypher_users.db` | User database |
-
-Sources: [.gitignore L1-L6](https://github.com/RogueElectron/Cypher/blob/7b7a1583/.gitignore#L1-L6)
 
 ### Service Ports and Communication
 

@@ -4,7 +4,9 @@
 > * [back-end/main.py](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/main.py)
 > * [back-end/node_internal_api/app.js](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/node_internal_api/app.js)
 
-This document details the dual-backend architecture that powers the Cypher authentication system. It covers the Node.js Internal API responsible for cryptographic operations and the Flask Session Service that manages token lifecycle and user sessions. For client-side components that interact with these services, see [Frontend Components](/RogueElectron/Cypher/2.2-frontend-components). For the security protocols implemented by these services, see [Security Model](/RogueElectron/Cypher/2.3-security-model).
+This document provides technical documentation for the backend services architecture of the Cypher authentication system. It covers the dual-backend design pattern, service responsibilities, inter-service communication protocols, and data flow between the Node.js Internal API and Flask Session Service.
+
+For detailed implementation of individual authentication workflows, see [Authentication Workflows](/RogueElectron/Cypher/documentation/3-authentication-workflows). For client-side component integration, see [Frontend Components](/RogueElectron/Cypher/documentation/2.2-frontend-components). For the security protocols implemented by these services, see [Security Model](/RogueElectron/Cypher/documentation/2.3-security-model).
 
 ## Service Overview
 
@@ -325,13 +327,7 @@ Sources: [back-end/node_internal_api/app.js L256-L287](https://github.com/RogueE
 
 ## Data Storage Architecture
 
-Both services use in-memory storage suitable for development and testing environments.
-
-### Storage Distribution
-
-```
-
-```
+Both services use wrappers around in-memory storage suitable for a demo environment.
 
 Sources: [back-end/node_internal_api/app.js L45-L82](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/node_internal_api/app.js#L45-L82)
 

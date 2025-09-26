@@ -14,7 +14,7 @@
 
 This document covers the frontend JavaScript modules, HTML templates, live visualization system, and user interface components that comprise the client-side architecture of the Cypher authentication system. These components handle user interactions, cryptographic operations, session management, and provide real-time feedback during authentication processes.
 
-For backend service implementations, see [Node.js Internal API](/RogueElectron/Cypher/4.1-node.js-internal-api) and [Flask Session Service](/RogueElectron/Cypher/4.2-flask-session-service). For build system configuration, see [Build System and Assets](/RogueElectron/Cypher/5.1-build-system-and-assets).
+For backend service implementations, see [Node.js Internal API](/RogueElectron/Cypher/documentation/4.1-node.js-internal-api) and [Flask Session Service](/RogueElectron/Cypher/documentation/4.2-flask-session-service). For build system configuration, see [Build System and Assets](/RogueElectron/Cypher/documentation/5.1-build-system-and-assets).
 
 ## JavaScript Module Architecture
 
@@ -243,20 +243,20 @@ Both authentication modules integrate the OPAQUE protocol through `@cloudflare/o
 
 ```mermaid
 sequenceDiagram
-  participant User Interface
-  participant auth.js / register.js
-  participant OpaqueClient
-  participant Node.js API
+  participant U as User Interface
+  participant A as auth.js / register.js
+  participant O as OpaqueClient
+  participant N as Node.js API
 
-  User Interface->>auth.js / register.js: "form submission"
-  auth.js / register.js->>OpaqueClient: "new OpaqueClient(cfg)"
-  auth.js / register.js->>OpaqueClient: "authInit(password) / registerInit(password)"
-  OpaqueClient-->>auth.js / register.js: "KE1 / Registration Request"
-  auth.js / register.js->>Node.js API: "POST /login/init or /register/init"
-  Node.js API-->>auth.js / register.js: "KE2 / Registration Response"
-  auth.js / register.js->>OpaqueClient: "authFinish(KE2) / registerFinish(response)"
-  OpaqueClient-->>auth.js / register.js: "KE3 / Registration Record"
-  auth.js / register.js->>Node.js API: "POST /login/finish or /register/finish"
+  U->>A: "form submission"
+  A->>O: "new OpaqueClient(cfg)"
+  A->>O: "authInit(password) / registerInit(password)"
+  O-->>A: "KE1 / Registration Request"
+  A->>N: "POST /login/init or /register/init"
+  N-->>A: "KE2 / Registration Response"
+  A->>O: "authFinish(KE2) / registerFinish(response)"
+  O-->>A: "KE3 / Registration Record"
+  A->>N: "POST /login/finish or /register/finish"
 ```
 
 ### TOTP Integration Components
