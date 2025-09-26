@@ -8,7 +8,7 @@
 
 This document explains the high-level architecture of the Cypher authentication platform, covering the dual-backend service design, client-side components, and inter-service communication patterns. The architecture implements a zero-knowledge authentication approach using the OPAQUE protocol combined with TOTP-based two-factor authentication.
 
-For implementation details of individual services, see [Backend Services](/RogueElectron/Cypher/2.1-backend-services). For frontend component documentation, see [Frontend Components](/RogueElectron/Cypher/2.2-frontend-components). For the underlying security model, see [Security Model](/RogueElectron/Cypher/2.3-security-model).
+For implementation details of individual services, see [Backend Services](/RogueElectron/Cypher/documentation/2.1-backend-services). For frontend component documentation, see [Frontend Components](/RogueElectron/Cypher/documentation/2.2-frontend-components). For the underlying security model, see [Security Model](/RogueElectron/Cypher/documentation/2.3-security-model).
 
 ## Architecture Overview
 
@@ -331,42 +331,39 @@ The system implements a multi-phase authentication flow with clear separation be
 
 ```mermaid
 sequenceDiagram
-  participant OpaqueClient
-  participant (auth.js)
-  participant Node.js API
-  participant (app.js)
-  participant Flask Service
-  participant (main.py)
-  participant Database
-  participant (createKVStorage)
+  participant O as OpaqueClient
+  participant A as auth.js
+  participant N as Node.js API
+  participant App as app.js
+  participant F as Flask Service
+  participant M as main.py
+  participant D as Database
+  participant K as createKVStorage
 
-  note over OpaqueClient,(createKVStorage): Registration Phase
-  OpaqueClient->>OpaqueClient: "registerInit(password)"
-  OpaqueClient->>Node.js API: "POST /register/init
-  Node.js API->>Node.js API: {username, registrationRequest}"
-  Node.js API-->>OpaqueClient: "server.registerInit(deSerReq, username)"
-  OpaqueClient->>OpaqueClient: "{registrationResponse}"
-  OpaqueClient->>Node.js API: "registerFinish(deSerRegResponse)"
-  Node.js API->>Database: "POST /register/finish
-  note over OpaqueClient,(createKVStorage): Login Phase
-  OpaqueClient->>OpaqueClient: {record, username}"
-  OpaqueClient->>Node.js API: "database.store(username, credential_file)"
-  Node.js API->>Database: "authInit(password)"
-  Node.js API->>Node.js API: "POST /login/init
-  Node.js API-->>OpaqueClient: {serke1, username}"
-  OpaqueClient->>OpaqueClient: "database.lookup(username)"
-  OpaqueClient->>Node.js API: "server.authInit(deser_ke1, credential_file)"
-  Node.js API->>Flask Service: "{ser_ke2}"
-  Flask Service-->>Node.js API: "authFinish(deser_ke2)"
-  Node.js API-->>OpaqueClient: "POST /login/finish
-  note over OpaqueClient,(createKVStorage): TOTP Phase
-  OpaqueClient->>Node.js API: {serke3, username}"
-  Node.js API->>Flask Service: "POST /api/create-token
-  Flask Service-->>Node.js API: {username}"
-  Node.js API->>Flask Service: "{token: pass_auth_token}"
-  Flask Service->>Flask Service: "{success, token: pass_auth_token}"
-  Flask Service-->>Node.js API: "POST /totp/verify-login
-  Node.js API-->>OpaqueClient: {username, token, passAuthToken}"
+  note over O,K: Registration Phase
+  O->>O: "registerInit(password)"
+  O->>N: "POST /register/init {username, registrationRequest}"
+  N->>N: "server.registerInit(deSerReq, username)"
+  N-->>O: "{registrationResponse}"
+  O->>O: "registerFinish(deSerRegResponse)"
+  O->>N: "POST /register/finish {record, username}"
+  N->>D: "database.store(username, credential_file)"
+  note over O,K: Login Phase
+  O->>O: "authInit(password)"
+  O->>N: "POST /login/init {serke1, username}"
+  N->>D: "database.lookup(username)"
+  N->>N: "server.authInit(deser_ke1, credential_file)"
+  N-->>O: "{ser_ke2}"
+  O->>O: "authFinish(deser_ke2)"
+  O->>N: "POST /login/finish {serke3, username}"
+  N->>F: "POST /api/create-token {username}"
+  F-->>N: "{token: pass_auth_token}"
+  N-->>O: "{success, token: pass_auth_token}"
+  note over O,K: TOTP Phase
+  O->>N: "POST /totp/verify-login {username, token, passAuthToken}"
+  N->>F: "token validation and session creation"
+  F-->>N: "session tokens"
+  N-->>O: "authentication complete"
 ```
 
 **Sources:** [back-end/src/auth.js L240-L298](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/src/auth.js#L240-L298)

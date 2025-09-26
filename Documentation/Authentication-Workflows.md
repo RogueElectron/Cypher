@@ -8,7 +8,9 @@
 
 ## Purpose and Scope
 
-This document provides comprehensive coverage of the complete user authentication workflows in the Cypher system, including user registration, login, and session management processes. The workflows implement zero-knowledge authentication using the OPAQUE protocol combined with mandatory TOTP two-factor authentication. For architectural details about the dual-backend system, see [System Architecture](/RogueElectron/Cypher/2-system-architecture). For implementation details of individual backend services, see [Implementation Details](/RogueElectron/Cypher/4-implementation-details).
+This document provides comprehensive documentation of the authentication workflows implemented in the Cypher system. It covers the complete user journey from registration through login and session management, detailing the cryptographic protocols, user interface interactions, and backend service coordination that enable secure zero-knowledge authentication.
+
+For technical implementation details of individual services, see [Backend Services](/RogueElectron/Cypher/documentation/2.1-backend-services). For security architecture and cryptographic protocols, see [Security Model](/RogueElectron/Cypher/documentation/2.3-security-model).
 
 ## Overview of Authentication Workflows
 

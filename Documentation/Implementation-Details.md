@@ -7,7 +7,7 @@
 
 This document provides a technical deep dive into the implementation of each major component of the Cypher authentication system. It covers the core architectural patterns, data structures, and code entities that enable the zero-knowledge authentication flow.
 
-For specific API documentation and endpoint details, see [Node.js Internal API](/RogueElectron/Cypher/4.1-node.js-internal-api) and [Flask Session Service](/RogueElectron/Cypher/4.2-flask-session-service). For frontend implementation specifics, see [Client-Side Components](/RogueElectron/Cypher/4.3-client-side-components).
+For specific API documentation and endpoint details, see [Node.js Internal API](/RogueElectron/Cypher/documentation/4.1-node.js-internal-api) and [Flask Session Service](/RogueElectron/Cypher/documentation/4.2-flask-session-service). For frontend implementation specifics, see [Client-Side Components](/RogueElectron/Cypher/documentation/4.3-client-side-components).
 
 ## Core Architecture Implementation
 

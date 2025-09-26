@@ -9,7 +9,7 @@
 
 This document provides a high-level overview of the Cypher authentication system, covering its zero-knowledge security approach, dual-backend architecture, and core authentication workflows. It serves as an entry point for understanding the system's design principles and major components.
 
-For detailed technical implementation of individual services, see [Backend Services](/RogueElectron/Cypher/2.1-backend-services). For step-by-step authentication workflows, see [Authentication Workflows](/RogueElectron/Cypher/3-authentication-workflows). For development environment setup, see [Development Guide](/RogueElectron/Cypher/5-development-guide).
+For detailed technical implementation of individual services, see [Backend Services](/RogueElectron/Cypher/documentation/2.1-backend-services). For step-by-step authentication workflows, see [Authentication Workflows](/RogueElectron/Cypher/documentation/3-authentication-workflows). For development environment setup, see [Development Guide](/RogueElectron/Cypher/documentation/5-development-guide).
 
 ## System Overview
 

@@ -6,7 +6,7 @@
 
 This guide provides comprehensive information for developers working on the Cypher authentication system. It covers development environment setup, build processes, and development workflows.
 
-For detailed information about the build system and asset compilation, see [Build System and Assets](/RogueElectron/Cypher/5.1-build-system-and-assets). For comprehensive setup instructions and dependency management, see [Setup and Dependencies](/RogueElectron/Cypher/5.2-setup-and-dependencies).
+For detailed information about the build system and asset compilation, see [Build System and Assets](/RogueElectron/Cypher/documentation/5.1-build-system-and-assets). For comprehensive setup instructions and dependency management, see [Setup and Dependencies](/RogueElectron/Cypher/documentation/5.2-setup-and-dependencies).
 
 ## Development Environment Overview
 

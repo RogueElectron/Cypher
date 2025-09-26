@@ -8,7 +8,7 @@
 
 This document covers the technical implementation of the Flask service that manages PASETO tokens, session lifecycle, and user authentication state in the Cypher authentication system. The Flask service operates on port 5000 and serves as the session management backend, complementing the Node.js Internal API which handles cryptographic operations.
 
-For information about the Node.js cryptographic service, see [4.1](/RogueElectron/Cypher/4.1-node.js-internal-api). For details about client-side session handling, see [4.3](/RogueElectron/Cypher/4.3-client-side-components).
+For information about the Node.js cryptographic service, see [Node.js Internal API](/RogueElectron/Cypher/documentation/4.1-node.js-internal-api). For details about client-side session handling, see [Client-Side Components](/RogueElectron/Cypher/documentation/4.3-client-side-components).
 
 ## Service Architecture
 
