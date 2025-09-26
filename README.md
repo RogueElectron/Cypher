@@ -1,0 +1,46 @@
+# Cypher Documentation
+
+Welcome to the Cypher project documentation. This guide provides comprehensive information about the system architecture, implementation details, and development workflows.
+
+## Documentation Index
+
+### System Architecture & Overview
+- [**System Architecture**](Documentation/System-Architecture.md) - High-level system design and component relationships
+- [**Implementation Details**](Documentation/Implementation-Details.md) - Technical implementation specifics
+- [**Security Model**](Documentation/Security-Model.md) - Security architecture and threat model
+
+###  Authentication & Security
+- [**Authentication System Overview**](Documentation/Authentication-System-Overview.md) - Complete authentication system design
+- [**Authentication Workflows**](Documentation/Authentication-Workflows.md) - Detailed authentication flow diagrams
+- [**User Registration Process**](Documentation/User-Registration-Process.md) - User signup and account creation
+- [**User Login Process**](Documentation/User-Login-Process.md) - Login flow and validation
+- [**Session Management**](Documentation/Session-Management.md) - Session handling and lifecycle
+
+### Backend Services
+- [**Backend Services**](Documentation/Backend-Services.md) - Overview of all backend components
+- [**Flask Session Service**](Documentation/Flask-Session-Service.md) - Flask-based session management
+- [**Node.js API**](Documentation/Node.js-API.md) - Node.js API endpoints and services
+
+### Frontend Components
+- [**Frontend Components**](Documentation/Frontend-Components.md) - Complete frontend architecture
+- [**Client-Side Components**](Documentation/Client-Side-Components.md) - Client-side implementation details
+
+### Development & Setup
+- [**Development Guide**](Documentation/Development-Guide.md) - Development environment and workflow
+- [**Setup and Dependencies**](Documentation/Setup-and-Dependencies.md) - Installation and configuration
+- [**Build System and Assets**](Documentation/Build-System-and-Assets.md) - Build process and asset management
+
+## Quick Start
+
+1. **New to the project?** Start with [System Architecture](Documentation/System-Architecture.md)
+2. **Setting up development?** Check [Setup and Dependencies](Documentation/Setup-and-Dependencies.md)
+3. **Working on authentication?** Review [Authentication System Overview](Documentation/Authentication-System-Overview.md)
+4. **Frontend development?** See [Frontend Components](Documentation/Frontend-Components.md)
+
+## Documentation Structure
+
+Each document follows a consistent structure with:
+- Overview and purpose
+- Technical specifications
+- Code examples where applicable
+- Related documentation links
