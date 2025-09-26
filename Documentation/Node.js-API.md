@@ -90,17 +90,17 @@ The OPAQUE server is initialized with cryptographic keys and configuration:
 
 ```mermaid
 sequenceDiagram
-  participant app.js
-  participant getOpaqueConfig
-  participant OpaqueServer
+  participant A as app.js
+  participant G as getOpaqueConfig
+  participant O as OpaqueServer
 
-  app.js->>getOpaqueConfig: getOpaqueConfig(OPAQUE_P256)
-  getOpaqueConfig-->>app.js: cfg
-  app.js->>app.js: Generate oprfSeed, serverKeypairSeed
-  app.js->>getOpaqueConfig: deriveAuthKeyPair(serverKeypairSeed)
-  getOpaqueConfig-->>app.js: serverAkeKeypair
-  app.js->>OpaqueServer: new OpaqueServer(cfg, oprfSeed, akeKeypairExport)
-  OpaqueServer-->>app.js: server instance
+  A->>G: getOpaqueConfig(OPAQUE_P256)
+  G-->>A: cfg
+  A->>A: Generate oprfSeed, serverKeypairSeed
+  A->>G: deriveAuthKeyPair(serverKeypairSeed)
+  G-->>A: serverAkeKeypair
+  A->>O: new OpaqueServer(cfg, oprfSeed, akeKeypairExport)
+  O-->>A: server instance
 ```
 
 Sources: [back-end/node_internal_api/app.js L74-L112](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/node_internal_api/app.js#L74-L112)
@@ -118,21 +118,21 @@ The OPAQUE registration process involves two endpoints:
 
 ```mermaid
 sequenceDiagram
-  participant Client
-  participant Node.js API
-  participant KV Storage
-  participant Cleanup System
+  participant C as Client
+  participant N as Node.js API
+  participant K as KV Storage
+  participant CS as Cleanup System
 
-  Client->>Node.js API: POST /register/init {username, registrationRequest}
-  Node.js API->>Node.js API: RegistrationRequest.deserialize()
-  Node.js API->>Node.js API: server.registerInit(request, username)
-  Node.js API-->>Client: {registrationResponse}
-  Client->>Node.js API: POST /register/finish {record, username}
-  Node.js API->>Node.js API: RegistrationRecord.deserialize()
-  Node.js API->>Node.js API: new CredentialFile(username, record)
-  Node.js API->>KV Storage: store(username, serialized_credential_file)
-  Node.js API->>Cleanup System: scheduleAccountCleanup(username)
-  Node.js API-->>Client: {success: true}
+  C->>N: POST /register/init {username, registrationRequest}
+  N->>N: RegistrationRequest.deserialize()
+  N->>N: server.registerInit(request, username)
+  N-->>C: {registrationResponse}
+  C->>N: POST /register/finish {record, username}
+  N->>N: RegistrationRecord.deserialize()
+  N->>N: new CredentialFile(username, record)
+  N->>K: store(username, serialized_credential_file)
+  N->>CS: scheduleAccountCleanup(username)
+  N-->>C: {success: true}
 ```
 
 Sources: [back-end/node_internal_api/app.js L118-L192](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/node_internal_api/app.js#L118-L192)
@@ -198,26 +198,26 @@ The service provides complete TOTP functionality for two-factor authentication u
 
 ```mermaid
 sequenceDiagram
-  participant Client
-  participant Node.js API
-  participant otplib
-  participant qrcode
-  participant Flask Service
+  participant C as Client
+  participant N as Node.js API
+  participant O as otplib
+  participant Q as qrcode
+  participant F as Flask Service
 
-  Client->>Node.js API: POST /totp/setup {username}
-  Node.js API->>otplib: authenticator.generateSecret()
-  otplib-->>Node.js API: secret
-  Node.js API->>Node.js API: totpSecrets.set(username, secret)
-  Node.js API->>otplib: authenticator.keyuri(username, 'Cypher', secret)
-  otplib-->>Node.js API: otpauthUrl
-  Node.js API->>qrcode: QRCode.toDataURL(otpauthUrl)
-  qrcode-->>Node.js API: qrCodeDataURL
-  Node.js API-->>Client: {secret, qrCode, otpauthUrl}
-  Client->>Node.js API: POST /totp/verify-setup {username, token}
-  Node.js API->>Node.js API: totpSecrets.get(username)
-  Node.js API->>otplib: authenticator.verify({token, secret})
-  otplib-->>Node.js API: isValid
-  Node.js API-->>Client: {success: isValid}
+  C->>N: POST /totp/setup {username}
+  N->>O: authenticator.generateSecret()
+  O-->>N: secret
+  N->>N: totpSecrets.set(username, secret)
+  N->>O: authenticator.keyuri(username, 'Cypher', secret)
+  O-->>N: otpauthUrl
+  N->>Q: QRCode.toDataURL(otpauthUrl)
+  Q-->>N: qrCodeDataURL
+  N-->>C: {secret, qrCode, otpauthUrl}
+  C->>N: POST /totp/verify-setup {username, token}
+  N->>N: totpSecrets.get(username)
+  N->>O: authenticator.verify({token, secret})
+  O-->>N: isValid
+  N-->>C: {success: isValid}
 ```
 
 Sources: [back-end/node_internal_api/app.js L302-L361](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/node_internal_api/app.js#L302-L361)
@@ -329,18 +329,18 @@ The Node.js API integrates with the Flask service for token management operation
 
 ```mermaid
 sequenceDiagram
-  participant Node.js API
-  participant Flask Service :5000
+  participant N as Node.js API
+  participant F as Flask Service (:5000)
 
-  note over Node.js API,Flask Service :5000: After successful OPAQUE authentication
-  Node.js API->>Flask Service :5000: POST /api/create-token {username}
-  Flask Service :5000-->>Node.js API: {token: pass_auth_token}
-  note over Node.js API,Flask Service :5000: During TOTP verification
-  Node.js API->>Flask Service :5000: POST /api/verify-token {token, username}
-  Flask Service :5000-->>Node.js API: {valid: boolean}
-  note over Node.js API,Flask Service :5000: After successful TOTP
-  Node.js API->>Flask Service :5000: POST /api/create-session {username}
-  Flask Service :5000-->>Node.js API: {access_token, refresh_token, expires_in}
+  note over N,F: After successful OPAQUE authentication
+  N->>F: POST /api/create-token {username}
+  F-->>N: {token: pass_auth_token}
+  note over N,F: During TOTP verification
+  N->>F: POST /api/verify-token {token, username}
+  F-->>N: {valid: boolean}
+  note over N,F: After successful TOTP
+  N->>F: POST /api/create-session {username}
+  F-->>N: {access_token, refresh_token, expires_in}
 ```
 
 Sources: [back-end/node_internal_api/app.js L256-L288](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/node_internal_api/app.js#L256-L288)
