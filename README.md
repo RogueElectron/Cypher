@@ -2,6 +2,12 @@
 
 Welcome to the Cypher project documentation. This guide provides comprehensive information about the system architecture, implementation details, and development workflows.
 
+## Digitopia specifics
+
+**Digitopia Jury?, these materials concern you.**
+
+- [**Business Model**]*(Documentation/Business-Model.md)* - complete business model
+
 ## Documentation Index
 
 ### System Architecture & Overview
