@@ -102,36 +102,36 @@ The registration workflow implements a two-phase process combining OPAQUE passwo
 
 ```mermaid
 sequenceDiagram
-  participant User
-  participant register.js
-  participant Node API :3000
-  participant Flask :5000
-  participant Authenticator App
+  participant U as User
+  participant R as register.js
+  participant N as Node API (:3000)
+  participant F as Flask (:5000)
+  participant A as Authenticator App
 
-  note over User,Authenticator App: OPAQUE Registration Phase
-  User->>register.js: Submit form with credentials
-  register.js->>register.js: "validatePasswords()"
-  register.js->>register.js: "OpaqueClient.registerInit(password)"
-  register.js->>Node API :3000: "POST /register/init {username, registrationRequest}"
-  Node API :3000->>Node API :3000: "server.registerInit(deSerReq, username)"
-  Node API :3000-->>register.js: "{registrationResponse}"
-  register.js->>register.js: "client.registerFinish(deSerRegResponse)"
-  register.js->>Node API :3000: "POST /register/finish {username, record}"
-  Node API :3000->>Node API :3000: "database.store(username, credentials)"
-  Node API :3000->>Node API :3000: "scheduleAccountCleanup(username)"
-  Node API :3000-->>register.js: "{success: true}"
-  note over User,Authenticator App: TOTP Setup Phase
-  register.js->>Node API :3000: "POST /totp/setup {username}"
-  Node API :3000->>Node API :3000: "authenticator.generateSecret()"
-  Node API :3000->>Node API :3000: "QRCode.toDataURL(otpauthUrl)"
-  Node API :3000-->>register.js: "{secret, qrCode, otpauthUrl}"
-  register.js->>register.js: "displayServerQrCode(qrCode)"
-  User->>Authenticator App: Scan QR code
-  User->>register.js: Enter 6-digit TOTP code
-  register.js->>Node API :3000: "POST /totp/verify-setup {username, token}"
-  Node API :3000->>Node API :3000: "authenticator.verify({token, secret})"
-  Node API :3000-->>register.js: "{success: true}"
-  register.js->>register.js: "window.location.href = '/api/login'"
+  note over U,A: OPAQUE Registration Phase
+  U->>R: Submit form with credentials
+  R->>R: "validatePasswords()"
+  R->>R: "OpaqueClient.registerInit(password)"
+  R->>N: "POST /register/init {username, registrationRequest}"
+  N->>N: "server.registerInit(deSerReq, username)"
+  N-->>R: "{registrationResponse}"
+  R->>R: "client.registerFinish(deSerRegResponse)"
+  R->>N: "POST /register/finish {username, record}"
+  N->>N: "database.store(username, credentials)"
+  N->>N: "scheduleAccountCleanup(username)"
+  N-->>R: "{success: true}"
+  note over U,A: TOTP Setup Phase
+  R->>N: "POST /totp/setup {username}"
+  N->>N: "authenticator.generateSecret()"
+  N->>N: "QRCode.toDataURL(otpauthUrl)"
+  N-->>R: "{secret, qrCode, otpauthUrl}"
+  R->>R: "displayServerQrCode(qrCode)"
+  U->>A: Scan QR code
+  U->>R: Enter 6-digit TOTP code
+  R->>N: "POST /totp/verify-setup {username, token}"
+  N->>N: "authenticator.verify({token, secret})"
+  N-->>R: "{success: true}"
+  R->>R: "window.location.href = '/api/login'"
 ```
 
 ### OPAQUE Registration Implementation
@@ -169,37 +169,37 @@ The login workflow implements a multi-stage authentication process that separate
 
 ```mermaid
 sequenceDiagram
-  participant User
-  participant auth.js
-  participant Node API :3000
-  participant Flask :5000
-  participant Authenticator App
+  participant U as User
+  participant A as auth.js
+  participant N as Node API (:3000)
+  participant F as Flask (:5000)
+  participant Auth as Authenticator App
 
-  note over User,Authenticator App: OPAQUE Authentication Phase
-  User->>auth.js: Submit login form
-  auth.js->>auth.js: "OpaqueClient.authInit(password)"
-  auth.js->>Node API :3000: "POST /login/init {username, serke1}"
-  Node API :3000->>Node API :3000: "server.authInit(deser_ke1, credential_file.record)"
-  Node API :3000-->>auth.js: "{ser_ke2}"
-  auth.js->>auth.js: "client.authFinish(deser_ke2)"
-  auth.js->>Flask :5000: "POST /api/create-token {username}"
-  Flask :5000-->>auth.js: "{token: pass_auth_token}"
-  auth.js->>Node API :3000: "POST /login/finish {username, serke3}"
-  Node API :3000->>Flask :5000: "POST /api/create-token {username}"
-  Flask :5000-->>Node API :3000: "{token: pass_auth_token}"
-  Node API :3000-->>auth.js: "{success: true, token}"
-  note over User,Authenticator App: TOTP Verification Phase
-  User->>auth.js: Enter TOTP code
-  auth.js->>Node API :3000: "POST /totp/verify-login {username, token, passAuthToken}"
-  Node API :3000->>Flask :5000: "POST /api/verify-token {token, username}"
-  Flask :5000-->>Node API :3000: "{valid: true, claims}"
-  Node API :3000->>Node API :3000: "authenticator.verify({token, secret, window: 1})"
-  Node API :3000->>Flask :5000: "POST /api/create-session {username}"
-  Flask :5000->>Flask :5000: "paseto.create(access_claims, exp_seconds=900)"
-  Flask :5000->>Flask :5000: "paseto.create(refresh_claims, exp_seconds=2592000)"
-  Flask :5000-->>Node API :3000: "{access_token, refresh_token, expires_in}"
-  Node API :3000-->>auth.js: "Session tokens"
-  auth.js->>auth.js: "sessionManager.setTokens()"
+  note over U,Auth: OPAQUE Authentication Phase
+  U->>A: Submit login form
+  A->>A: "OpaqueClient.authInit(password)"
+  A->>N: "POST /login/init {username, serke1}"
+  N->>N: "server.authInit(deser_ke1, credential_file.record)"
+  N-->>A: "{ser_ke2}"
+  A->>A: "client.authFinish(deser_ke2)"
+  A->>F: "POST /api/create-token {username}"
+  F-->>A: "{token: pass_auth_token}"
+  A->>N: "POST /login/finish {username, serke3}"
+  N->>F: "POST /api/create-token {username}"
+  F-->>N: "{token: pass_auth_token}"
+  N-->>A: "{success: true, token}"
+  note over U,Auth: TOTP Verification Phase
+  U->>A: Enter TOTP code
+  A->>N: "POST /totp/verify-login {username, token, passAuthToken}"
+  N->>F: "POST /api/verify-token {token, username}"
+  F-->>N: "{valid: true, claims}"
+  N->>N: "authenticator.verify({token, secret, window: 1})"
+  N->>F: "POST /api/create-session {username}"
+  F->>F: "paseto.create(access_claims, exp_seconds=900)"
+  F->>F: "paseto.create(refresh_claims, exp_seconds=2592000)"
+  F-->>N: "{access_token, refresh_token, expires_in}"
+  N-->>A: "Session tokens"
+  A->>A: "sessionManager.setTokens()"
 ```
 
 ### OPAQUE Authentication Implementation

@@ -208,22 +208,22 @@ Sources: [back-end/main.py L17-L18](https://github.com/RogueElectron/Cypher/blob
 
 ```mermaid
 sequenceDiagram
-  participant Node.js API
-  participant Flask Service
-  participant In-memory Storage
+  participant N as Node.js API
+  participant F as Flask Service
+  participant S as In-memory Storage
 
-  Node.js API->>Flask Service: "POST /api/create-token"
-  Flask Service->>Flask Service: "paseto.create() with key"
-  Flask Service-->>Node.js API: "passAuthToken (180s TTL)"
-  Node.js API->>Flask Service: "POST /api/verify-token"
-  Flask Service->>Flask Service: "paseto.parse() with key"
-  Flask Service-->>Node.js API: "validation result"
-  Node.js API->>Flask Service: "POST /api/create-session"
-  Flask Service->>Flask Service: "Generate session_id, token_id"
-  Flask Service->>In-memory Storage: "Store in active_sessions"
-  Flask Service->>In-memory Storage: "Store in active_refresh_tokens"
-  Flask Service->>Flask Service: "Create access_token, refresh_token"
-  Flask Service-->>Node.js API: "session tokens"
+  N->>F: "POST /api/create-token"
+  F->>F: "paseto.create() with key"
+  F-->>N: "passAuthToken (180s TTL)"
+  N->>F: "POST /api/verify-token"
+  F->>F: "paseto.parse() with key"
+  F-->>N: "validation result"
+  N->>F: "POST /api/create-session"
+  F->>F: "Generate session_id, token_id"
+  F->>S: "Store in active_sessions"
+  F->>S: "Store in active_refresh_tokens"
+  F->>F: "Create access_token, refresh_token"
+  F-->>N: "session tokens"
 ```
 
 Sources: [back-end/main.py L36-L151](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/main.py#L36-L151)
@@ -284,23 +284,23 @@ The Node.js service makes HTTP requests to Flask endpoints during authentication
 
 ```mermaid
 sequenceDiagram
-  participant Client Browser
-  participant Node.js (:3000)
-  participant Flask (:5000)
+  participant C as Client Browser
+  participant N as Node.js (:3000)
+  participant F as Flask (:5000)
 
-  note over Client Browser,Flask (:5000): "Login Flow Inter-Service Calls"
-  Client Browser->>Node.js (:3000): "POST /login/finish"
-  Node.js (:3000)->>Node.js (:3000): "server.authFinish() validates OPAQUE"
-  Node.js (:3000)->>Flask (:5000): "fetch('http://localhost:5000/api/create-token')"
-  Flask (:5000)-->>Node.js (:3000): "passAuthToken"
-  Node.js (:3000)-->>Client Browser: "Login success + passAuthToken"
-  Client Browser->>Node.js (:3000): "POST /totp/verify-login"
-  Node.js (:3000)->>Flask (:5000): "fetch('http://localhost:5000/api/verify-token')"
-  Flask (:5000)-->>Node.js (:3000): "Token validation result"
-  Node.js (:3000)->>Node.js (:3000): "authenticator.verify() checks TOTP"
-  Node.js (:3000)->>Flask (:5000): "fetch('http://localhost:5000/api/create-session')"
-  Flask (:5000)-->>Node.js (:3000): "access_token, refresh_token"
-  Node.js (:3000)-->>Client Browser: "Final authentication tokens"
+  note over C,F: "Login Flow Inter-Service Calls"
+  C->>N: "POST /login/finish"
+  N->>N: "server.authFinish() validates OPAQUE"
+  N->>F: "fetch('http://localhost:5000/api/create-token')"
+  F-->>N: "passAuthToken"
+  N-->>C: "Login success + passAuthToken"
+  C->>N: "POST /totp/verify-login"
+  N->>F: "fetch('http://localhost:5000/api/verify-token')"
+  F-->>N: "Token validation result"
+  N->>N: "authenticator.verify() checks TOTP"
+  N->>F: "fetch('http://localhost:5000/api/create-session')"
+  F-->>N: "access_token, refresh_token"
+  N-->>C: "Final authentication tokens"
 ```
 
 Sources: [back-end/node_internal_api/app.js L256-L287](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/node_internal_api/app.js#L256-L287)

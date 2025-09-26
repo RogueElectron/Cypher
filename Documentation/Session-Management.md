@@ -80,25 +80,25 @@ Session creation occurs after successful OPAQUE authentication and TOTP verifica
 
 ```mermaid
 sequenceDiagram
-  participant Node.js API
-  participant Flask Service
-  participant active_sessions
-  participant active_refresh_tokens
-  participant SessionManager
+  participant N as Node.js API
+  participant F as Flask Service
+  participant AS as active_sessions
+  participant AR as active_refresh_tokens
+  participant S as SessionManager
 
-  Node.js API->>Flask Service: POST /api/create-session
-  note over Node.js API,Flask Service: {username: "user"}
-  Flask Service->>Flask Service: Generate session_id
-  Flask Service->>Flask Service: Create access_token claims
-  Flask Service->>Flask Service: Create refresh_token claims
-  Flask Service->>Flask Service: Generate refresh_token_id
-  Flask Service->>active_sessions: Store session metadata
-  Flask Service->>active_refresh_tokens: Store refresh token mapping
-  Flask Service-->>Node.js API: Return tokens
-  note over Node.js API,Flask Service: {access_token, refresh_token, expires_in: 900}
-  Node.js API-->>SessionManager: Send session tokens
-  SessionManager->>SessionManager: setTokens()
-  SessionManager->>SessionManager: scheduleRefresh()
+  N->>F: POST /api/create-session
+  note over N,F: {username: "user"}
+  F->>F: Generate session_id
+  F->>F: Create access_token claims
+  F->>F: Create refresh_token claims
+  F->>F: Generate refresh_token_id
+  F->>AS: Store session metadata
+  F->>AR: Store refresh token mapping
+  F-->>N: Return tokens
+  note over N,F: {access_token, refresh_token, expires_in: 900}
+  N-->>S: Send session tokens
+  S->>S: setTokens()
+  S->>S: scheduleRefresh()
 ```
 
 The `create_session` endpoint generates a unique `session_id` using `secrets.token_urlsafe(32)` and stores session metadata in the `active_sessions` dictionary. Each refresh token receives a unique `token_id` for revocation tracking.
@@ -163,21 +163,21 @@ The refresh process involves a complete token exchange where the old refresh tok
 
 ```mermaid
 sequenceDiagram
-  participant SessionManager
-  participant Flask /api/refresh-token
-  participant active_refresh_tokens
-  participant active_sessions
+  participant S as SessionManager
+  participant F as Flask /api/refresh-token
+  participant AR as active_refresh_tokens
+  participant AS as active_sessions
 
-  SessionManager->>Flask /api/refresh-token: POST refresh_token
-  Flask /api/refresh-token->>Flask /api/refresh-token: Parse and validate token
-  Flask /api/refresh-token->>active_refresh_tokens: Verify token_id exists
-  Flask /api/refresh-token->>active_sessions: Verify session_id exists
-  Flask /api/refresh-token->>active_refresh_tokens: Delete old token_id
-  Flask /api/refresh-token->>Flask /api/refresh-token: Generate new tokens
-  Flask /api/refresh-token->>active_refresh_tokens: Store new token_id mapping
-  Flask /api/refresh-token->>active_sessions: Update last_refresh timestamp
-  Flask /api/refresh-token-->>SessionManager: Return new token pair
-  SessionManager->>SessionManager: Update cookies and schedule next refresh
+  S->>F: POST refresh_token
+  F->>F: Parse and validate token
+  F->>AR: Verify token_id exists
+  F->>AS: Verify session_id exists
+  F->>AR: Delete old token_id
+  F->>F: Generate new tokens
+  F->>AR: Store new token_id mapping
+  F->>AS: Update last_refresh timestamp
+  F-->>S: Return new token pair
+  S->>S: Update cookies and schedule next refresh
 ```
 
 Sources: [back-end/main.py L153-L239](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/main.py#L153-L239)
@@ -253,25 +253,25 @@ The logout process ensures complete session cleanup on both client and server si
 
 ```mermaid
 sequenceDiagram
-  participant logout button
-  participant SessionManager
-  participant Flask /api/logout
-  participant active_sessions
-  participant active_refresh_tokens
-  participant Browser cookies
+  participant B as logout button
+  participant S as SessionManager
+  participant F as Flask /api/logout
+  participant AS as active_sessions
+  participant AR as active_refresh_tokens
+  participant C as Browser cookies
 
-  logout button->>SessionManager: logout()
-  SessionManager->>Flask /api/logout: POST access_token & refresh_token
-  Flask /api/logout->>Flask /api/logout: Parse access_token for session_id
-  Flask /api/logout->>Flask /api/logout: Parse refresh_token for token_id
-  Flask /api/logout->>active_refresh_tokens: Delete token_id
-  Flask /api/logout->>active_sessions: Delete session_id
-  Flask /api/logout->>Flask /api/logout: Find and delete related refresh tokens
-  Flask /api/logout-->>SessionManager: Success response
-  SessionManager->>Browser cookies: deleteCookie('access_token')
-  SessionManager->>Browser cookies: deleteCookie('refresh_token')
-  SessionManager->>SessionManager: Clear local state
-  SessionManager->>SessionManager: Cancel refresh timeout
+  B->>S: logout()
+  S->>F: POST access_token & refresh_token
+  F->>F: Parse access_token for session_id
+  F->>F: Parse refresh_token for token_id
+  F->>AR: Delete token_id
+  F->>AS: Delete session_id
+  F->>F: Find and delete related refresh tokens
+  F-->>S: Success response
+  S->>C: deleteCookie('access_token')
+  S->>C: deleteCookie('refresh_token')
+  S->>S: Clear local state
+  S->>S: Cancel refresh timeout
 ```
 
 The logout endpoint gracefully handles partial token availability - it attempts to extract session information from either the access token or refresh token if only one is available.

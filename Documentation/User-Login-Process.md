@@ -51,40 +51,40 @@ Sources: [back-end/node_internal_api/app.js L22-L79](https://github.com/RogueEle
 
 ```mermaid
 sequenceDiagram
-  participant User Browser
-  participant Flask (:5000)
-  participant Node.js (:3000)
-  participant KV Storage
-  participant TOTP Secrets
+  participant U as User Browser
+  participant F as Flask (:5000)
+  participant N as Node.js (:3000)
+  participant K as KV Storage
+  participant T as TOTP Secrets
 
-  note over User Browser,TOTP Secrets: OPAQUE Authentication Phase
-  User Browser->>User Browser: "Generate KE1 using OpaqueClient.authInit()"
-  User Browser->>Node.js (:3000): "POST /login/init {username, serke1}"
-  Node.js (:3000)->>KV Storage: "database.lookup(username)"
-  KV Storage-->>Node.js (:3000): "credential_file bytes"
-  Node.js (:3000)->>Node.js (:3000): "server.authInit(ke1, credential_file)"
-  Node.js (:3000)-->>User Browser: "KE2 response"
-  User Browser->>User Browser: "client.authFinish(ke2) → session_key"
-  User Browser->>Flask (:5000): "POST /api/create-token {username}"
-  Flask (:5000)-->>User Browser: "pass_auth_token (180s expiry)"
-  User Browser->>Node.js (:3000): "POST /login/finish {username, serke3}"
-  Node.js (:3000)->>Node.js (:3000): "server.authFinish(ke3) → session_key"
-  Node.js (:3000)->>Flask (:5000): "POST /api/create-token {username}"
-  Flask (:5000)-->>Node.js (:3000): "pass_auth_token"
-  Node.js (:3000)-->>User Browser: "OPAQUE success + pass_auth_token"
-  note over User Browser,TOTP Secrets: TOTP Verification Phase
-  User Browser->>User Browser: "Switch to TOTP UI phase"
-  User Browser->>Node.js (:3000): "POST /totp/verify-login {username, token, passAuthToken}"
-  Node.js (:3000)->>Flask (:5000): "POST /api/verify-token {token, username}"
-  Flask (:5000)-->>Node.js (:3000): "token validation result"
-  Node.js (:3000)->>TOTP Secrets: "totpSecrets.get(username)"
-  TOTP Secrets-->>Node.js (:3000): "user TOTP secret"
-  Node.js (:3000)->>Node.js (:3000): "authenticator.verify({token, secret})"
-  Node.js (:3000)->>Flask (:5000): "POST /api/create-session {username}"
-  Flask (:5000)->>Flask (:5000): "Generate access_token + refresh_token"
-  Flask (:5000)-->>Node.js (:3000): "session tokens"
-  Node.js (:3000)-->>User Browser: "Final auth success + session tokens"
-  User Browser->>User Browser: "sessionManager.setTokens() + redirect"
+  note over U,T: OPAQUE Authentication Phase
+  U->>U: "Generate KE1 using OpaqueClient.authInit()"
+  U->>N: "POST /login/init {username, serke1}"
+  N->>K: "database.lookup(username)"
+  K-->>N: "credential_file bytes"
+  N->>N: "server.authInit(ke1, credential_file)"
+  N-->>U: "KE2 response"
+  U->>U: "client.authFinish(ke2) → session_key"
+  U->>F: "POST /api/create-token {username}"
+  F-->>U: "pass_auth_token (180s expiry)"
+  U->>N: "POST /login/finish {username, serke3}"
+  N->>N: "server.authFinish(ke3) → session_key"
+  N->>F: "POST /api/create-token {username}"
+  F-->>N: "pass_auth_token"
+  N-->>U: "OPAQUE success + pass_auth_token"
+  note over U,T: TOTP Verification Phase
+  U->>U: "Switch to TOTP UI phase"
+  U->>N: "POST /totp/verify-login {username, token, passAuthToken}"
+  N->>F: "POST /api/verify-token {token, username}"
+  F-->>N: "token validation result"
+  N->>T: "totpSecrets.get(username)"
+  T-->>N: "user TOTP secret"
+  N->>N: "authenticator.verify({token, secret})"
+  N->>F: "POST /api/create-session {username}"
+  F->>F: "Generate access_token + refresh_token"
+  F-->>N: "session tokens"
+  N-->>U: "Final auth success + session tokens"
+  U->>U: "sessionManager.setTokens() + redirect"
 ```
 
 Sources: [back-end/src/auth.js L214-L377](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/src/auth.js#L214-L377)

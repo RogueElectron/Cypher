@@ -124,20 +124,20 @@ The `OpaqueServer` instance is initialized with P-256 curve configuration and cr
 
 ```mermaid
 sequenceDiagram
-  participant OpaqueClient
-  participant /register/init
-  participant /register/finish
-  participant createKVStorage()
+  participant O as OpaqueClient
+  participant I as /register/init
+  participant F as /register/finish
+  participant K as createKVStorage()
 
-  OpaqueClient->>/register/init: "RegistrationRequest.serialize()"
-  /register/init->>/register/init: "RegistrationRequest.deserialize(cfg, serRegistrationRequest)"
-  /register/init->>/register/init: "server.registerInit(deSerReq, username)"
-  /register/init-->>OpaqueClient: "regResponse.serialize()"
-  OpaqueClient->>/register/finish: "RegistrationRecord.serialize()"
-  /register/finish->>/register/finish: "RegistrationRecord.deserialize(cfg, record)"
-  /register/finish->>/register/finish: "new CredentialFile(username, deserRec)"
-  /register/finish->>createKVStorage(): "database.store(username, credential_file.serialize())"
-  /register/finish->>/register/finish: "scheduleAccountCleanup(username)"
+  O->>I: "RegistrationRequest.serialize()"
+  I->>I: "RegistrationRequest.deserialize(cfg, serRegistrationRequest)"
+  I->>I: "server.registerInit(deSerReq, username)"
+  I-->>O: "regResponse.serialize()"
+  O->>F: "RegistrationRecord.serialize()"
+  F->>F: "RegistrationRecord.deserialize(cfg, record)"
+  F->>F: "new CredentialFile(username, deserRec)"
+  F->>K: "database.store(username, credential_file.serialize())"
+  F->>F: "scheduleAccountCleanup(username)"
 ```
 
 **Sources:** [back-end/node_internal_api/app.js L118-L192](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/node_internal_api/app.js#L118-L192)
@@ -274,18 +274,18 @@ The Node.js service makes HTTP requests to Flask endpoints during authentication
 
 ```mermaid
 sequenceDiagram
-  participant Node.js :3000
-  participant Flask :5000
+  participant N as Node.js (:3000)
+  participant F as Flask (:5000)
 
-  note over Node.js :3000,Flask :5000: After OPAQUE Success
-  Node.js :3000->>Flask :5000: "POST /api/create-token
-  Flask :5000-->>Node.js :3000: {username}"
-  note over Node.js :3000,Flask :5000: During TOTP Verification
-  Node.js :3000->>Flask :5000: "{token: pass_auth_token}"
-  Flask :5000-->>Node.js :3000: "POST /api/verify-token
-  note over Node.js :3000,Flask :5000: After TOTP Success
-  Node.js :3000->>Flask :5000: {token, username}"
-  Flask :5000-->>Node.js :3000: "{valid: true, claims}"
+  note over N,F: After OPAQUE Success
+  N->>F: "POST /api/create-token {username}"
+  F-->>N: "{token: pass_auth_token}"
+  note over N,F: During TOTP Verification
+  N->>F: "POST /api/verify-token {token, username}"
+  F-->>N: "{valid: true, claims}"
+  note over N,F: After TOTP Success
+  N->>F: "POST /api/create-session {username}"
+  F-->>N: "{access_token, refresh_token}"
 ```
 
 Each service maintains its specialized responsibilities while coordinating through well-defined API contracts.

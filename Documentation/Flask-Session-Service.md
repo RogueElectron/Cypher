@@ -83,34 +83,34 @@ The service implements a three-tier PASETO token system with distinct purposes a
 
 ```mermaid
 sequenceDiagram
-  participant Node.js API
-  participant Flask Service
-  participant In-Memory Storage
+  participant N as Node.js API
+  participant F as Flask Service
+  participant S as In-Memory Storage
 
-  note over Node.js API,In-Memory Storage: Pass Auth Token Creation
-  Node.js API->>Flask Service: POST /api/create-token
-  Flask Service->>Flask Service: create_token()
-  Flask Service-->>Node.js API: pass_auth_token (180s exp)
-  note over Node.js API,In-Memory Storage: Session Creation
-  Node.js API->>Flask Service: POST /api/create-session
-  Flask Service->>Flask Service: create_session()
-  Flask Service->>In-Memory Storage: Store session in active_sessions
-  Flask Service->>In-Memory Storage: Store refresh_token_id in active_refresh_tokens
-  Flask Service-->>Node.js API: access_token + refresh_token
-  note over Node.js API,In-Memory Storage: Token Refresh
-  Node.js API->>Flask Service: POST /api/refresh-token
-  Flask Service->>Flask Service: refresh_token()
-  Flask Service->>In-Memory Storage: Validate session_id in active_sessions
-  Flask Service->>In-Memory Storage: Validate token_id in active_refresh_tokens
-  Flask Service->>In-Memory Storage: Delete old token_id
-  Flask Service->>In-Memory Storage: Store new refresh_token_id
-  Flask Service-->>Node.js API: new_access_token + new_refresh_token
-  note over Node.js API,In-Memory Storage: Session Cleanup
-  Node.js API->>Flask Service: POST /api/logout
-  Flask Service->>Flask Service: logout()
-  Flask Service->>In-Memory Storage: Delete session from active_sessions
-  Flask Service->>In-Memory Storage: Delete all related refresh tokens
-  Flask Service-->>Node.js API: success
+  note over N,S: Pass Auth Token Creation
+  N->>F: POST /api/create-token
+  F->>F: create_token()
+  F-->>N: pass_auth_token (180s exp)
+  note over N,S: Session Creation
+  N->>F: POST /api/create-session
+  F->>F: create_session()
+  F->>S: Store session in active_sessions
+  F->>S: Store refresh_token_id in active_refresh_tokens
+  F-->>N: access_token + refresh_token
+  note over N,S: Token Refresh
+  N->>F: POST /api/refresh-token
+  F->>F: refresh_token()
+  F->>S: Validate session_id in active_sessions
+  F->>S: Validate token_id in active_refresh_tokens
+  F->>S: Delete old token_id
+  F->>S: Store new refresh_token_id
+  F-->>N: new_access_token + new_refresh_token
+  note over N,S: Session Cleanup
+  N->>F: POST /api/logout
+  F->>F: logout()
+  F->>S: Delete session from active_sessions
+  F->>S: Delete all related refresh tokens
+  F-->>N: success
 ```
 
 Sources: [back-end/main.py L36-L56](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/main.py#L36-L56)

@@ -86,23 +86,23 @@ The system implements a secure key exchange mechanism that generates session key
 
 ```mermaid
 sequenceDiagram
-  participant Client (auth.js)
-  participant Node API (app.js)
-  participant Flask Service (main.py)
+  participant C as Client (auth.js)
+  participant N as Node API (app.js)
+  participant F as Flask Service (main.py)
 
-  note over Client (auth.js),Flask Service (main.py): OPAQUE Authentication Phase
-  Client (auth.js)->>Node API (app.js): registerInit(username, blindedPassword)
-  Node API (app.js)-->>Client (auth.js): registrationResponse
-  Client (auth.js)->>Node API (app.js): registerFinish(record)
-  Node API (app.js)-->>Client (auth.js): Registration success
-  note over Client (auth.js),Flask Service (main.py): Login Phase
-  Client (auth.js)->>Node API (app.js): authInit(KE1)
-  Node API (app.js)-->>Client (auth.js): KE2 response
-  Client (auth.js)->>Node API (app.js): authFinish(KE3)
-  note over Node API (app.js): Verify session_key
-  Node API (app.js)->>Flask Service (main.py): POST /api/create-token
-  Flask Service (main.py)-->>Node API (app.js): pass_auth_token
-  Node API (app.js)-->>Client (auth.js): Authentication token
+  note over C,F: OPAQUE Authentication Phase
+  C->>N: registerInit(username, blindedPassword)
+  N-->>C: registrationResponse
+  C->>N: registerFinish(record)
+  N-->>C: Registration success
+  note over C,F: Login Phase
+  C->>N: authInit(KE1)
+  N-->>C: KE2 response
+  C->>N: authFinish(KE3)
+  note over N: Verify session_key
+  N->>F: POST /api/create-token
+  F-->>N: pass_auth_token
+  N-->>C: Authentication token
 ```
 
 Sources: [back-end/node_internal_api/app.js L194-L298](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/node_internal_api/app.js#L194-L298)
