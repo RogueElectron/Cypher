@@ -67,12 +67,8 @@ Our target addressable market is essentially all digital platforms, applications
 - **Healthcare Platforms**: Patient data platforms where violations violate HIPAA and infringe on medical privacy
 - **Government Platforms**: Federal, state, and local platforms requiring security clearances and safeguarding of citizen information
 - **Enterprise SaaS**: Operation-critical platforms where violations affect operations and violate compliance laws
-
-#### Emerging Growth Platforms
 - **Startup Ecosystem**: High-growth companies building user bases ahead of implementing sufficient security
 - **Consumer Applications**: Social applications, messaging applications, and services handling personal data at scale
-- **Connected Devices and IoT**: Secure device authentication in smart home, automotive, and industrial use cases
-- **Web3 and Blockchain**: Cryptographically secure decentralized platforms without centralized trust
 
 ---
 
@@ -120,9 +116,14 @@ Pricing matches customer value and level of engagement - from little support sel
 ## Go-to-Market Strategy: Regulatory-First Market Disruption
 
 ### Essential Reality: Force Liability, Create Demand
-We establish corporate liability for poor authentication due to regulatory pressure and audit mandates, while simultaneously providing the only feasible solution using available developer tools and enterprise deployments.
 
-### Phase 1: Regulatory Influence and Liability Creation (Months 1-12)
+No company will willingly implement something that costs money and slows them down — not until regulation forces their hand. Shareholders optimize for profits, and as long as fines are cheaper than real security, nothing changes.
+
+That’s exactly why our approach works. We get ahead of the curve: capturing startups when they’re just ideas and small dev teams, giving them the tools to grow securely from day one, and pushing enterprise companies to adopt our technology to avoid liability.
+
+By the time our regulation efforts change the industry, the industry will already be owned by us.
+
+### Phase 1: Regulatory Influence and Liability Creation
 #### Target Regulatory Bodies and Liability Creation
 - **NIST Cybersecurity Framework**: Encourage clear zero-knowledge authentication requirements in subsequent revisions of CSF and NIST Privacy Framework 1.1 (public comment period through June 13, 2025)
 - **SEC Corporate Disclosure Rules**: Push for compulsory disclosure of authentication vulnerabilities as material cybersecurity threats
@@ -131,25 +132,12 @@ We establish corporate liability for poor authentication due to regulatory press
 - **FTC Data Protection Enforcement**: Provide technical input to Federal Trade Commission on consumer damage cases with authentication-related concerns
 - **GDPR Article 25 (Data Protection by Design)**: Work with European Data Protection Board to complete zero-knowledge as required technical means under privacy by design requirements
 
-#### Regulatory Capture Timeline Specific to Particular Regulations
-- **NIST SP 800-90A Public Comment Period**: Strives to meet November 4, 2025 deadline to influence cryptographic standards
-- **UK Data (Use and Access) Act 2025**: Inform implementation phases June 2025-June 2026 of regulation development
-- **EU-UK Adequacy Decision Process**: Target ongoing adequacy decision review launched July 2025
-- **Canada PIPEDA Modernization**: Target Personal Information Protection and Electronic Documents Act modernization under consideration
-- **Australia Privacy Act Review**: Inform ongoing Privacy Act 1988 reforming process
-
 #### Auditing and Compliance Pressure
 - **SOC 2 Type II Enhancement**: Co-engage with AICPA to update SOC 2 criteria in such a manner that zero-knowledge authentication will be required to be achieved for Type II certification
 - **ISO 27001 Standards Update**: Engage International Organization for Standardization to incorporate zero-knowledge specifications in information security management
 - **PCI DSS Council Engagement**: Engage Payment Card Industry Security Standards Council to involve zero-knowledge as mandatory for payment authentication
 - **Big Four Audit Methodology**: Train Deloitte, PwC, KPMG, and EY auditors to mark traditional authentication as material control failure
 - **Cyber Insurance Requirements**: Partner with top insurers (AIG, Chubb, AXA) to require zero-knowledge authentication for policy eligibility
-
-#### Corporate Liability Strategy
-- **Board Director Liability**: Train plaintiff lawyers on director fiduciary duty breach for inadequate authentication protection
-- **Executive Personal Liability**: Use GDPR personal fines and US corporate officer liability standards to authentication failure
-- **Class Action Technical Support**: Provide expert witness services in support of privacy class actions encompassing authentication breaches
-- **Regulatory Enforcement Support**: Assist regulators with enforcement action against companies with poor authentication controls
 
 #### Patent Warfare Strategy
 - **OPAQUE + PASETO Integration Patents**: Patent specific combinations of OPAQUE protocol with PASETO token rotation methods
@@ -170,12 +158,6 @@ We establish corporate liability for poor authentication due to regulatory press
 - **Graduate Fellowship Programs**: Establish fellowship programs that train the future generation of researchers in zero-knowledge protocols
 - **Academic Conference Sponsorship**: Sponsor big cryptography and security conferences to set research narrative and networking
 
-#### Crisis Response Kit Creation
-- **Pre-built Deployment Packages**: Ready-to-deploy packages for typical enterprise architecture (AWS, Azure, GCP)
-- **Breach Response Playbooks**: Migration guides with step-by-step procedures for organizations needing immediate authentication overhaul
-- **Regulatory Compliance Kits**: Complete documentation sets for immediate regulatory review response
-- **Legal Defense Materials**: Technical reports and expert witness materials for legal defense
-
 #### International Standards Expansion
 - **EU GDPR Article 25 Push**: Position zero-knowledge authentication as required "appropriate technical measure" under privacy by design
 - **UK Post-Brexit Data Framework**: Influence future UK Data (Use and Access) Act 2025 implementation during 2025-2026 regulatory development cycle
@@ -184,7 +166,7 @@ We establish corporate liability for poor authentication due to regulatory press
 - **Singapore PDPA Updates**: Target Personal Data Protection Act amendment process
 - **Japan APPI Enhancement**: Influence Act on Protection of Personal Information updates
 
-### Phase 2: Developer Ecosystem Capture and Market Readiness (Months 13-24)
+### Part 2 of phase 1: Developer Ecosystem Capture and Market Readiness
 #### Low-Cost API Strategy (Simplifying Regulatory Compliance)
 - **Compliance-Ready APIs**: Position developer APIs as turnkey regulatory compliance solution for upstart startups and growing businesses
 - **Regulatory Documentation Package**: Bundle complete audit documentation and compliance certificates with API deployment
@@ -197,12 +179,7 @@ We establish corporate liability for poor authentication due to regulatory press
 - **Founder Liability Education**: Simple education campaigns to startup founders about individual liability for adverse security choices
 - **Investment Agreement Language**: Work with law firms to have zero-knowledge authentication terms written in investment term sheets
 
-### Phase 3: Enterprise Market Domination Through Regulatory Enforcement (Months 25+)
-#### Enterprise Liability Exploitation
-- **Regulatory Examination Response**: Timely enterprise interaction following banking, healthcare, and financial services examination findings
-- **Post-Breach Liability Consulting**: Function as key remediation ally when companies are struck with regulatory enforcement for authentication failure
-- **Insurance Claim Support**: Technical support for companies filing cyber insurance claims based on authentication vulnerabilities
-- **Legal Defense Partnership**: Ally with corporate defense attorneys representing companies in authentication-based lawsuits
+### Phase 2: Enterprise Market Domination Through Regulatory Enforcement 
 
 #### Regulatory Enforcement Amplification
 - **CISA Cybersecurity Directives**: Ally with Cybersecurity and Infrastructure Security Agency to make federal directives encompass zero-knowledge requirements
@@ -264,7 +241,8 @@ We establish corporate liability for poor authentication due to regulatory press
 ## Competitive Landscape & Differentiation
 
 ### Market Position
-We are competing with established identity providers and new zero-trust solutions, but our strategy is fundamentally distinct.
+There are no competitors, we are the trailblazers carrying OPAQUE and PASETO through
+to the real world.
 
 ### Competitive Advantages
 
@@ -276,43 +254,17 @@ We are competing with established identity providers and new zero-trust solution
 
 #### Business Model Advantages
 - **Decreased Total Cost of Ownership**: Reduced compliance and breach response costs
-- **Investment Future-Proof**: Quantum-resistant day one
 - **Transparent Security**: Open implementations create trust
 
 ---
 
 ## Deployment & Operations
 
-### Technical Infrastructure
-- **Cloud-Native Architecture**: Multi-cloud deployment capabilities
-- **Scalability**: Designed to accommodate enterprise-class performance requirements
-- **Security Certifications**: S pursuit of relevant industry certifications
-- **Integration APIs**: Full developer tools and documentation
-
 ### Customer Success Strategy
 - **Onboarding Program**: Structured deployment and education
 - **Ongoing Support**: Security support and technical advisory
 - **Community Building**: Technical forums and user communities
 - **Continuous Innovation**: Regular feature releases and security patches
-
----
-
-## Risk Factors & Mitigation Strategies
-
-### Technology Risks
-- **Cryptographic Vulnerabilities**: Regular security audits and peer review
-- **Performance Scaling**: Investment in infrastructure and optimization
-- **Integration Complexity**: Full support and documentation
-
-### Market Risks
-- **Regulatory Changes**: Active engagement with standards and compliance groups
-- **Competitive Response**: Continued innovation and patent development
-- **Customer Education**: Investment in market education and thought leadership
-
-### Execution Risks
-- **Talent Acquisition**: Competitive hiring for cryptography and security experts
-- **Customer Concentration**: Diversified customer base strategy
-- **Technology Evolution**: Ongoing research and development investment
 
 ---
 
