@@ -37,6 +37,9 @@ if (-not (Test-Path "venv")) {
 # Activate venv
 & .\venv\Scripts\Activate.ps1
 
+# move libsodium to /venv/Scripts
+Copy-Item -Path '.\libsodium.dll' -Destination '.\venv\Scripts\libsodium.dll'
+
 # Upgrade pip and install requirements
 python -m pip install --upgrade pip
 pip install -r requirements.txt
