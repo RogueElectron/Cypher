@@ -93,4 +93,4 @@ EOF
 chmod +x start.sh dev.sh
 
 echo "installation complete"
-echo "run: ./dev.sh (development)"
+echo "run: ./start.sh "

@@ -3,4 +3,4 @@
 /back-end/__pycache__ 
 /back-end/node_internal_api/node_modules
 /back-end/.env
-/back-end/cypher_users.db
+/back-end/static/dist/
