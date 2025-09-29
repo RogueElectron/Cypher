@@ -8,6 +8,7 @@ Welcome to the Cypher project documentation. This guide provides comprehensive i
 
 - [**Business Model**](Documentation/Business-Model.md) - complete business model
 - [**Team Roles**](Documentation/Team-Roles.md) - team roles
+- [**Simple Guide**](Documentation/Simple-Guide.md) - quick guide to understand how cypher works without getting into much details
 
 ## Documentation Index
 
