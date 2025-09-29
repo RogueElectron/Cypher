@@ -4,13 +4,13 @@ Welcome to the Cypher project documentation. This guide provides comprehensive i
 
 ## NOTICE
 
-This project is in active development and is a prototype, please take in mind:
+- This project is in active development and is a prototype, please take in mind:
 
-The server doesn't hardcode secrets but generates them on each run
-The server doesn't have presistent storage but instead uses wrappers around ```map()```
-The time on both the server machine and the user machine MUST BE CORRECT for TOTP work
-Since TOTP by design relies on the time
-This project is tested on Debian 12 and Windows
+- The server doesn't hardcode secrets but generates them on each run
+- The server doesn't have presistent storage but instead uses wrappers around ```map()```
+- The time on both the server machine and the user machine MUST BE CORRECT for TOTP to work correctly
+
+- This project is tested on Debian 12 and Windows
 
 
 ## Digitopia specifics
