@@ -10,7 +10,7 @@ Welcome to the Cypher project documentation. This guide provides comprehensive i
 - The server doesn't have presistent storage but instead uses wrappers around ```map()```
 - The time on both the server machine and the user machine MUST BE CORRECT for TOTP to work correctly
 
-- This project is tested on Debian 12 and Windows
+- This project is tested on Debian 12
 
 
 ## Digitopia specifics
