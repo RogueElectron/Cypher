@@ -297,5 +297,3 @@ Our zero-knowledge authentication technology is a paradigm shift in how organiza
 Where regulation requirements meet privacy sensitivity and cyber risk, there's a compelling market opportunity for an offering that not only delivers security—proves it mathematically.
 
 With deep technology advantage, end-to-end go-to-market strategy, and customer success orientation, we are building the authentication infrastructure of the privacy-conscious digital future.
-
-**The authentication future is not just secure—it's unknowable.**

@@ -26,8 +26,9 @@ graph TB
         ServerRecord --> Breach2
         Breach2 --> Useless
     end
-``` [1](#0-0) 
+```
 
+This diagram illustrates why the OPAQUE protocol prevents attackers from reusing stolen records.
 
 ### 2. OPAQUE Registration Process
 
@@ -55,9 +56,9 @@ sequenceDiagram
     
     Server->>DB: "Store puzzle record"
     Note over DB: Database contains mathematical puzzle<br/>NOT the password or hash
-``` [3](#0-2) 
+```
 
-The registration process ensures your password never leaves your device in plaintext [4](#0-3) .
+The registration process ensures your password never leaves your device in plaintext.
 
 ### 3. Zero-Knowledge Authentication
 
@@ -79,9 +80,9 @@ graph TB
     subgraph "What Server Knows"
         ServerKnows["❌ NOT the password<br/>❌ NOT password hash<br/>✅ Mathematical proof user knows password"]
     end
-``` [5](#0-4) 
+```
 
-The authentication steps are visualized in real-time for users [6](#0-5) .
+The authentication steps are visualized in real time for users inside the Cypher UI.
 
 ### 4. Why Breaches Become Useless
 
@@ -107,7 +108,7 @@ graph TB
     end
 ```
 
-Unlike traditional password hashes, OPAQUE records stored in the database [7](#0-6)  cannot be cracked offline.
+Unlike traditional password hashes, OPAQUE records stored in the database cannot be cracked offline.
 
 ### 5. Same Password, Different Sites = Different Fingerprints
 
@@ -139,7 +140,7 @@ graph TB
     end
 ```
 
-Each OPAQUE server instance uses unique cryptographic seeds [8](#0-7) , ensuring different fingerprints even with identical passwords.
+Each OPAQUE server instance uses unique cryptographic seeds, ensuring different fingerprints even with identical passwords.
 
 ### 6. Complete Security Architecture
 
@@ -170,7 +171,6 @@ graph TB
     PASETO --> Rotation
     Rotation --> Refresh
     Refresh --> Impossible
-``` [9](#0-8) 
+```
 
-The system combines OPAQUE with TOTP 2FA [10](#0-9)  and rotating PASETO session tokens for complete security.
-
+The system combines OPAQUE with TOTP 2FA and rotating PASETO session tokens for complete security.
