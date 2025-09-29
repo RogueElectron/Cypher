@@ -265,9 +265,16 @@ The service implements automatic cleanup for unverified accounts:
 | --- | --- | --- |
 | `scheduleAccountCleanup()` | Schedule account deletion | 5 minutes |
 | `cleanupUnverifiedAccount()` | Remove account data | Immediate |
+| `markAccountVerified()` | Cancel pending cleanup when verification succeeds | Immediate |
 | `VERIFICATION_TIMEOUT` | Cleanup timeout constant | 300000ms |
 
-Sources: [back-end/node_internal_api/app.js L82-L101](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/node_internal_api/app.js#L82-L101)
+### Account Verification Helper
+
+The `markAccountVerified()` helper clears any pending cleanup timers when either `/totp/verify-setup` or `/totp/verify-login` confirms the user's one-time code. This prevents accidental deletion of newly registered accounts that complete multi-factor authentication within the five-minute window.
+
+Sources: [back-end/node_internal_api/app.js L336-L378](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/node_internal_api/app.js#L336-L378)
+
+ [back-end/node_internal_api/app.js L420-L455](https://github.com/RogueElectron/Cypher/blob/7b7a1583/back-end/node_internal_api/app.js#L420-L455)
 
 ## Security Configuration
 

@@ -55,6 +55,15 @@ function createKVStorage() {  // Simple KV storage for testing - not for product
             const value = storage.get(key);  
             return value || false;  
         },  
+
+        delete(key) {
+            return storage.delete(key);
+        },
+
+        clear() {
+            storage.clear();
+            return true;
+        }
           
   
     };  
@@ -98,6 +107,13 @@ function scheduleAccountCleanup(username) {
     }, VERIFICATION_TIMEOUT);
     
     unverifiedAccounts.set(username, timeoutId);
+}
+
+function markAccountVerified(username) {
+    if (unverifiedAccounts.has(username)) {
+        clearTimeout(unverifiedAccounts.get(username));
+        unverifiedAccounts.delete(username);
+    }
 }
 
 const akeKeypairExport = {  
@@ -349,6 +365,7 @@ app.post('/totp/verify-setup', async (req, res) => {
         const isValid = authenticator.verify({ token, secret });
                 
         if (isValid) {
+            markAccountVerified(username);
             res.status(200).json({ success: true, message: 'TOTP verification successful' });
         } else {
             res.status(400).json({ success: false, error: 'Invalid TOTP code' });
@@ -412,10 +429,7 @@ app.post('/totp/verify-login', async (req, res) => {
         });
                 
         if (isValid) {
-            if (unverifiedAccounts.has(username)) {
-                clearTimeout(unverifiedAccounts.get(username));
-                unverifiedAccounts.delete(username);
-            }
+            markAccountVerified(username);
             
             // call flask to create session tokens
             try {
