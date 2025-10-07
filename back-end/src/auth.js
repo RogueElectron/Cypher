@@ -283,7 +283,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const finClient = await client.authFinish(deser_ke2);
                 const ke3 = finClient.ke3;
                 const ser_ke3 = ke3.serialize();
-                console.log('session', finClient.session_key);
+                // opaque protocol completed - session key established
                 
                 authLiveViz.completeStep('verify-server');
                 
@@ -339,12 +339,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     authLiveViz.activateStep('totp-verify');
                     authLiveViz.updateSecurityStatus('OPAQUE authentication complete! Now verifying 2FA...');
                     
-                    console.log('Switching to TOTP phase...');
+                        // switch ui from password form to 2fa input
                     const loginForm = document.getElementById('login-form');
                     const totpPhase = document.getElementById('totp-phase');
                     const backLink = document.getElementById('back-link');
-                    
-                    console.log('Elements found:', {loginForm, totpPhase, backLink});
                     
                     if (loginForm) loginForm.style.display = 'none';
                     if (totpPhase) totpPhase.style.display = 'block';
@@ -434,16 +432,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 authLiveViz.completeStep('totp-verify');
                 authLiveViz.updateSecurityStatus('Authentication complete! Session tokens created.');
                 
-                // store session tokens and clear temp passauth token
+                // totp verified - now establish persistent session
                 if (verifyResult.access_token && verifyResult.refresh_token) {
                     const { sessionManager } = await import('./session-manager.js');
+                    // initialize session with tokens from server
                     sessionManager.setTokens(
                         verifyResult.access_token,
                         verifyResult.refresh_token,
                         verifyResult.expires_in || 900
                     );
                     
-                    // clear passauth token now that we have session tokens
+                    // cleanup temporary auth token since we have real session now
                     document.cookie = 'pass_auth_token=; Max-Age=0; Path=/; SameSite=Lax';
                 }
                 

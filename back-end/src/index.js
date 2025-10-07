@@ -1,13 +1,17 @@
+// session management for the main landing page
 import { sessionManager } from './session-manager.js';
 
+// check if user is logged in and show appropriate interface
 document.addEventListener('DOMContentLoaded', async () => {
     const heroSection = document.querySelector('.hero-section');
     const container = heroSection.querySelector('.container');
     
+    // try to load existing session from cookies/localstorage
     const hasSession = sessionManager.loadTokens();
     
     if (hasSession) {
         try {
+            // verify the session is still valid
             const currentUser = await sessionManager.getCurrentUser();
             
             if (currentUser) {
@@ -16,6 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 showUnauthenticatedView(container);
             }
         } catch (error) {
+            // token verification failed - show login options
             showUnauthenticatedView(container);
         }
     } else {
@@ -23,6 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
+// render the logged-in dashboard
 function showAuthenticatedView(username, container) {
     container.innerHTML = `
         <div class="row">
@@ -73,12 +79,14 @@ function showAuthenticatedView(username, container) {
         </div>
     `;
     
+    // wire up logout button
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', handleLogout);
     }
 }
 
+// render the login/signup landing page
 function showUnauthenticatedView(container) {
     container.innerHTML = `
         <div class="row">
@@ -106,6 +114,7 @@ function showUnauthenticatedView(container) {
     `;
 }
 
+// handle logout button click with proper cleanup
 async function handleLogout() {
     const logoutBtn = document.getElementById('logout-btn');
     
@@ -115,15 +124,18 @@ async function handleLogout() {
         logoutBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Logging out...';
         
         try {
+            // tell server to invalidate session
             await sessionManager.logout();
             
             logoutBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>logged out';
             
+            // refresh to show logged out state
             setTimeout(() => {
                 window.location.reload();
             }, 1000);
             
         } catch (error) {
+            // fallback - clear local session even if server call failed
             sessionManager.clearSession();
             
             logoutBtn.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>logged out';
@@ -134,6 +146,7 @@ async function handleLogout() {
     }
 }
 
+// prevent xss by escaping html in usernames
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
