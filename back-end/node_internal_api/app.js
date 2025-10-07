@@ -70,7 +70,7 @@ function createKVStorage() {  // Simple KV storage for testing - not for product
 }
 
 
-// CORS setup for frontend communication
+// allow cross-origin requests from the flask frontend
 app.use(cors({
     origin: ['http://127.0.0.1:5000', 'http://localhost:5000'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -80,15 +80,18 @@ app.use(cors({
 
 app.use(express.json());
 
+// initialize opaque cryptographic configuration  
 const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);  
 const oprfSeed = cfg.prng.random(cfg.hash.Nh);  
 const serverKeypairSeed = cfg.prng.random(cfg.constants.Nseed);
+// generate server keypair for authenticated key exchange
 const serverAkeKeypair = await cfg.ake.deriveAuthKeyPair(serverKeypairSeed);
 
+// storage for user credentials and temporary state
 const database = createKVStorage();
-const totpSecrets = new Map();
-const unverifiedAccounts = new Map();
-const VERIFICATION_TIMEOUT = 5 * 60 * 1000;
+const totpSecrets = new Map();  // totp secrets during setup
+const unverifiedAccounts = new Map();  // pending verification cleanup
+const VERIFICATION_TIMEOUT = 5 * 60 * 1000;  // 5 minutes to complete setup
 
 function cleanupUnverifiedAccount(username) {
     const userData = database.lookup(username);
@@ -130,8 +133,9 @@ const server = new OpaqueServer(
 
 
 
-// registration routes
+// user registration endpoints
 app.post('/register/init', async (req, res) => {
+    // make sure opaque server is ready
     if (!server) {
         return res.status(503).json({ error: 'Server not initialized yet' });
     }
@@ -186,10 +190,12 @@ app.post('/register/finish', async (req, res) => {
         
         const deserRec = RegistrationRecord.deserialize(cfg, record);
         const credential_file = new CredentialFile(username, deserRec);
+        // store user credentials in database
         const success = database.store(username, Uint8Array.from(credential_file.serialize()));
         
         if (success) {
             console.log(`User ${username} registered successfully`);
+            // user has 5 minutes to complete totp setup
             scheduleAccountCleanup(username);
             res.status(200).json({ 
                 success: true, 
@@ -262,13 +268,12 @@ app.post('/login/finish', async (req, res) => {
         const deser_ke3 = KE3.deserialize(cfg, ser_ke3);
         const finServer = await server.authFinish(deser_ke3, expected);
         
-        // clean up the session
+        // remove opaque session state now that we're done with auth
         global.userSessions.delete(username);
 
         
         if (finServer.session_key) {
-            console.log('Login successful for user:', username);
-
+            // opaque auth succeeded - need intermediate token for totp phase
             try {
                 const createTokenResponse = await fetch('http://localhost:5000/api/create-token', {
                     method: 'POST',
@@ -303,7 +308,7 @@ app.post('/login/finish', async (req, res) => {
             }
 
         } else {
-            console.log('Login failed:', finServer);
+            // opaque protocol failed - wrong password or user doesn't exist
             res.status(401).json({ success: false, message: 'Authentication failed' });
         }
 
@@ -334,7 +339,7 @@ app.post('/totp/setup', async (req, res) => {
         // Generate QR code
         const qrCodeDataURL = await QRCode.toDataURL(otpauthUrl);
         
-        console.log(`TOTP setup for user ${username}:`, { secret, otpauthUrl });
+        // totp secret generated and qr code created for user enrollment
         
         res.status(200).json({
             success: true,
@@ -416,12 +421,13 @@ app.post('/totp/verify-login', async (req, res) => {
             return res.status(500).json({ error: 'Token verification failed' });
         }
 
-        // if token is valid then proceed with TOTP verification
+        // intermediate token validated - now check the totp code
         const secret = totpSecrets.get(username);
         if (!secret) {
             return res.status(400).json({ error: 'No TOTP secret found for user' });
         }
         
+        // verify the 6-digit totp code with 30 second window
         const isValid = authenticator.verify({ 
             token, 
             secret,
@@ -429,9 +435,10 @@ app.post('/totp/verify-login', async (req, res) => {
         });
                 
         if (isValid) {
+            // totp setup complete - account is now fully verified
             markAccountVerified(username);
             
-            // call flask to create session tokens
+            // totp verified - create actual session tokens for the user
             try {
                 const sessionResponse = await fetch('http://localhost:5000/api/create-session', {
                     method: 'POST',
@@ -446,6 +453,7 @@ app.post('/totp/verify-login', async (req, res) => {
                 if (sessionResponse.ok) {
                     const sessionData = await sessionResponse.json();
                     
+                    // return session tokens to client for storage
                     res.status(200).json({ 
                         success: true, 
                         message: 'TOTP login verification successful - session created',
