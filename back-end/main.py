@@ -155,6 +155,198 @@ def create_session():
         'expires_in': 900
     })
 
+# verify access token endpoint (called by session manager)
+@app.route('/api/verify-access', methods=['POST'])
+def verify_access():
+    data = request.get_json()
+    access_token = data.get('access_token')
+    
+    if not access_token:
+        return jsonify({'valid': False, 'error': 'Access token required'}), 400
+    
+    try:
+        # parse and validate access token
+        parsed = paseto.parse(
+            key=session_key,
+            purpose='local',
+            token=access_token
+        )
+        
+        access_claims = parsed['message']
+        
+        # check token type
+        if access_claims.get('type') != 'access':
+            return jsonify({'valid': False, 'error': 'Invalid token type'}), 401
+        
+        username = access_claims.get('username')
+        session_id = access_claims.get('session_id')
+        
+        if not all([username, session_id]):
+            return jsonify({'valid': False, 'error': 'Invalid token claims'}), 401
+        
+        # check if session still exists
+        if session_id not in active_sessions:
+            return jsonify({'valid': False, 'error': 'Session expired'}), 401
+        
+        session_info = active_sessions[session_id]
+        if session_info['username'] != username:
+            return jsonify({'valid': False, 'error': 'Token mismatch'}), 401
+        
+        return jsonify({
+            'valid': True,
+            'username': username,
+            'session_id': session_id
+        })
+        
+    except (paseto.ExpireError, paseto.ValidationError):
+        return jsonify({'valid': False, 'error': 'Invalid or expired token'}), 401
+
+# refresh token endpoint (called by session manager)
+@app.route('/api/refresh-token', methods=['POST']) 
+def refresh_token():
+    data = request.get_json()
+    refresh_token = data.get('refresh_token')
+    
+    if not refresh_token:
+        return jsonify({'error': 'Refresh token required'}), 400
+    
+    try:
+        parsed = paseto.parse(
+            key=refresh_key,
+            purpose='local',
+            token=refresh_token
+        )
+        
+        refresh_claims = parsed['message']
+        
+        if refresh_claims.get('type') != 'refresh':
+            return jsonify({'error': 'Invalid token type'}), 401
+        
+        username = refresh_claims.get('username')
+        session_id = refresh_claims.get('session_id')
+        token_id = refresh_claims.get('token_id')
+        
+        if not all([username, session_id, token_id]):
+            return jsonify({'error': 'Invalid refresh token claims'}), 401
+        
+        # atomically remove token to prevent multiple uses
+        token_info = active_refresh_tokens.pop(token_id, None)
+        if token_info is None:
+            return jsonify({'error': 'Refresh token already used or invalid'}), 401
+        
+        # verify token belongs to the requesting user and session
+        if token_info['username'] != username or token_info['session_id'] != session_id:
+            # token mismatch indicates compromise - kill entire session
+            if session_id in active_sessions:
+                del active_sessions[session_id]
+            # remove all refresh tokens for this session
+            tokens_to_remove = [tid for tid, tinfo in active_refresh_tokens.items() 
+                              if tinfo['session_id'] == session_id]
+            for tid in tokens_to_remove:
+                del active_refresh_tokens[tid]
+            return jsonify({'error': 'Token compromise detected - session terminated'}), 401
+        
+        # check if session still exists
+        if session_id not in active_sessions:
+            # session expired - cleanup any orphaned tokens
+            tokens_to_remove = [tid for tid, tinfo in active_refresh_tokens.items() 
+                              if tinfo['session_id'] == session_id]
+            for tid in tokens_to_remove:
+                del active_refresh_tokens[tid]
+            return jsonify({'error': 'Session expired'}), 401
+        
+        current_time = time.time()
+        active_sessions[session_id]['last_refresh'] = current_time
+        
+        # generate new access token with 15 minute expiry
+        new_access_claims = {
+            'username': username,
+            'session_id': session_id,
+            'type': 'access',
+            'iat': current_time
+        }
+        
+        new_access_token = paseto.create(
+            key=session_key,
+            purpose='local',
+            claims=new_access_claims,
+            exp_seconds=900
+        )
+        
+        # create new refresh token with unique id
+        new_refresh_token_id = secrets.token_urlsafe(32)
+        new_refresh_claims = {
+            'username': username,
+            'session_id': session_id,
+            'type': 'refresh',
+            'token_id': new_refresh_token_id,
+            'iat': current_time
+        }
+        
+        # refresh tokens live for 30 days
+        new_refresh_token = paseto.create(
+            key=refresh_key,
+            purpose='local',
+            claims=new_refresh_claims,
+            exp_seconds=2592000
+        )
+        
+        # track the new refresh token
+        active_refresh_tokens[new_refresh_token_id] = {
+            'username': username,
+            'session_id': session_id
+        }
+        
+        return jsonify({
+            'success': True,
+            'access_token': new_access_token,
+            'refresh_token': new_refresh_token,
+            'expires_in': 900
+        })
+        
+    except Exception as error:
+        return jsonify({'error': 'Token refresh failed'}), 500
+
+# logout endpoint to clean up sessions
+@app.route('/api/logout', methods=['POST'])
+def logout():
+    data = request.get_json()
+    access_token = data.get('access_token')
+    refresh_token = data.get('refresh_token')
+    
+    if access_token:
+        try:
+            # extract session info from access token
+            parsed = paseto.parse(
+                key=session_key,
+                purpose='local',
+                token=access_token
+            )
+            
+            access_claims = parsed['message']
+            session_id = access_claims.get('session_id')
+            
+            if session_id:
+                # clean up session and all associated tokens
+                if session_id in active_sessions:
+                    del active_sessions[session_id]
+                    
+                    # find all refresh tokens for this session
+                    tokens_to_remove = []
+                    for token_id, token_info in active_refresh_tokens.items():
+                        if token_info['session_id'] == session_id:
+                            tokens_to_remove.append(token_id)
+                    
+                    # remove all refresh tokens for the session
+                    for token_id in tokens_to_remove:
+                        del active_refresh_tokens[token_id]
+                        
+        except Exception:
+            # ignore errors during cleanup
+            pass
+    
+    return jsonify({'success': True})
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
 
