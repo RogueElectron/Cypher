@@ -5,6 +5,35 @@ class SessionManager {
         this.refreshTimeout = null;
         this.isRefreshing = false;
         this.refreshPromise = null;
+        
+        // handles multiple tabs fighting over tokens
+        this.setupStorageSync();
+    }
+    
+    setupStorageSync() {
+        // listen for when other tabs mess with tokens
+        window.addEventListener('storage', (event) => {
+            if (event.key === 'refresh_token') {
+                this.refreshToken = event.newValue;
+            } else if (event.key === 'token_sync') {
+                // some other tab did the work for us
+                const syncData = JSON.parse(event.newValue || '{}');
+                if (syncData.action === 'update') {
+                    this.accessToken = this.getCookie('access_token');
+                    
+                    // stop our timer since someone else already refreshed
+                    if (this.refreshTimeout) {
+                        clearTimeout(this.refreshTimeout);
+                    }
+                    // refresh 2-3 minutes before expiry (tokens last 15 min)
+                    const ROTATION_INTERVAL = 720; // 12 minutes
+                    const jitter = Math.random() * 60; // random 0-60 seconds
+                    this.scheduleRefresh(ROTATION_INTERVAL + jitter);
+                } else if (syncData.action === 'clear') {
+                    this.clearSession();
+                }
+            }
+        });
     }
 
     setCookie(name, value, maxAge) {
@@ -28,18 +57,27 @@ class SessionManager {
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
         
+        // access token goes in cookie so it gets sent automatically
         this.setCookie('access_token', accessToken, expiresIn);
-        this.setCookie('refresh_token', refreshToken, 2592000);
         
-        // auto refresh 1 minute before expiry
-        if (expiresIn > 60) {
-            this.scheduleRefresh(expiresIn - 60);
-        }
+        // refresh token stays local - don't want it sent with every request
+        localStorage.setItem('refresh_token', refreshToken);
+        
+        // tell other tabs we got new tokens
+        localStorage.setItem('token_sync', JSON.stringify({
+            action: 'update',
+            timestamp: Date.now()
+        }));
+        
+        // refresh 2-3 minutes before the 15-minute expiry
+        const ROTATION_INTERVAL = 720; // 12 minutes  
+        const jitter = Math.random() * 60; // random 0-60 seconds
+        this.scheduleRefresh(ROTATION_INTERVAL + jitter);
     }
 
     loadTokens() {
         this.accessToken = this.getCookie('access_token');
-        this.refreshToken = this.getCookie('refresh_token');
+        this.refreshToken = localStorage.getItem('refresh_token');
         
         if (this.accessToken && this.refreshToken) {
             this.verifyToken().catch(() => {
@@ -77,6 +115,34 @@ class SessionManager {
             throw new Error('No refresh token available');
         }
         
+        // try to be the tab that does the refresh
+        const lockAcquired = this.acquireRefreshLock();
+        if (!lockAcquired) {
+            // someone else is handling it, just wait
+            return new Promise((resolve) => {
+                const handleTokenSync = (event) => {
+                    if (event.key === 'token_sync') {
+                        const syncData = JSON.parse(event.newValue || '{}');
+                        if (syncData.action === 'update') {
+                            // other tab finished, grab the new tokens
+                            this.accessToken = this.getCookie('access_token');
+                            this.refreshToken = localStorage.getItem('refresh_token');
+                            window.removeEventListener('storage', handleTokenSync);
+                            resolve();
+                        }
+                    }
+                };
+                
+                window.addEventListener('storage', handleTokenSync);
+                
+                // give up after 10 seconds in case something breaks
+                setTimeout(() => {
+                    window.removeEventListener('storage', handleTokenSync);
+                    resolve();
+                }, 10000);
+            });
+        }
+        
         this.isRefreshing = true;
         this.refreshPromise = this._performRefresh();
         
@@ -86,7 +152,47 @@ class SessionManager {
         } finally {
             this.isRefreshing = false;
             this.refreshPromise = null;
+            this.releaseRefreshLock();
         }
+    }
+    
+    acquireRefreshLock() {
+        const now = Date.now();
+        const tabId = Math.random().toString(36);
+        
+        // each tab gets a unique lock value
+        const lockValue = JSON.stringify({
+            timestamp: now,
+            tabId: tabId
+        });
+        
+        // try to claim the lock
+        localStorage.setItem('refresh_lock', lockValue);
+        
+        // make sure we actually got it (race conditions are fun)
+        const actualLock = localStorage.getItem('refresh_lock');
+        if (actualLock !== lockValue) {
+            // someone else won, but maybe their lock is old?
+            try {
+                const lockData = JSON.parse(actualLock);
+                if (now - lockData.timestamp > 10000) {
+                    // lock is stale, steal it
+                    localStorage.setItem('refresh_lock', lockValue);
+                    return localStorage.getItem('refresh_lock') === lockValue;
+                }
+            } catch (e) {
+                // corrupted data, just take it
+                localStorage.setItem('refresh_lock', lockValue);
+                return localStorage.getItem('refresh_lock') === lockValue;
+            }
+            return false; // they have a valid lock
+        }
+        
+        return true; // we got it!
+    }
+    
+    releaseRefreshLock() {
+        localStorage.removeItem('refresh_lock');
     }
 
     async _performRefresh() {
@@ -144,26 +250,34 @@ class SessionManager {
         return data;
     }
 
-    // make requests with auto token refresh if needed
+    // wrapper for fetch that handles expired tokens
     async authenticatedFetch(url, options = {}) {
         if (!this.accessToken) {
             throw new Error('No access token - user not authenticated');
         }
 
+        // flask wants tokens in the body, not headers
+        const body = options.body ? JSON.parse(options.body) : {};
+        body.access_token = this.accessToken;
+
         const authOptions = {
             ...options,
             headers: {
-                ...options.headers,
-                'Authorization': `Bearer ${this.accessToken}`
-            }
+                'Content-Type': 'application/json',
+                ...options.headers
+            },
+            body: JSON.stringify(body)
         };
 
         try {
             const response = await fetch(url, authOptions);
             
             if (response.status === 401) {
+                // token expired, get a new one and try again
                 await this.refreshTokens();
-                authOptions.headers['Authorization'] = `Bearer ${this.accessToken}`;
+                const newBody = JSON.parse(authOptions.body);
+                newBody.access_token = this.accessToken;
+                authOptions.body = JSON.stringify(newBody);
                 return fetch(url, authOptions);
             }
             
@@ -195,7 +309,14 @@ class SessionManager {
         this.refreshToken = null;
         
         this.deleteCookie('access_token');
-        this.deleteCookie('refresh_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('refresh_lock'); // cleanup any locks we might have had
+        
+        // tell other tabs we're logging out
+        localStorage.setItem('token_sync', JSON.stringify({
+            action: 'clear',
+            timestamp: Date.now()
+        }));
         
         if (this.refreshTimeout) {
             clearTimeout(this.refreshTimeout);
@@ -222,6 +343,10 @@ class SessionManager {
 
 const sessionManager = new SessionManager();
 
+// expose globally for testing/debugging
+window.sessionManager = sessionManager;
+
+// start loading tokens as soon as the page is ready
 document.addEventListener('DOMContentLoaded', () => {
     sessionManager.loadTokens();
 });

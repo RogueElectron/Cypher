@@ -1,4 +1,5 @@
 
+// opaque protocol client for registration flow
 import { 
   OpaqueClient,
   getOpaqueConfig,
@@ -6,7 +7,7 @@ import {
   RegistrationResponse
 } from '@cloudflare/opaque-ts';
 
-
+// p256 curve configuration for crypto operations
 const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);
 
 const registrationSteps = [
@@ -75,7 +76,7 @@ const registrationSteps = [
     }
 ];
 
-// Live visualization controller for registration
+// handles the step-by-step ui visualization during registration
 class LiveVisualization {
     constructor() {
         this.steps = registrationSteps;
@@ -107,7 +108,7 @@ class LiveVisualization {
     activateStep(stepId) {
         const currentIndex = this.steps.findIndex(step => step.id === stepId);
         
-        // batch dom updates for better performance
+        // update all step states in one pass to avoid layout thrashing
         this.steps.forEach((step, index) => {
             const element = document.getElementById(`step-${step.id}`);
             if (element) {
@@ -145,10 +146,10 @@ class LiveVisualization {
     }
 }
 
-// Initialize live visualization
+// global instance for step visualization
 let liveViz;
 
-// Sidebar toggle functionality
+// collapsible sidebar for the registration progress
 function initSidebarToggle() {
     const hideBtn = document.getElementById('hide-sidebar');
     const showBtn = document.getElementById('show-sidebar');
@@ -167,7 +168,7 @@ function initSidebarToggle() {
     }
 }
 
-// Utility functions for UI feedback
+// bootstrap alert system for user notifications
 function showAlert(message, type = 'success', containerId = 'alert-container') {
     const alertContainer = document.getElementById(containerId);
     if (!alertContainer) {
@@ -184,7 +185,7 @@ function showAlert(message, type = 'success', containerId = 'alert-container') {
         </div>
     `;
     
-    // Auto-dismiss success messages after 5 seconds
+    // success messages disappear automatically
     if (type === 'success') {
         setTimeout(() => {
             const alert = alertContainer.querySelector('.alert');
@@ -260,6 +261,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 liveViz.activateStep('generate-keys');
                 liveViz.updateSecurityStatus('Generating cryptographic blinding - your password stays secure');
                 
+                // start opaque protocol - password gets blinded locally
                 const client = new OpaqueClient(cfg);
                 const request = await client.registerInit(password);
                 const serRequest = request.serialize();
@@ -269,6 +271,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 liveViz.activateStep('registration-request');
                 liveViz.updateSecurityStatus('Sending blinded password to server - original password never leaves this device');
                 
+                // send blinded password to server for opaque protocol
                 const response = await fetch('http://localhost:3000/register/init', {
                     method: 'POST',
                     headers: {
@@ -290,6 +293,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 liveViz.activateStep('server-response');
                 liveViz.updateSecurityStatus('Server processing blinded password - your actual password remains unknown');
                 
+                // parse server's opaque response
                 const { registrationResponse } = await response.json();
                 const deSerRegResponse = RegistrationResponse.deserialize(cfg, registrationResponse);
                 
@@ -298,6 +302,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 liveViz.activateStep('finalize');
                 liveViz.updateSecurityStatus('Creating your secure credential file locally');
                 
+                // complete opaque protocol and generate credential record
                 const rec = await client.registerFinish(deSerRegResponse);
                 const record = rec.record;
                 const serRec = record.serialize();
@@ -328,11 +333,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     liveViz.updateSecurityStatus('OPAQUE registration complete! Now setting up 2FA...');
                     
 
+                    // switch from password form to totp setup
                     document.getElementById('register-form').parentElement.style.display = 'none';
                     document.getElementById('totp-phase').style.display = 'block';
                     document.getElementById('back-link').style.display = 'none';
                     
-                    
+                    // generate totp secret for 2fa setup
                     generateTotpSecret();
                     
                     showAlert('OPAQUE registration successful! Please set up 2FA to complete registration.', 'success');
@@ -350,11 +356,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
     
-    // TOTP setup
+    // create totp secret and qr code for authenticator app
     async function generateTotpSecret() {
         try {
             const username = document.getElementById('username').value;
             
+            // request new totp secret from server
             const response = await fetch('http://localhost:3000/totp/setup', {
                 method: 'POST',
                 headers: {
@@ -369,10 +376,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             const result = await response.json();
             
+            // show secret to user (for manual entry)
             document.getElementById('totp-secret').textContent = result.secret;
             
+            // store username for verification step
             window.currentUsername = username;
             
+            // display qr code for easy scanning
             displayServerQrCode(result.qrCode, result.otpauthUrl);
             
             showTotpInfo(result.secret);
@@ -405,11 +415,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     function showTotpInfo(secret) {
-        // Blue info box removed for streamlined UI
+        // info box was removed to simplify ui
     }
     
     
-    // TOTP verification form handler
+    // verify totp code to complete registration
     const totpForm = document.getElementById('totp-verify-form');
     if (totpForm) {
         totpForm.addEventListener('submit', async (event) => {
@@ -419,13 +429,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             const formData = new FormData(totpForm);
             const totpCode = formData.get('totp_code');
             
-            // Validate TOTP code
+            // make sure we have a 6-digit code
             if (!totpCode || totpCode.length !== 6) {
                 showAlert('Please enter a valid 6-digit code!', 'error');
                 return;
             }
             
-            // Disable form during verification
+            // prevent double-submission while verifying
             const submitButton = totpForm.querySelector('button[type="submit"]');
             const originalText = submitButton.innerHTML;
             submitButton.disabled = true;
@@ -442,6 +452,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     return;
                 }
 
+                // send totp code to server for verification
                 const verifyResponse = await fetch('http://localhost:3000/totp/verify-setup', {
                     method: 'POST',
                     headers: {
@@ -474,21 +485,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                 showAlert(`2FA verification failed: ${error.message || 'Invalid code'}`, 'error', 'totp-alert-container');
                 liveViz.updateSecurityStatus('TOTP verification failed. Please try again.', 'error');
             } finally {
-                // Re-enable form
+                // restore form state
                 submitButton.disabled = false;
                 submitButton.innerHTML = originalText;
             }
         });
     }
     
-    // Format TOTP input
+    // restrict totp input to 6 digits only
     const totpInput = document.getElementById('totp-code');
     if (totpInput) {
         totpInput.addEventListener('input', () => {
-            // Only allow numbers
+            // numbers only please
             totpInput.value = totpInput.value.replace(/[^0-9]/g, '');
             
-            // Limit to 6 digits
+            // cut off at 6 characters
             if (totpInput.value.length > 6) {
                 totpInput.value = totpInput.value.slice(0, 6);
             }
