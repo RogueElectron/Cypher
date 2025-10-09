@@ -137,33 +137,21 @@ jobs:
         
         # Test database connectivity
         python3 -c "
-import psycopg2
-import redis
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-
+import psycopg2;
+import redis;
+import os;
+from dotenv import load_dotenv;
+load_dotenv();
 try:
-    # Test PostgreSQL connection
-    conn = psycopg2.connect(
-        host='localhost',
-        port=5432,
-        user='cypher',
-        password=os.getenv('CYPHER_DB_PASSWORD'),
-        database='cypher_db'
-    )
-    conn.close()
-    print('✅ PostgreSQL connection successful')
-    
-    # Test Redis connection
-    r = redis.Redis(host='localhost', port=6379, decode_responses=True)
-    r.ping()
-    print('✅ Redis connection successful')
-    
+    conn = psycopg2.connect(host='localhost', port=5432, user='cypher', password=os.getenv('CYPHER_DB_PASSWORD'), database='cypher_db');
+    conn.close();
+    print('✅ PostgreSQL connection successful');
+    r = redis.Redis(host='localhost', port=6379, decode_responses=True);
+    r.ping();
+    print('✅ Redis connection successful');
 except Exception as e:
-    print(f'❌ Database connection failed: {e}')
-    exit(1)
+    print(f'❌ Database connection failed: {e}');
+    exit(1);
         "
         
     - name: Run Application Tests (if any)
