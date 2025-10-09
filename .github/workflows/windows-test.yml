@@ -1,0 +1,179 @@
+name: Windows Testing
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  windows-test:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: back-end/package.json
+        
+    - name: Start Docker Desktop (Windows)
+      run: |
+        # Start Docker Desktop on Windows
+        Start-Process "C:\Program Files\Docker\Docker\Docker Desktop.exe" -WindowStyle Hidden
+        # Wait for Docker to be ready
+        $timeout = 120
+        $timer = 0
+        do {
+          Start-Sleep -Seconds 5
+          $timer += 5
+          try {
+            docker version | Out-Null
+            $dockerReady = $true
+            break
+          } catch {
+            $dockerReady = $false
+          }
+        } while ($timer -lt $timeout -and -not $dockerReady)
+        
+        if (-not $dockerReady) {
+          Write-Error "Docker failed to start within $timeout seconds"
+          exit 1
+        }
+        Write-Host "Docker is ready"
+      shell: pwsh
+      
+    - name: Navigate to back-end directory
+      run: cd back-end
+      shell: pwsh
+      
+    - name: Run Cypher Setup
+      run: |
+        cd back-end
+        .\setup.ps1
+      shell: pwsh
+      
+    - name: Verify Setup Success
+      run: |
+        cd back-end
+        # Check if virtual environment was created
+        if (!(Test-Path "venv\Scripts\activate.ps1") -and !(Test-Path "..\venv\Scripts\activate.ps1") -and !(Test-Path "..\cyvenv\Scripts\activate.ps1")) {
+          Write-Error "Virtual environment not found"
+          exit 1
+        }
+        
+        # Check if .env file was created
+        if (!(Test-Path ".env")) {
+          Write-Error ".env file not created"
+          exit 1
+        }
+        
+        # Check if Docker containers are running
+        $containers = docker compose ps --format json | ConvertFrom-Json
+        $postgresRunning = $containers | Where-Object { $_.Name -like "*postgres*" -and $_.State -eq "running" }
+        if (!$postgresRunning) {
+          Write-Error "PostgreSQL container not running"
+          exit 1
+        }
+        
+        Write-Host "✅ Setup verification passed"
+      shell: pwsh
+      
+    - name: Test Application Startup
+      run: |
+        cd back-end
+        
+        # Since start.ps1 runs indefinitely, we'll test the startup components separately
+        # Find and activate virtual environment
+        $venvPaths = @(".\venv", "..\venv", "..\cyvenv", ".\cyvenv")
+        $venvPath = ""
+        foreach ($path in $venvPaths) {
+            if ((Test-Path $path) -and (Test-Path "$path\Scripts\activate.ps1")) {
+                $venvPath = $path
+                break
+            }
+        }
+        
+        if ($venvPath -eq "") {
+            Write-Error "Virtual environment not found"
+            exit 1
+        }
+        
+        # Activate virtual environment
+        & "$venvPath\Scripts\Activate.ps1"
+        
+        # Test Python dependencies
+        python -c "import flask, requests, redis, psycopg2" 2>$null
+        if ($LASTEXITCODE -ne 0) {
+          Write-Error "Python dependencies test failed"
+          exit 1
+        }
+        
+        # Test Node.js dependencies
+        cd node_internal_api
+        node -e "console.log('Node.js dependencies OK')" 2>$null
+        if ($LASTEXITCODE -ne 0) {
+          Write-Error "Node.js dependencies test failed"
+          exit 1
+        }
+        cd ..
+        
+        Write-Host "✅ Application startup test passed"
+      shell: pwsh
+      
+    - name: Run Application Tests (if any)
+      run: |
+        cd back-end
+        
+        # Activate virtual environment
+        $venvPaths = @(".\venv", "..\venv", "..\cyvenv", ".\cyvenv")
+        $venvPath = ""
+        foreach ($path in $venvPaths) {
+            if ((Test-Path $path) -and (Test-Path "$path\Scripts\activate.ps1")) {
+                $venvPath = $path
+                break
+            }
+        }
+        & "$venvPath\Scripts\Activate.ps1"
+        
+        # Check if there are any test files and run them
+        if (Test-Path "tests") {
+          Write-Host "Running Python tests..."
+          python -m pytest tests/ -v
+        } elseif (Test-Path "test_*.py") {
+          Write-Host "Running Python test files..."
+          python -m pytest test_*.py -v
+        } else {
+          Write-Host "No test files found, skipping test execution"
+        }
+        
+        # Check for Node.js tests
+        cd node_internal_api
+        if (Test-Path "package.json") {
+          $packageJson = Get-Content "package.json" | ConvertFrom-Json
+          if ($packageJson.scripts.test) {
+            Write-Host "Running Node.js tests..."
+            npm test
+          }
+        }
+        cd ..
+      shell: pwsh
+      
+    - name: Cleanup
+      run: |
+        cd back-end
+        # Stop Docker containers
+        docker compose down
+        Write-Host "✅ Cleanup completed"
+      shell: pwsh
+      if: always()

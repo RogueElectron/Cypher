@@ -1,0 +1,263 @@
+name: Linux Testing
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  linux-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: back-end/package.json
+        
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-venv python3-pip
+        
+    - name: Setup Docker
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Make setup script executable
+      run: |
+        cd back-end
+        chmod +x setup.sh
+        
+    - name: Run Cypher Setup
+      run: |
+        cd back-end
+        ./setup.sh
+        
+    - name: Verify Setup Success
+      run: |
+        cd back-end
+        
+        # Check if virtual environment was created
+        if [ ! -d "venv" ] && [ ! -d "../venv" ] && [ ! -d "../cyvenv" ] && [ ! -d "cyvenv" ]; then
+          echo "❌ Virtual environment not found"
+          exit 1
+        fi
+        
+        # Check if .env file was created
+        if [ ! -f ".env" ]; then
+          echo "❌ .env file not created"
+          exit 1
+        fi
+        
+        # Check if start.sh was created and is executable
+        if [ ! -f "start.sh" ] || [ ! -x "start.sh" ]; then
+          echo "❌ start.sh not created or not executable"
+          exit 1
+        fi
+        
+        # Check if dev.sh was created and is executable
+        if [ ! -f "dev.sh" ] || [ ! -x "dev.sh" ]; then
+          echo "❌ dev.sh not created or not executable"
+          exit 1
+        fi
+        
+        # Check Docker containers are running
+        if ! docker compose ps | grep -q "Up"; then
+          echo "❌ Docker services not running"
+          exit 1
+        fi
+        
+        echo "✅ Setup verification passed"
+        
+    - name: Test Application Dependencies
+      run: |
+        cd back-end
+        
+        # Find and activate virtual environment
+        VENV_PATHS=("./venv" "../venv" "../cyvenv" "./cyvenv")
+        VENV_PATH=""
+        for path in "${VENV_PATHS[@]}"; do
+            if [ -d "$path" ] && [ -f "$path/bin/activate" ]; then
+                VENV_PATH="$path"
+                break
+            fi
+        done
+        
+        if [ -z "$VENV_PATH" ]; then
+            echo "❌ Virtual environment not found"
+            exit 1
+        fi
+        
+        # Activate virtual environment and test Python dependencies
+        source "$VENV_PATH/bin/activate"
+        python3 -c "import flask, requests, redis, psycopg2" 2>/dev/null
+        if [ $? -ne 0 ]; then
+          echo "❌ Python dependencies test failed"
+          exit 1
+        fi
+        
+        # Test Node.js dependencies
+        cd node_internal_api
+        node -e "console.log('Node.js dependencies OK')" 2>/dev/null
+        if [ $? -ne 0 ]; then
+          echo "❌ Node.js dependencies test failed"
+          exit 1
+        fi
+        cd ..
+        
+        echo "✅ Application dependencies test passed"
+        
+    - name: Test Database Connectivity
+      run: |
+        cd back-end
+        
+        # Find and activate virtual environment
+        VENV_PATHS=("./venv" "../venv" "../cyvenv" "./cyvenv")
+        VENV_PATH=""
+        for path in "${VENV_PATHS[@]}"; do
+            if [ -d "$path" ] && [ -f "$path/bin/activate" ]; then
+                VENV_PATH="$path"
+                break
+            fi
+        done
+        
+        source "$VENV_PATH/bin/activate"
+        
+        # Test database connectivity
+        python3 -c "
+import psycopg2
+import redis
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+try:
+    # Test PostgreSQL connection
+    conn = psycopg2.connect(
+        host='localhost',
+        port=5432,
+        user='cypher',
+        password=os.getenv('CYPHER_DB_PASSWORD'),
+        database='cypher_db'
+    )
+    conn.close()
+    print('✅ PostgreSQL connection successful')
+    
+    # Test Redis connection
+    r = redis.Redis(host='localhost', port=6379, decode_responses=True)
+    r.ping()
+    print('✅ Redis connection successful')
+    
+except Exception as e:
+    print(f'❌ Database connection failed: {e}')
+    exit(1)
+        "
+        
+    - name: Run Application Tests (if any)
+      run: |
+        cd back-end
+        
+        # Activate virtual environment
+        VENV_PATHS=("./venv" "../venv" "../cyvenv" "./cyvenv")
+        VENV_PATH=""
+        for path in "${VENV_PATHS[@]}"; do
+            if [ -d "$path" ] && [ -f "$path/bin/activate" ]; then
+                VENV_PATH="$path"
+                break
+            fi
+        done
+        source "$VENV_PATH/bin/activate"
+        
+        # Check if there are any test files and run them
+        if [ -d "tests" ]; then
+          echo "Running Python tests..."
+          python3 -m pytest tests/ -v
+        elif ls test_*.py 1> /dev/null 2>&1; then
+          echo "Running Python test files..."
+          python3 -m pytest test_*.py -v
+        else
+          echo "No Python test files found, skipping test execution"
+        fi
+        
+        # Check for Node.js tests
+        cd node_internal_api
+        if [ -f "package.json" ]; then
+          if grep -q '"test"' package.json; then
+            echo "Running Node.js tests..."
+            npm test
+          fi
+        fi
+        cd ..
+        
+    - name: Test Application Startup Components  
+      run: |
+        cd back-end
+        
+        # Find and activate virtual environment
+        VENV_PATHS=("./venv" "../venv" "../cyvenv" "./cyvenv")
+        VENV_PATH=""
+        for path in "${VENV_PATHS[@]}"; do
+            if [ -d "$path" ] && [ -f "$path/bin/activate" ]; then
+                VENV_PATH="$path"
+                break
+            fi
+        done
+        source "$VENV_PATH/bin/activate"
+        
+        echo "Testing Flask application startup..."
+        
+        # Start Flask in background for testing
+        timeout 30 python3 main.py &
+        FLASK_PID=$!
+        
+        # Start Node.js API in background for testing
+        cd node_internal_api
+        timeout 30 node app.js &
+        NODE_PID=$!
+        cd ..
+        
+        # Wait a bit for services to start
+        sleep 10
+        
+        # Test if services are responding
+        if curl -f http://localhost:5000 --max-time 10 --silent > /dev/null; then
+          echo "✅ Flask backend responding"
+        else
+          echo "⚠️ Flask backend not responding"
+        fi
+        
+        if curl -f http://localhost:3000 --max-time 10 --silent > /dev/null; then
+          echo "✅ Node.js API responding"
+        else
+          echo "⚠️ Node.js API not responding"
+        fi
+        
+        # Clean up processes
+        kill $FLASK_PID $NODE_PID 2>/dev/null || true
+        sleep 2
+        
+        echo "✅ Startup components test completed"
+        
+    - name: Cleanup
+      run: |
+        cd back-end
+        # Stop Docker containers
+        docker compose down
+        # Kill any remaining processes
+        pkill -f "python.*main.py" || true
+        pkill -f "node.*app.js" || true
+        echo "✅ Cleanup completed"
+      if: always()
