@@ -1,67 +1,105 @@
-# Cypher Documentation
+# Cypher - Zero-Knowledge Authentication Platform
 
-HEY, MAJOR CHANGES, all docs were removed becuse they were old and im working on the new docs
+[![Hackathon Project](https://img.shields.io/badge/Hackathon-Digitopia%20Finals-blue?style=for-the-badge&logo=hackaday&logoColor=white)](#)
+[![Security](https://img.shields.io/badge/Security-Zero--Knowledge-green?style=for-the-badge)](#)
+[![Tech Stack](https://img.shields.io/badge/Stack-Node.js%20%7C%20Flask%20%7C%20PostgreSQL%20%7C%20Redis-red?style=for-the-badge)](#)
 
-Welcome to the Cypher project documentation. This guide provides comprehensive information about the system architecture, implementation details, and development workflows.
+> **Revolutionary Zero-Knowledge Authentication Platform** - Passwords never leave your device, even during registration and login.
 
-## NOTICE
+## What Makes Cypher Special
 
-- This project is in active development and is a prototype, please take in mind:
+**Cypher** is a cutting-edge authentication platform that implements **zero-knowledge password authentication** using the OPAQUE protocol. Unlike traditional systems where passwords are transmitted and stored (even if hashed), Cypher ensures that passwords never leave the client's device.
 
-- The server doesn't hardcode secrets but generates them on each run
-- The server doesn't have presistent storage but instead uses wrappers around ```map()```
-- The time on both the server machine and the user machine MUST BE CORRECT for TOTP to work correctly
-
-- This project is tested on Debian 12
-
-
-## Digitopia specifics
-
-**Digitopia Jury?, these materials concern you.**
-
-- [**Business Model**](Documentation/Business-Model.md) - complete business model
-- [**Team Roles**](Documentation/Team-Roles.md) - team roles
-- [**Simple Guide**](Documentation/Simple-Guide.md) - quick guide to understand how cypher works without getting into much details
-
-## Documentation Index
-
-### System Architecture & Overview
-- [**System Architecture**](Documentation/System-Architecture.md) - High-level system design and component relationships
-- [**Implementation Details**](Documentation/Implementation-Details.md) - Technical implementation specifics
-- [**Security Model**](Documentation/Security-Model.md) - Security architecture and threat model
-
-###  Authentication & Security
-- [**Authentication System Overview**](Documentation/Authentication-System-Overview.md) - Complete authentication system design
-- [**Authentication Workflows**](Documentation/Authentication-Workflows.md) - Detailed authentication flow diagrams
-- [**User Registration Process**](Documentation/User-Registration-Process.md) - User signup and account creation
-- [**User Login Process**](Documentation/User-Login-Process.md) - Login flow and validation
-- [**Session Management**](Documentation/Session-Management.md) - Session handling and lifecycle
-
-### Backend Services
-- [**Backend Services**](Documentation/Backend-Services.md) - Overview of all backend components
-- [**Flask Session Service**](Documentation/Flask-Session-Service.md) - Flask-based session management
-- [**Node.js API**](Documentation/Node.js-API.md) - Node.js API endpoints and services
-
-### Frontend Components
-- [**Frontend Components**](Documentation/Frontend-Components.md) - Complete frontend architecture
-- [**Client-Side Components**](Documentation/Client-Side-Components.md) - Client-side implementation details
-
-### Development & Setup
-- [**Development Guide**](Documentation/Development-Guide.md) - Development environment and workflow
-- [**Setup and Dependencies**](Documentation/Setup-and-Dependencies.md) - Installation and configuration
-- [**Build System and Assets**](Documentation/Build-System-and-Assets.md) - Build process and asset management
+### Advanced Architecture
+- **Two-Service Design**: Isolated cryptographic operations (Node.js) and session management (Flask)
+- **Stateless Tokens**: PASETO-based authentication tokens (no JWT vulnerabilities)
+- **Dual Storage**: Redis for performance, PostgreSQL for durability
+- **Real-time Sync**: Multi-tab session synchronization with automatic token refresh
 
 ## Quick Start
 
-1. **New to the project?** Start with [System Architecture](Documentation/System-Architecture.md)
-2. **Setting up development?** Check [Setup and Dependencies](Documentation/Setup-and-Dependencies.md)
-3. **Working on authentication?** Review [Authentication System Overview](Documentation/Authentication-System-Overview.md)
-4. **Frontend development?** See [Frontend Components](Documentation/Frontend-Components.md)
+### Prerequisites
+- **Node.js** 18+ and **npm**
+- **Python** 3.8+ and **pip**
+- **PostgreSQL** 15+
+- **Redis** 7+
+- **Docker** (optional, for containerized deployment)
 
-## Documentation Structure
+## Project Structure
 
-Each document follows a consistent structure with:
-- Overview and purpose
-- Technical specifications
-- Code examples where applicable
-- Related documentation links
+```
+Cypher/
+├── back-end/                    # Main application backend
+│   ├── src/                     # Python source modules
+│   │   ├── auth.js                 # Client-side authentication
+│   │   ├── register.js             # Registration flow
+│   │   ├── session-manager.js      # Token lifecycle management
+│   │   ├── models.py               # Database models
+│   │   ├── encryption_manager.py   # Encryption utilities
+│   │   └── redis_manager.py        # Redis operations
+│   ├── node_internal_api/       # Node.js cryptographic service
+│   │   ├── app.js                  # Express application
+│   │   ├── db.js                   # Database operations
+│   │   └── package.json
+│   ├── static/                  # Frontend assets
+│   │   ├── dist/                   # Compiled JavaScript
+│   │   └── templates/              # HTML templates
+│   ├── migrations/              # Database migrations
+│   ├── main.py                     # Flask application
+│   ├── requirements.txt            # Python dependencies
+│   └── docker-compose.yml          # Infrastructure
+├── docs/                        # Comprehensive documentation
+│   ├── Overview.md                 # System overview
+│   ├── API-Reference.md            # Complete API documentation
+│   ├── Authentication-System.md    # Security architecture
+│   ├── System-Architecture.md      # Technical architecture
+│   └── README.md                   # Documentation index
+├── Documentation/               # Legacy documentation (being migrated)
+└── README.md                       # This file
+```
+
+## Documentation
+
+###  Documentation Suite
+- **[Overview](docs/Overview.md)** - System introduction and capabilities
+- **[API Reference](docs/API-Reference.md)** - Complete endpoint documentation
+- **[Authentication System](docs/Authentication-System.md)** - Security architecture deep-dive
+- **[System Architecture](docs/System-Architecture.md)** - Technical design details
+- **[Authentication Workflows](docs/Authentication-Workflows.md)** - Flow diagrams
+- **[Development and Deployment](docs/Development-and-Deployment.md)** - Setup and contribution guide
+
+### Quick Links
+- **[Installation and Setup](docs/Installation-and-Setup.md)** - Get started in minutes
+- **[Running the Application](docs/Running-the-Application.md)** - Launch instructions
+- **[Security Architecture](docs/Security-Architecture.md)** - Threat model and design
+- **[Team Roles](docs/Team-Roles.md)** - Team structure and responsibilities
+
+### for an index of  the complete docs 
+- **[Documentation index](/docs/README.md)**
+
+## Technical Specifications
+
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| **Frontend** | Vanilla JS + Vite | Zero-knowledge client operations |
+| **Node.js API** | Express + OPAQUE | Cryptographic protocol handling |
+| **Flask Service** | Flask + PASETO | Session management & tokens |
+| **Database** | PostgreSQL | Persistent credential storage |
+| **Cache** | Redis | Session & rate limiting |
+| **Protocol** | OPAQUE (P-256) | Zero-knowledge authentication |
+| **Tokens** | PASETO v4.local | Stateless session management |
+
+## Live Demo
+
+**Frontend Interface**: http://localhost:5000
+- Interactive registration and login flows
+- Real-time authentication visualization
+- Responsive design with security indicators
+
+## License
+
+This project is developed for educational and research purposes as part of the Digitopia Hackathon. See individual component licenses for usage terms.
+
+## Contributing
+
+We welcome contributions! Please see our [Development Guide](docs/Development-and-Deployment.md) for setup instructions and contribution guidelines.
