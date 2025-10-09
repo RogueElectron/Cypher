@@ -84,7 +84,47 @@ cd ..
 echo "building frontend assets..."
 npx vite build > /dev/null
 
-#included .env 
+echo "setting up environment configuration..."
+if [ ! -f ".env" ]; then
+    if [ -f ".env.example" ]; then
+        echo "creating .env file from .env.example..."
+        cp .env.example .env
+        
+        # Update KEY_STORE_PATH to be relative to current directory
+        CURRENT_DIR=$(pwd)
+        sed -i "s|KEY_STORE_PATH=.*|KEY_STORE_PATH=$CURRENT_DIR/.keys|g" .env
+        
+        echo "generating secure secrets..."
+        
+        # Generate secure random secrets
+        MASTER_ENCRYPTION_PASSWORD=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
+        CYPHER_DB_PASSWORD=$(python3 -c "import secrets; print(secrets.token_urlsafe(24))")
+        CYPHER_DB_SALT=$(python3 -c "import secrets; print(secrets.token_urlsafe(24))")
+        FLASK_SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
+        OPRF_SEED=$(python3 -c "import secrets, base64; print(base64.b64encode(secrets.token_bytes(32)).decode())")
+        SERVER_KEYPAIR_SEED=$(python3 -c "import secrets, base64; print(base64.b64encode(secrets.token_bytes(32)).decode())")
+        SERVER_PRIVATE_KEY=$(python3 -c "import secrets, base64; print(base64.b64encode(secrets.token_bytes(32)).decode())")
+        SERVER_PUBLIC_KEY=$(python3 -c "import secrets, base64; print(base64.b64encode(secrets.token_bytes(32)).decode())")
+        
+        # Replace hardcoded secrets with generated ones
+        sed -i "s|MASTER_ENCRYPTION_PASSWORD=.*|MASTER_ENCRYPTION_PASSWORD=$MASTER_ENCRYPTION_PASSWORD|g" .env
+        sed -i "s|CYPHER_DB_PASSWORD=.*|CYPHER_DB_PASSWORD=$CYPHER_DB_PASSWORD|g" .env
+        sed -i "s|CYPHER_DB_SALT=.*|CYPHER_DB_SALT=$CYPHER_DB_SALT|g" .env
+        sed -i "s|FLASK_SECRET_KEY=.*|FLASK_SECRET_KEY=$FLASK_SECRET_KEY|g" .env
+        sed -i "s|OPRF_SEED=.*|OPRF_SEED=$OPRF_SEED|g" .env
+        sed -i "s|SERVER_KEYPAIR_SEED=.*|SERVER_KEYPAIR_SEED=$SERVER_KEYPAIR_SEED|g" .env
+        sed -i "s|SERVER_PRIVATE_KEY=.*|SERVER_PRIVATE_KEY=$SERVER_PRIVATE_KEY|g" .env
+        sed -i "s|SERVER_PUBLIC_KEY=.*|SERVER_PUBLIC_KEY=$SERVER_PUBLIC_KEY|g" .env
+        
+        echo -e "${GREEN}.env file created with generated secrets!${NC}"
+        echo -e "${YELLOW}Important: Back up your .env file - these secrets are unique and cannot be recovered.${NC}"
+    else
+        echo -e "${RED}error: .env.example file not found${NC}"
+        exit 1
+    fi
+else
+    echo ".env file already exists"
+fi
 
 echo "starting database services..."
 docker compose up -d postgres redis
