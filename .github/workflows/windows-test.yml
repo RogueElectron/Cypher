@@ -11,31 +11,6 @@ jobs:
   windows-test:
     runs-on: windows-latest
     
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_DB: cypher_db
-          POSTGRES_USER: cypher_user
-          POSTGRES_PASSWORD: cypher_strong_password_123
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-          
-      redis:
-        image: redis:7
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -52,11 +27,37 @@ jobs:
         cache: 'npm'
         cache-dependency-path: back-end/package.json
         
-    - name: Wait for database services
+    - name: Install PostgreSQL
       run: |
-        Write-Host "Waiting for database services to be ready..."
-        Start-Sleep -Seconds 10
-        Write-Host "✅ Database services ready"
+        # Download and install PostgreSQL
+        Write-Host "Installing PostgreSQL..."
+        choco install postgresql15 --params '/Password:postgres' -y
+        
+        # Wait for installation to complete
+        Start-Sleep -Seconds 30
+        
+        # Start PostgreSQL service
+        Start-Service postgresql-x64-15
+        
+        # Create database and user
+        $env:PGPASSWORD = "postgres"
+        & "C:\Program Files\PostgreSQL\15\bin\createdb.exe" -U postgres cypher_db
+        & "C:\Program Files\PostgreSQL\15\bin\psql.exe" -U postgres -d cypher_db -c "CREATE USER cypher_user WITH PASSWORD 'cypher_strong_password_123';"
+        & "C:\Program Files\PostgreSQL\15\bin\psql.exe" -U postgres -d cypher_db -c "GRANT ALL PRIVILEGES ON DATABASE cypher_db TO cypher_user;"
+        
+        Write-Host "✅ PostgreSQL installed and configured"
+      shell: pwsh
+      
+    - name: Install Redis  
+      run: |
+        # Download and install Redis
+        Write-Host "Installing Redis..."
+        choco install redis-64 -y
+        
+        # Start Redis service
+        Start-Service Redis
+        
+        Write-Host "✅ Redis installed and started"
       shell: pwsh
       
     - name: Create modified setup script (skip Docker)
@@ -64,10 +65,10 @@ jobs:
         cd back-end
         # Create a version of setup.ps1 that skips Docker startup
         $setupContent = Get-Content "setup.ps1" -Raw
-        $modifiedSetup = $setupContent -replace 'docker compose up -d postgres redis.*\n', 'Write-Host "Skipping Docker startup - using GitHub Actions services"`n'
-        $modifiedSetup = $modifiedSetup -replace 'echo "starting database services\.\.\.".*\n', ''
-        $modifiedSetup = $modifiedSetup -replace 'echo "waiting for databases to be ready\.\.\.".*\n', ''
-        $modifiedSetup = $modifiedSetup -replace 'sleep 5.*\n', ''
+        $modifiedSetup = $setupContent -replace 'docker compose up -d postgres redis.*', 'Write-Host "Skipping Docker startup - databases installed directly"'
+        $modifiedSetup = $modifiedSetup -replace 'echo "starting database services\.\.\.".*', 'Write-Host "Database services already running"'
+        $modifiedSetup = $modifiedSetup -replace 'echo "waiting for databases to be ready\.\.\.".*', ''
+        $modifiedSetup = $modifiedSetup -replace 'sleep 5.*', ''
         $modifiedSetup | Set-Content "setup_ci.ps1"
       shell: pwsh
       
@@ -198,6 +199,9 @@ jobs:
         Get-Process -Name "node" -ErrorAction SilentlyContinue | Where-Object {$_.ProcessName -eq "node"} | Stop-Process -Force -ErrorAction SilentlyContinue
         # Remove temporary CI script
         Remove-Item "setup_ci.ps1" -ErrorAction SilentlyContinue
+        # Stop database services
+        Stop-Service postgresql-x64-15 -ErrorAction SilentlyContinue
+        Stop-Service Redis -ErrorAction SilentlyContinue
         Write-Host "✅ Cleanup completed"
       shell: pwsh
       if: always()
