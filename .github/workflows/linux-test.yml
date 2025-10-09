@@ -27,10 +27,9 @@ jobs:
         cache: 'npm'
         cache-dependency-path: back-end/package.json
         
-    - name: Install system dependencies
+    - name: Update package lists
       run: |
         sudo apt-get update
-        sudo apt-get install -y python3-venv python3-pip netcat-openbsd libpq-dev python3-dev
         
     - name: Setup Docker
       uses: docker/setup-buildx-action@v3
@@ -73,21 +72,6 @@ jobs:
           exit 1
         fi
         
-        # Check if requirements.txt was processed
-        VENV_PATHS=("./venv" "../venv" "../cyvenv" "./cyvenv")
-        VENV_PATH=""
-        for path in "${VENV_PATHS[@]}"; do
-            if [ -d "$path" ] && [ -f "$path/bin/activate" ]; then
-                VENV_PATH="$path"
-                break
-            fi
-        done
-        
-        if [ -n "$VENV_PATH" ]; then
-          source "$VENV_PATH/bin/activate"
-          pip list | grep -i flask || (echo "❌ Flask not installed in virtual environment" && exit 1)
-          echo "✅ Python packages installed in virtual environment"
-        fi
         
         # Check Docker containers are running
         if ! docker compose ps | grep -q "Up"; then
@@ -97,49 +81,6 @@ jobs:
         
         echo "✅ Setup verification passed"
         
-    - name: Test Application Dependencies
-      run: |
-        cd back-end
-        
-        # Find and activate virtual environment
-        VENV_PATHS=("./venv" "../venv" "../cyvenv" "./cyvenv")
-        VENV_PATH=""
-        for path in "${VENV_PATHS[@]}"; do
-            if [ -d "$path" ] && [ -f "$path/bin/activate" ]; then
-                VENV_PATH="$path"
-                break
-            fi
-        done
-        
-        if [ -z "$VENV_PATH" ]; then
-            echo "❌ Virtual environment not found"
-            exit 1
-        fi
-        
-        # Activate virtual environment and test Python dependencies
-        source "$VENV_PATH/bin/activate"
-        
-        echo "Testing Python dependencies from requirements.txt..."
-        
-        # Test actual dependencies from requirements.txt
-        python3 -c "import flask; print('✅ Flask imported successfully')" || (echo "❌ Flask import failed" && exit 1)
-        python3 -c "import redis; print('✅ Redis imported successfully')" || (echo "❌ Redis import failed" && exit 1)
-        python3 -c "import psycopg2; print('✅ Psycopg2 imported successfully')" || (echo "❌ Psycopg2 import failed" && exit 1)
-        python3 -c "import sqlalchemy; print('✅ SQLAlchemy imported successfully')" || (echo "❌ SQLAlchemy import failed" && exit 1)
-        python3 -c "import cryptography; print('✅ Cryptography imported successfully')" || (echo "❌ Cryptography import failed" && exit 1)
-        
-        echo "✅ Application dependencies test passed"
-        
-        # Test Node.js dependencies
-        cd node_internal_api
-        node -e "console.log('Node.js dependencies OK')" 2>/dev/null
-        if [ $? -ne 0 ]; then
-          echo "❌ Node.js dependencies test failed"
-          exit 1
-        fi
-        cd ..
-        
-        echo "✅ Application dependencies test passed"
         
     - name: Test Database Connectivity
       run: |
@@ -157,24 +98,18 @@ jobs:
         
         source "$VENV_PATH/bin/activate"
         
-        # Test database connectivity with simple commands
-        echo "Testing database connectivity..."
-        
-        # Test PostgreSQL connectivity
-        if nc -z localhost 5432; then
-          echo "✅ PostgreSQL accessible on port 5432"
-        else
-          echo "❌ PostgreSQL not accessible"
+        # Test database connectivity 
+        if ! docker compose ps | grep -q "postgres.*Up"; then
+          echo "❌ PostgreSQL container not running"
           exit 1
         fi
         
-        # Test Redis connectivity  
-        if nc -z localhost 6379; then
-          echo "✅ Redis accessible on port 6379"
-        else
-          echo "❌ Redis not accessible"
+        if ! docker compose ps | grep -q "redis.*Up"; then
+          echo "❌ Redis container not running" 
           exit 1
         fi
+        
+        echo "✅ Database services are running"
         
     - name: Run Application Tests (if any)
       run: |

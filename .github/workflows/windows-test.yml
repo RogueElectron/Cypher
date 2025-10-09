@@ -60,22 +60,10 @@ jobs:
         Write-Host "✅ Redis installed and started"
       shell: pwsh
       
-    - name: Create modified setup script (skip Docker)
+    - name: Run Cypher Setup
       run: |
         cd back-end
-        # Create a version of setup.ps1 that skips Docker startup
-        $setupContent = Get-Content "setup.ps1" -Raw
-        $modifiedSetup = $setupContent -replace 'docker compose up -d postgres redis.*', 'Write-Host "Skipping Docker startup - databases installed directly"'
-        $modifiedSetup = $modifiedSetup -replace 'echo "starting database services\.\.\.".*', 'Write-Host "Database services already running"'
-        $modifiedSetup = $modifiedSetup -replace 'echo "waiting for databases to be ready\.\.\.".*', ''
-        $modifiedSetup = $modifiedSetup -replace 'sleep 5.*', ''
-        $modifiedSetup | Set-Content "setup_ci.ps1"
-      shell: pwsh
-      
-    - name: Run Modified Cypher Setup
-      run: |
-        cd back-end
-        .\setup_ci.ps1
+        .\setup.ps1
       shell: pwsh
       
     - name: Verify Setup Success
@@ -94,19 +82,17 @@ jobs:
         }
         
         # Check if database services are accessible
-        try {
-          Test-NetConnection -ComputerName localhost -Port 5432 -InformationLevel Quiet | Out-Null
-          Write-Host "✅ PostgreSQL service accessible"
-        } catch {
-          Write-Host "⚠️ PostgreSQL connectivity test failed"
+        if (!(Test-NetConnection -ComputerName localhost -Port 5432 -InformationLevel Quiet)) {
+          Write-Error "PostgreSQL not accessible on port 5432"
+          exit 1
         }
         
-        try {
-          Test-NetConnection -ComputerName localhost -Port 6379 -InformationLevel Quiet | Out-Null
-          Write-Host "✅ Redis service accessible"
-        } catch {
-          Write-Host "⚠️ Redis connectivity test failed"
+        if (!(Test-NetConnection -ComputerName localhost -Port 6379 -InformationLevel Quiet)) {
+          Write-Error "Redis not accessible on port 6379" 
+          exit 1
         }
+        
+        Write-Host "✅ Database services accessible"
         
         Write-Host "✅ Setup verification passed"
       shell: pwsh
@@ -197,8 +183,6 @@ jobs:
         # Kill any remaining processes
         Get-Process -Name "python" -ErrorAction SilentlyContinue | Where-Object {$_.ProcessName -eq "python"} | Stop-Process -Force -ErrorAction SilentlyContinue
         Get-Process -Name "node" -ErrorAction SilentlyContinue | Where-Object {$_.ProcessName -eq "node"} | Stop-Process -Force -ErrorAction SilentlyContinue
-        # Remove temporary CI script
-        Remove-Item "setup_ci.ps1" -ErrorAction SilentlyContinue
         # Stop database services
         Stop-Service postgresql-x64-15 -ErrorAction SilentlyContinue
         Stop-Service Redis -ErrorAction SilentlyContinue
