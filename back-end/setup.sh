@@ -46,12 +46,30 @@ if ! command_exists docker; then
 fi
 
 echo "setting up python environment..."
-if [ ! -d "../cyvenv" ]; then
-    echo "creating virtual environment in parent directory..."
-    cd .. && python3 -m venv cyvenv && cd back-end
+
+# find or create virtual environment
+VENV_NAME="venv"
+VENV_PATHS=("./venv" "../venv" "../cyvenv" "./cyvenv")
+VENV_PATH=""
+
+# check for existing virtual environment
+for path in "${VENV_PATHS[@]}"; do
+    if [ -d "$path" ] && [ -f "$path/bin/activate" ]; then
+        VENV_PATH="$path"
+        echo "found existing virtual environment at $VENV_PATH"
+        break
+    fi
+done
+
+# create new virtual environment if none found
+if [ -z "$VENV_PATH" ]; then
+    VENV_PATH="./venv"
+    echo "creating virtual environment at $VENV_PATH..."
+    python3 -m venv "$VENV_PATH"
 fi
 
-source ../cyvenv/bin/activate
+echo "activating virtual environment..."
+source "$VENV_PATH/bin/activate"
 pip install --upgrade pip > /dev/null
 pip install -r requirements.txt
 
@@ -90,7 +108,22 @@ docker compose ps | grep -q "cypher-postgres.*Up" || {
     sleep 5
 }
 
-source ../cyvenv/bin/activate
+# find virtual environment
+VENV_PATHS=("./venv" "../venv" "../cyvenv" "./cyvenv")
+VENV_PATH=""
+for path in "${VENV_PATHS[@]}"; do
+    if [ -d "$path" ] && [ -f "$path/bin/activate" ]; then
+        VENV_PATH="$path"
+        break
+    fi
+done
+
+if [ -z "$VENV_PATH" ]; then
+    echo "Error: Virtual environment not found. Run setup.sh first."
+    exit 1
+fi
+
+source "$VENV_PATH/bin/activate"
 python main.py &
 FLASK_PID=$!
 cd node_internal_api
@@ -115,7 +148,22 @@ docker compose ps | grep -q "cypher-postgres.*Up" || {
     sleep 5
 }
 
-source ../cyvenv/bin/activate
+# find virtual environment
+VENV_PATHS=("./venv" "../venv" "../cyvenv" "./cyvenv")
+VENV_PATH=""
+for path in "${VENV_PATHS[@]}"; do
+    if [ -d "$path" ] && [ -f "$path/bin/activate" ]; then
+        VENV_PATH="$path"
+        break
+    fi
+done
+
+if [ -z "$VENV_PATH" ]; then
+    echo "Error: Virtual environment not found. Run setup.sh first."
+    exit 1
+fi
+
+source "$VENV_PATH/bin/activate"
 FLASK_DEBUG=1 python main.py &
 FLASK_PID=$!
 cd node_internal_api

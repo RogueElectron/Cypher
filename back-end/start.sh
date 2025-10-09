@@ -8,7 +8,22 @@ docker compose ps | grep -q "cypher-postgres.*Up" || {
     sleep 5
 }
 
-source ../cyvenv/bin/activate
+# find virtual environment
+VENV_PATHS=("./venv" "../venv" "../cyvenv" "./cyvenv")
+VENV_PATH=""
+for path in "${VENV_PATHS[@]}"; do
+    if [ -d "$path" ] && [ -f "$path/bin/activate" ]; then
+        VENV_PATH="$path"
+        break
+    fi
+done
+
+if [ -z "$VENV_PATH" ]; then
+    echo "Error: Virtual environment not found. Run setup.sh first."
+    exit 1
+fi
+
+source "$VENV_PATH/bin/activate"
 python main.py &
 FLASK_PID=$!
 cd node_internal_api
