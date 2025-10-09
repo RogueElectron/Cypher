@@ -2,43 +2,43 @@
 
 ## Getting Started
 - [Overview](Overview.md)
-- [Installation and Setup](Installation-and-Setup.md)
-- [Running the Application](Running-the-Application.md)
+- [Installation and Setup](docs/Installation-and-Setup.md)
+- [Running the Application](docs/Running-the-Application.md)
 
 ## System Architecture
-- [System Architecture](System-Architecture.md)
-- [Component Overview](Component-Overview.md)
-- [Security Architecture](Security-Architecture.md)
-- [Data Flow and Communication Patterns](Data-Flow-and-Communication-Patterns.md)
+- [System Architecture](docs/System-Architecture.md)
+- [Component Overview](docs/Component-Overview.md)
+- [Security Architecture](docs/Security-Architecture.md)
+- [Data Flow and Communication Patterns](docs/Data-Flow-and-Communication-Patterns.md)
 
 ## Authentication & Security
-- [Authentication System](Authentication-System.md)
-- [Authentication Workflows](Authentication-Workflows.md)
-- [OPAQUE Protocol Implementation](OPAQUE-Protocol-Implementation.md)
-- [TOTP Two-Factor Authentication](TOTP-Two-Factor-Authentication.md)
-- [Session and Token Management](Session-and-Token-Management.md)
+- [Authentication System](docs/Authentication-System.md)
+- [Authentication Workflows](docs/Authentication-Workflows.md)
+- [OPAQUE Protocol Implementation]docs/(OPAQUE-Protocol-Implementation.md)
+- [TOTP Two-Factor Authentication](docs/TOTP-Two-Factor-Authentication.md)
+- [Session and Token Management](docs/Session-and-Token-Management.md)
 
 ## Backend Services
-- [Backend Services](Backend-Services.md)
-- [Flask Session Service](Flask-Session-Service.md)
-- [Node.js Internal API](Node.js-Internal-API.md)
-- [Session Manager Module](Session-Manager-Module.md)
+- [Backend Services](docs/Backend-Services.md)
+- [Flask Session Service](docs/Flask-Session-Service.md)
+- [Node.js Internal API](docs/Node.js-Internal-API.md)
+- [Session Manager Module](docs/Session-Manager-Module.md)
 
 ## Data Layer
-- [Data Layer](Data-Layer.md)
-- [PostgreSQL Schema](PostgreSQL-Schema.md)
-- [Redis Caching and Rate Limiting](Redis-Caching-and-Rate-Limiting.md)
+- [Data Layer](docs/Data-Layer.md)
+- [PostgreSQL Schema](docs/PostgreSQL-Schema.md)
+- [Redis Caching and Rate Limiting](docs/Redis-Caching-and-Rate-Limiting.md)
 
 ## Frontend
-- [Frontend Components](Frontend-Components.md)
-- [UI Templates and Visualization](UI-Templates-and-Visualization.md)
-- [Login Flow (Client Side)](Login-Flow-(Client-Side).md)
-- [Registration Flow (Client Side)](Registration-Flow-(Client-Side).md)
+- [Frontend Components](docs/Frontend-Components.md)
+- [UI Templates and Visualization](docs/UI-Templates-and-Visualization.md)
+- [Login Flow (Client Side)](docs/Login-Flow-(Client-Side).md)
+- [Registration Flow (Client Side)](docs/Registration-Flow-(Client-Side).md)
 
 ## Development
-- [Development and Deployment](Development-and-Deployment.md)
-- [Build System](Build-System.md)
-- [API Reference](API-Reference.md)
+- [Development and Deployment](docs/Development-and-Deployment.md)
+- [Build System](docs/Build-System.md)
+- [API Reference](docs/API-Reference.md)
 
 ## Additional Resources
-- [OPAQUE Documentation](opaque_documentation.md)
+- [OPAQUE Documentation](docs/opaque_documentation.md)
