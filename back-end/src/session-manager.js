@@ -20,15 +20,14 @@ class SessionManager {
                 const syncData = JSON.parse(event.newValue || '{}');
                 if (syncData.action === 'update') {
                     this.accessToken = this.getCookie('access_token');
-                    this.refreshToken = localStorage.getItem('refresh_token');
                     
                     // stop our timer since someone else already refreshed
                     if (this.refreshTimeout) {
                         clearTimeout(this.refreshTimeout);
                     }
-                    // random delay to avoid everyone refreshing at once
-                    const ROTATION_INTERVAL = 90;
-                    const jitter = Math.random() * 10; // TODO: maybe make this configurable?
+                    // refresh 2-3 minutes before expiry (tokens last 15 min)
+                    const ROTATION_INTERVAL = 720; // 12 minutes
+                    const jitter = Math.random() * 60; // random 0-60 seconds
                     this.scheduleRefresh(ROTATION_INTERVAL + jitter);
                 } else if (syncData.action === 'clear') {
                     this.clearSession();
@@ -70,9 +69,9 @@ class SessionManager {
             timestamp: Date.now()
         }));
         
-        // remember to fix this - hardcoded 90 seconds
-        const ROTATION_INTERVAL = 90;
-        const jitter = Math.random() * 10; // random delay so tabs don't sync up
+        // refresh 2-3 minutes before the 15-minute expiry
+        const ROTATION_INTERVAL = 720; // 12 minutes  
+        const jitter = Math.random() * 60; // random 0-60 seconds
         this.scheduleRefresh(ROTATION_INTERVAL + jitter);
     }
 
@@ -343,6 +342,9 @@ class SessionManager {
 }
 
 const sessionManager = new SessionManager();
+
+// expose globally for testing/debugging
+window.sessionManager = sessionManager;
 
 // start loading tokens as soon as the page is ready
 document.addEventListener('DOMContentLoaded', () => {
