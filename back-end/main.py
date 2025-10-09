@@ -266,7 +266,7 @@ def create_session():
             get_token_manager().cache_refresh_token(
                 user_id=str(user.id),
                 token_id=refresh_token_id,
-                session_id=session_id,
+                token_data=refresh_claims,
                 ttl=7 * 24 * 3600
             )
             

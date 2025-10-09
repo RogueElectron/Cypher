@@ -39,11 +39,34 @@ jobs:
         # Start PostgreSQL service
         Start-Service postgresql-x64-15
         
-        # Create database and user
+        # Configure PostgreSQL for proper authentication and IPv4 connections
         $env:PGPASSWORD = "postgres"
-        & "C:\Program Files\PostgreSQL\15\bin\createdb.exe" -U postgres cypher_db
-        & "C:\Program Files\PostgreSQL\15\bin\psql.exe" -U postgres -d cypher_db -c "CREATE USER cypher_user WITH PASSWORD 'cypher_strong_password_123';"
-        & "C:\Program Files\PostgreSQL\15\bin\psql.exe" -U postgres -d cypher_db -c "GRANT ALL PRIVILEGES ON DATABASE cypher_db TO cypher_user;"
+        
+        # Create user and database
+        & "C:\Program Files\PostgreSQL\15\bin\psql.exe" -U postgres -c "CREATE USER cypher_user WITH PASSWORD 'cypher_strong_password_123' CREATEDB SUPERUSER;"
+        & "C:\Program Files\PostgreSQL\15\bin\createdb.exe" -U postgres -O cypher_user cypher_db
+        
+        # Update pg_hba.conf to allow password authentication for cypher_user
+        $pgHbaPath = "C:\Program Files\PostgreSQL\15\data\pg_hba.conf"
+        $pgHbaContent = Get-Content $pgHbaPath
+        $newEntry = "host    all             cypher_user     127.0.0.1/32            md5"
+        if ($pgHbaContent -notcontains $newEntry) {
+            Add-Content $pgHbaPath $newEntry
+        }
+        
+        # Also add IPv6 entry just in case
+        $newEntryIPv6 = "host    all             cypher_user     ::1/128                 md5"
+        if ($pgHbaContent -notcontains $newEntryIPv6) {
+            Add-Content $pgHbaPath $newEntryIPv6
+        }
+        
+        # Restart PostgreSQL to apply configuration changes
+        Restart-Service postgresql-x64-15
+        Start-Sleep -Seconds 5
+        
+        # Test connection with the cypher_user
+        $env:PGPASSWORD = "cypher_strong_password_123"
+        & "C:\Program Files\PostgreSQL\15\bin\psql.exe" -h 127.0.0.1 -U cypher_user -d cypher_db -c "SELECT 'Connection successful' as status;"
         
         Write-Host "✅ PostgreSQL installed and configured"
       shell: pwsh
@@ -54,10 +77,17 @@ jobs:
         Write-Host "Installing Redis..."
         choco install redis-64 -y
         
-        # Start Redis service
-        Start-Service Redis
+        # Start Redis manually (redis-64 doesn't create a Windows service)
+        Start-Process -FilePath "redis-server.exe" -WindowStyle Hidden
+        Start-Sleep -Seconds 3
         
-        Write-Host "✅ Redis installed and started"
+        # Verify Redis is running
+        if (Test-NetConnection -ComputerName localhost -Port 6379 -InformationLevel Quiet) {
+            Write-Host "✅ Redis started and accessible on port 6379"
+        } else {
+            Write-Host "❌ Redis failed to start"
+            exit 1
+        }
       shell: pwsh
       
     - name: Run Cypher Setup
@@ -185,7 +215,7 @@ jobs:
         Get-Process -Name "node" -ErrorAction SilentlyContinue | Where-Object {$_.ProcessName -eq "node"} | Stop-Process -Force -ErrorAction SilentlyContinue
         # Stop database services
         Stop-Service postgresql-x64-15 -ErrorAction SilentlyContinue
-        Stop-Service Redis -ErrorAction SilentlyContinue
+        Get-Process -Name "redis-server" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
         Write-Host "✅ Cleanup completed"
       shell: pwsh
       if: always()
