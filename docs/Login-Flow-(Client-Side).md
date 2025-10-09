@@ -152,11 +152,11 @@ sequenceDiagram
   note over OpaqueClient instance: "Verify server proof
   OpaqueClient instance-->>auth.js handler: "finClient {ke3, sessionKey}"
   auth.js handler->>auth.js handler: "finClient.ke3.serialize() → ser_ke3"
-  note over auth.js handler,:5000/api/create-token: "Intermediate Token Creation"
+  note over auth.js handler: "Intermediate Token Creation"
   auth.js handler->>FlaskAPI: "POST /api/create-token
   FlaskAPI-->>auth.js handler: {username}"
   auth.js handler->>auth.js handler: "{token: pass_auth_token}"
-  note over auth.js handler,:3000/login/finish: "OPAQUE Completion"
+  note over auth.js handler: "OPAQUE Completion"
   auth.js handler->>NodeAPI: "Set cookie: pass_auth_token
   NodeAPI-->>auth.js handler: Max-Age=180, SameSite=Lax"
 ```

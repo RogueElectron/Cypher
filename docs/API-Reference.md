@@ -952,6 +952,8 @@ sequenceDiagram
   note over Client,FlaskAPI: "Phase 6: Logout"
   Client->>FlaskAPI: {token, username}"
   FlaskAPI-->>Client: "{valid: true}"
+
+
 ---
 
 ## Security Headers
