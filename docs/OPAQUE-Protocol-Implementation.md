@@ -85,7 +85,7 @@ The server keypair is generated from a cryptographically secure seed (`serverKey
 sequenceDiagram
   participant OpaqueClient
   participant (register.js)
-  participant Node.js API
+  participant NodeAPI as Node.js API
   participant POST /register/*
   participant OpaqueServer
   participant (app.js)
@@ -216,13 +216,13 @@ The Node.js API implements two registration endpoints:
 sequenceDiagram
   participant OpaqueClient
   participant (auth.js)
-  participant Node.js API
+  participant NodeAPI as Node.js API
   participant POST /login/*
   participant OpaqueServer
   participant (app.js)
   participant PostgreSQL
   participant (users table)
-  participant Flask API
+  participant FlaskAPI as Flask API
   participant /api/create-token
 
   note over OpaqueClient,(auth.js): User enters password locally

@@ -310,33 +310,33 @@ Authentication proceeds through four distinct phases, each with different securi
 ```mermaid
 sequenceDiagram
   participant Client
-  participant (auth.js)
-  participant Node.js API :3000
-  participant (app.js)
-  participant Flask API :5000
-  participant (main.py)
+  participant Auth as (auth.js)
+  participant NodeAPI as Node.js API
+  participant App as (app.js)
+  participant FlaskAPI as Flask API
+  participant Main as (main.py)
 
-  note over Client,(main.py): Phase 1: OPAQUE Authentication
-  Client->>Node.js API :3000: "POST /login/init {username, KE1}"
-  Node.js API :3000->>Node.js API :3000: "OpaqueServer.authInit()"
-  Node.js API :3000-->>Client: "{KE2}"
+  note over Client,Main: Phase 1: OPAQUE Authentication
+  Client->>NodeAPI: "POST /login/init {username, KE1}"
+  NodeAPI->>NodeAPI: "OpaqueServer.authInit()"
+  NodeAPI-->>Client: "{KE2}"
   Client->>Client: "verify server, generate KE3"
-  Client->>Node.js API :3000: "POST /login/finish {username, KE3}"
-  Node.js API :3000->>Node.js API :3000: "OpaqueServer.authFinish()"
-  note over Client,(main.py): Phase 2: Intermediate Token
-  Node.js API :3000->>Flask API :5000: "POST /api/create-token"
-  Flask API :5000-->>Node.js API :3000: "{token: pass_auth_token}"
-  Node.js API :3000-->>Client: "{success: true, token}"
-  note over Client,(main.py): Phase 3: TOTP Verification
-  Client->>Node.js API :3000: "POST /totp/verify-login {code, pass_auth_token}"
-  Node.js API :3000->>Flask API :5000: "POST /api/verify-token"
-  Flask API :5000-->>Node.js API :3000: "{valid: true}"
-  Node.js API :3000->>Node.js API :3000: "authenticator.verify()"
-  note over Client,(main.py): Phase 4: Session Creation
-  Node.js API :3000->>Flask API :5000: "POST /api/create-session"
-  Flask API :5000->>Flask API :5000: "paseto.create() x2"
-  Flask API :5000-->>Node.js API :3000: "{access_token, refresh_token}"
-  Node.js API :3000-->>Client: "return tokens"
+  Client->>NodeAPI: "POST /login/finish {username, KE3}"
+  NodeAPI->>NodeAPI: "OpaqueServer.authFinish()"
+  note over Client,Main: Phase 2: Intermediate Token
+  NodeAPI->>FlaskAPI: "POST /api/create-token"
+  FlaskAPI-->>NodeAPI: "{token: pass_auth_token}"
+  NodeAPI-->>Client: "{success: true, token}"
+  note over Client,Main: Phase 3: TOTP Verification
+  Client->>NodeAPI: "POST /totp/verify-login {code, pass_auth_token}"
+  NodeAPI->>FlaskAPI: "POST /api/verify-token"
+  FlaskAPI-->>NodeAPI: "{valid: true}"
+  NodeAPI->>NodeAPI: "authenticator.verify()"
+  note over Client,Main: Phase 4: Session Creation
+  NodeAPI->>FlaskAPI: "POST /api/create-session"
+  FlaskAPI->>FlaskAPI: "paseto.create() x2"
+  FlaskAPI-->>NodeAPI: "{access_token, refresh_token}"
+  NodeAPI-->>Client: "return tokens"
   Client->>Client: "SessionManager.setTokens()"
 ```
 

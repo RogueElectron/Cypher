@@ -70,7 +70,7 @@ The Flask application initializes all Redis managers during startup, before acce
 
 ```mermaid
 sequenceDiagram
-  participant main.py
+  participant Main as main.py
   participant initialize_app()
   participant Encryption Manager
   participant init_databases()
@@ -115,7 +115,7 @@ When a user successfully completes OPAQUE and TOTP authentication, the `/api/cre
 
 ```mermaid
 sequenceDiagram
-  participant Node.js API
+  participant NodeAPI as Node.js API
   participant POST /api/create-session
   participant get_rate_limiter()
   participant get_session_manager()
@@ -259,7 +259,7 @@ The token refresh endpoint enforces one-time use by immediately deactivating the
 
 ```mermaid
 sequenceDiagram
-  participant session-manager.js
+  participant SessionMgr as session-manager.js
   participant POST /api/refresh-token
   participant get_token_manager()
   participant PostgreSQL
