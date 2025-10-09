@@ -168,8 +168,8 @@ The platform uses two distinct data access patterns depending on the service mak
 ```mermaid
 sequenceDiagram
   participant Client
-  participant Node.js API
-  participant app.js
+  participant NodeAPI as Node.js API
+  participant App as app.js
   participant db.js
   participant createPostgresStorage()
   participant PostgreSQL
@@ -210,7 +210,7 @@ sequenceDiagram
 sequenceDiagram
   participant Client
   participant Flask Service
-  participant main.py
+  participant Main as main.py
   participant SQLAlchemy ORM
   participant get_db_session()
   participant models.py
@@ -297,7 +297,7 @@ Insert --> PG
 
 ```mermaid
 sequenceDiagram
-  participant Node.js API
+  participant NodeAPI as Node.js API
   participant /totp/verify-login
   participant Flask Service
   participant /api/create-session

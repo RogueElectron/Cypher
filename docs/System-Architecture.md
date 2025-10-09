@@ -135,9 +135,9 @@ Inter-service communication occurs via internal HTTP calls from Node.js to Flask
 ```mermaid
 sequenceDiagram
   participant Client Browser
-  participant Node.js :3000
+  participant NodeAPI as Node.js API
   participant app.js
-  participant Flask :5000
+  participant FlaskAPI as Flask API
   participant main.py
   participant Redis
   participant get_session_manager()

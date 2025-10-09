@@ -149,9 +149,9 @@ sequenceDiagram
   participant Browser
   participant auth.js
   participant Node API
-  participant app.js:3000
+  participant App as app.js
   participant Flask
-  participant main.py:5000
+  participant Main as main.py
   participant PostgreSQL
 
   note over Browser,PostgreSQL: Phase 1: OPAQUE Authentication

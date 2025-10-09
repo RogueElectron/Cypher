@@ -23,32 +23,32 @@ The registration workflow implements a two-phase process: OPAQUE credential enro
 ```mermaid
 sequenceDiagram
   participant User
-  participant register.js
-  participant Node.js API
-  participant :3000
-  participant Flask API
-  participant :5000
-  participant PostgreSQL
+  participant Register as register.js
+  participant NodeAPI as Node.js API
+  participant NodeAPI as Node.js API
+  participant FlaskAPI as Flask API
+  participant FlaskAPI as Flask API
+  participant Postgres as PostgreSQL
 
-  User->>register.js: "Enter username/password"
-  note over register.js: "Step: input"
-  register.js->>register.js: "OpaqueClient.registerInit(password)"
-  note over register.js: "Step: generate-keys
-  register.js->>Node.js API: "POST /register/init
-  note over register.js: "Step: registration-request"
-  Node.js API->>PostgreSQL: {username, registrationRequest}"
-  Node.js API->>Node.js API: "Check if username exists"
-  Node.js API-->>register.js: "OpaqueServer.registerInit()"
-  note over register.js: "Step: server-response"
-  register.js->>register.js: "{registrationResponse}"
-  note over register.js: "Step: finalize
-  register.js->>Node.js API: "client.registerFinish(response)"
-  Node.js API->>Node.js API: "POST /register/finish
-  Node.js API->>Node.js API: {username, record}"
-  Node.js API->>PostgreSQL: "RegistrationRecord.deserialize()"
-  Node.js API->>Node.js API: "new CredentialFile(username, record)"
-  note over Node.js API,:3000: "5-minute timeout starts"
-  Node.js API-->>register.js: "store(username, serialized_credential)"
+  User->>Register: "Enter username/password"
+  note over Register: "Step: input"
+  Register->>Register: "OpaqueClient.registerInit(password)"
+  note over Register: "Step: generate-keys
+  Register->>NodeAPI: "POST /register/init
+  note over Register: "Step: registration-request"
+  NodeAPI->>Postgres: {username, registrationRequest}"
+  NodeAPI->>NodeAPI: "Check if username exists"
+  NodeAPI-->>Register: "OpaqueServer.registerInit()"
+  note over Register: "Step: server-response"
+  Register->>Register: "{registrationResponse}"
+  note over Register: "Step: finalize
+  Register->>NodeAPI: "client.registerFinish(response)"
+  NodeAPI->>NodeAPI: "POST /register/finish
+  NodeAPI->>NodeAPI: {username, record}"
+  NodeAPI->>Postgres: "RegistrationRecord.deserialize()"
+  NodeAPI->>NodeAPI: "new CredentialFile(username, record)"
+  note over NodeAPI,Port3000: "5-minute timeout starts"
+  NodeAPI-->>Register: "store(username, serialized_credential)"
 ```
 
 **Sources:** [back-end/src/register.js L223-L356](https://github.com/RogueElectron/Cypher1/blob/c60431e6/back-end/src/register.js#L223-L356)
@@ -77,36 +77,36 @@ After OPAQUE registration completes, the UI transitions from password entry to T
 ```mermaid
 sequenceDiagram
   participant User
-  participant register.js
-  participant Node.js API
-  participant :3000
-  participant totpSecrets Map
-  participant PostgreSQL
+  participant Register as register.js
+  participant NodeAPI as Node.js API
+  participant NodeAPI as Node.js API
+  participant TotpSecrets as totpSecrets Map
+  participant Postgres as PostgreSQL
 
-  note over register.js: "Registration form hidden
-  register.js->>Node.js API: "POST /totp/setup
-  Node.js API->>Node.js API: {username}"
-  Node.js API->>totpSecrets Map: "authenticator.generateSecret()"
-  Node.js API->>Node.js API: "totpSecrets.set(username, secret)"
-  Node.js API->>Node.js API: "authenticator.keyuri(username, 'Cypher', secret)"
-  Node.js API-->>register.js: "QRCode.toDataURL(otpauthUrl)"
-  register.js->>register.js: "{secret, qrCode, otpauthUrl}"
-  note over register.js: "Step: totp-setup"
+  note over Register: "Registration form hidden
+  Register->>NodeAPI: "POST /totp/setup
+  NodeAPI->>NodeAPI: {username}"
+  NodeAPI->>TotpSecrets: "authenticator.generateSecret()"
+  NodeAPI->>NodeAPI: "totpSecrets.set(username, secret)"
+  NodeAPI->>NodeAPI: "authenticator.keyuri(username, 'Cypher', secret)"
+  NodeAPI-->>Register: "QRCode.toDataURL(otpauthUrl)"
+  Register->>Register: "{secret, qrCode, otpauthUrl}"
+  note over Register: "Step: totp-setup"
   User->>User: "Display QR code and secret"
-  User->>register.js: "Scan QR with authenticator app"
-  register.js->>Node.js API: "Enter 6-digit TOTP code"
-  Node.js API->>totpSecrets Map: "POST /totp/verify-setup
-  Node.js API->>Node.js API: {username, token}"
+  User->>Register: "Scan QR with authenticator app"
+  Register->>NodeAPI: "Enter 6-digit TOTP code"
+  NodeAPI->>TotpSecrets: "POST /totp/verify-setup
+  NodeAPI->>NodeAPI: {username, token}"
   loop ["TOTP Valid"]
-    Node.js API->>Node.js API: "secret = totpSecrets.get(username)"
-    Node.js API->>PostgreSQL: "authenticator.verify({token, secret})"
-    Node.js API->>PostgreSQL: "markAccountVerified(username)"
-    Node.js API->>totpSecrets Map: "storeTotpSecret(username, secret)"
-    Node.js API->>Node.js API: "enableTotp(username)"
-    note over Node.js API,:3000: "Account now active"
-    Node.js API-->>register.js: "totpSecrets.delete(username)"
-    register.js->>register.js: "clearTimeout(cleanupTimer)"
-    Node.js API-->>register.js: "{success: true}"
+    NodeAPI->>NodeAPI: "secret = totpSecrets.get(username)"
+    NodeAPI->>Postgres: "authenticator.verify({token, secret})"
+    NodeAPI->>Postgres: "markAccountVerified(username)"
+    NodeAPI->>TotpSecrets: "storeTotpSecret(username, secret)"
+    NodeAPI->>NodeAPI: "enableTotp(username)"
+    note over NodeAPI,Port3000: "Account now active"
+    NodeAPI-->>Register: "totpSecrets.delete(username)"
+    Register->>Register: "clearTimeout(cleanupTimer)"
+    NodeAPI-->>Register: "{success: true}"
     note over User: "User can retry within 5-min window"
   end
 ```
@@ -154,38 +154,38 @@ The login workflow consists of four sequential phases: OPAQUE authentication, in
 ```mermaid
 sequenceDiagram
   participant User
-  participant auth.js
-  participant Node.js API
-  participant :3000
-  participant global.userSessions
-  participant PostgreSQL
+  participant Auth as auth.js
+  participant NodeAPI as Node.js API
+  participant NodeAPI as Node.js API
+  participant UserSessions as global.userSessions
+  participant Postgres as PostgreSQL
 
-  User->>auth.js: "Enter username/password"
-  note over auth.js: "Step: input"
-  auth.js->>auth.js: "OpaqueClient.authInit(password)"
-  note over auth.js: "Step: ke1-generation
-  auth.js->>Node.js API: "POST /login/init
-  note over auth.js: "Step: send-ke1"
-  Node.js API->>PostgreSQL: {username, serke1}"
-  Node.js API->>Node.js API: "lookup(username) → credFileBytes"
-  Node.js API->>Node.js API: "CredentialFile.deserialize(credFileBytes)"
-  Node.js API->>Node.js API: "KE1.deserialize(serke1)"
-  Node.js API->>global.userSessions: "server.authInit(ke1, record, credential_id)"
-  note over global.userSessions: "Store expected value for finish"
-  Node.js API-->>auth.js: "userSessions.set(username, expected)"
-  note over auth.js: "Step: server-ke2"
-  auth.js->>auth.js: "{ser_ke2}"
-  auth.js->>auth.js: "KE2.deserialize(ser_ke2)"
-  note over auth.js: "Step: verify-server
-  auth.js->>Node.js API: "client.authFinish(ke2)"
-  note over auth.js: "Step: send-ke3"
-  Node.js API->>global.userSessions: "POST /login/finish
-  Node.js API->>Node.js API: {username, serke3}"
-  Node.js API->>Node.js API: "expected = userSessions.get(username)"
+  User->>Auth: "Enter username/password"
+  note over Auth: "Step: input"
+  Auth->>Auth: "OpaqueClient.authInit(password)"
+  note over Auth: "Step: ke1-generation
+  Auth->>NodeAPI: "POST /login/init
+  note over Auth: "Step: send-ke1"
+  NodeAPI->>Postgres: {username, serke1}"
+  NodeAPI->>NodeAPI: "lookup(username) → credFileBytes"
+  NodeAPI->>NodeAPI: "CredentialFile.deserialize(credFileBytes)"
+  NodeAPI->>NodeAPI: "KE1.deserialize(serke1)"
+  NodeAPI->>UserSessions: "server.authInit(ke1, record, credential_id)"
+  note over UserSessions: "Store expected value for finish"
+  NodeAPI-->>Auth: "userSessions.set(username, expected)"
+  note over Auth: "Step: server-ke2"
+  Auth->>Auth: "{ser_ke2}"
+  Auth->>Auth: "KE2.deserialize(ser_ke2)"
+  note over Auth: "Step: verify-server
+  Auth->>NodeAPI: "client.authFinish(ke2)"
+  note over Auth: "Step: send-ke3"
+  NodeAPI->>UserSessions: "POST /login/finish
+  NodeAPI->>NodeAPI: {username, serke3}"
+  NodeAPI->>NodeAPI: "expected = userSessions.get(username)"
   loop ["OPAQUE Valid"]
-    Node.js API->>global.userSessions: "KE3.deserialize(serke3)"
-    note over Node.js API,:3000: "Proceed to Phase 2"
-    Node.js API-->>auth.js: "server.authFinish(ke3, expected)"
+    NodeAPI->>UserSessions: "KE3.deserialize(serke3)"
+    note over NodeAPI,Port3000: "Proceed to Phase 2"
+    NodeAPI-->>Auth: "server.authFinish(ke3, expected)"
     note over User: "Invalid password"
   end
 ```
@@ -226,27 +226,27 @@ After successful OPAQUE authentication, an intermediate token (`pass_auth_token`
 ```mermaid
 sequenceDiagram
   participant User
-  participant auth.js
-  participant Node.js API
-  participant :3000
-  participant Flask API
-  participant :5000
-  participant PostgreSQL
+  participant Auth as auth.js
+  participant NodeAPI as Node.js API
+  participant NodeAPI as Node.js API
+  participant FlaskAPI as Flask API
+  participant FlaskAPI as Flask API
+  participant Postgres as PostgreSQL
 
-  User->>auth.js: "Enter 6-digit TOTP code"
-  auth.js->>auth.js: "getCookieValue('pass_auth_token')"
-  auth.js->>Node.js API: "POST /totp/verify-login
-  Node.js API->>Flask API: {username, token, passAuthToken}"
-  Flask API->>Flask API: "POST /api/verify-token
-  Flask API->>Flask API: {token: passAuthToken, username}"
-  Flask API-->>Node.js API: "paseto.parse(key, token)"
-  note over Node.js API,:3000: "Intermediate token valid"
-  Node.js API->>PostgreSQL: "Verify claims: username match, pass_authed=true"
-  Node.js API->>Node.js API: "{valid: true, claims}"
+  User->>Auth: "Enter 6-digit TOTP code"
+  Auth->>Auth: "getCookieValue('pass_auth_token')"
+  Auth->>NodeAPI: "POST /totp/verify-login
+  NodeAPI->>FlaskAPI: {username, token, passAuthToken}"
+  FlaskAPI->>FlaskAPI: "POST /api/verify-token
+  FlaskAPI->>FlaskAPI: {token: passAuthToken, username}"
+  FlaskAPI-->>NodeAPI: "paseto.parse(key, token)"
+  note over NodeAPI,Port3000: "Intermediate token valid"
+  NodeAPI->>Postgres: "Verify claims: username match, pass_authed=true"
+  NodeAPI->>NodeAPI: "{valid: true, claims}"
   loop ["TOTP Valid"]
-    Node.js API->>Node.js API: "getTotpSecret(username)"
-    note over Node.js API,:3000: "Proceed to Phase 4"
-    Node.js API-->>auth.js: "authenticator.verify({token, secret, window: 1})"
+    NodeAPI->>NodeAPI: "getTotpSecret(username)"
+    note over NodeAPI,Port3000: "Proceed to Phase 4"
+    NodeAPI-->>Auth: "authenticator.verify({token, secret, window: 1})"
     note over User: "Invalid code - can retry"
   end
 ```
@@ -332,29 +332,28 @@ The logout workflow performs comprehensive cleanup: access token blacklisting, s
 
 ```mermaid
 sequenceDiagram
-  participant session-manager.js
-  participant Flask API
-  participant :5000
+  participant SessionMgr as session-manager.js
+  participant FlaskAPI as Flask API
+  participant FlaskAPI as Flask API
   participant Redis
-  participant PostgreSQL
+  participant Postgres as PostgreSQL
 
-  session-manager.js->>Flask API: "POST /api/logout
-  Flask API->>Flask API: {access_token, refresh_token}"
-  Flask API->>Flask API: "paseto.parse(session_key, access_token)"
-  note over Flask API,:5000: "Cleanup sequence begins"
-  Flask API->>Redis: "Extract session_id from claims"
+  SessionMgr->>FlaskAPI: "POST /api/logout
+  FlaskAPI->>FlaskAPI: {access_token, refresh_token}"
+  FlaskAPI->>FlaskAPI: "paseto.parse(session_key, access_token)"
+  note over FlaskAPI,Port5000: "Cleanup sequence begins"
+  FlaskAPI->>Redis: "Extract session_id from claims"
   note over Redis: "Blacklist for remaining 15 min lifetime"
-  Flask API->>Redis: "get_token_manager().blacklist_token(access_token, ttl=900)"
+  FlaskAPI->>Redis: "get_token_manager().blacklist_token(access_token, ttl=900)"
   note over Redis: "Remove session from cache"
-  Flask API->>PostgreSQL: "get_session_manager().delete_session(session_id)"
-  note over PostgreSQL: "Revoke all refresh tokens for session"
-  Flask API->>PostgreSQL: "UPDATE RefreshToken SET is_active=false, is_revoked=true
-  note over PostgreSQL: "Deactivate session"
-  Flask API->>PostgreSQL: WHERE session_id=?"
-  Flask API-->>session-manager.js: "UPDATE UserSession SET is_active=false
-  session-manager.js->>session-manager.js: WHERE session_id=?"
-  session-manager.js->>session-manager.js: "COMMIT transaction"
-  session-manager.js->>session-manager.js: "{success: true}"
+  FlaskAPI->>Postgres: "get_session_manager().delete_session(session_id)"
+  note over Postgres: "Revoke all refresh tokens for session"
+  FlaskAPI->>Postgres: "UPDATE RefreshToken SET is_active=false, is_revoked=true
+  note over Postgres: "Deactivate session"
+  FlaskAPI-->>SessionMgr: "UPDATE UserSession SET is_active=false
+  SessionMgr->>SessionMgr: WHERE session_id=?"
+  SessionMgr->>SessionMgr: "COMMIT transaction"
+  SessionMgr->>SessionMgr: "{success: true}"
 ```
 
 **Sources:** [back-end/main.py L514-L560](https://github.com/RogueElectron/Cypher1/blob/c60431e6/back-end/main.py#L514-L560)

@@ -69,7 +69,7 @@ The `authenticator.generateSecret()` method creates a base32-encoded secret comp
 sequenceDiagram
   participant Browser
   participant (register.js)
-  participant Node.js API
+  participant NodeAPI as Node.js API
   participant /totp/setup
   participant /totp/verify-setup
   participant Map
@@ -213,14 +213,14 @@ sequenceDiagram
   participant (auth.js)
   participant Cookie
   participant pass_auth_token
-  participant Node.js API
+  participant NodeAPI as Node.js API
   participant /totp/verify-login
   participant Flask Service
   participant /api/verify-token
   participant /api/create-session
   participant PostgreSQL
   participant database.getTotpSecret
-  participant session-manager.js
+  participant SessionMgr as session-manager.js
   participant setTokens()
 
   note over Browser,setTokens(): TOTP Login Verification Phase
