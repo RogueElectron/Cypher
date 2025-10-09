@@ -54,13 +54,13 @@ subgraph Data ["Data Layer"]
     RedisCache
 end
 
-subgraph Node ["Node.js API :3000app.js"]
+subgraph Node ["Node.js API (Port 3000)"]
     OpaqueServer
     NodeRoutes
     TotpAuth
 end
 
-subgraph Flask ["Flask Service :5000main.py"]
+subgraph Flask ["Flask Service (Port 5000)"]
     FlaskRoutes
     FlaskTemplates
 end
@@ -145,26 +145,26 @@ sequenceDiagram
   participant get_db_session()
 
   note over Client Browser,get_db_session(): OPAQUE Authentication Phase
-  Client Browser->>Node.js :3000: "POST /login/finish
-  Node.js :3000->>Node.js :3000: {username, serke3}"
+  Client Browser->>NodeAPI: "POST /login/finish
+  NodeAPI->>NodeAPI: {username, serke3}"
   note over Client Browser,get_db_session(): Internal Token Creation
-  Node.js :3000->>Flask :5000: "server.authFinish(deser_ke3, expected)"
-  Flask :5000->>Flask :5000: "fetch('http://localhost:5000/api/create-token')"
-  Flask :5000-->>Node.js :3000: "paseto.create(key=key, exp_seconds=180)"
-  Node.js :3000-->>Client Browser: "{token: pass_auth_token}"
+  NodeAPI->>FlaskAPI: "server.authFinish(deser_ke3, expected)"
+  FlaskAPI->>FlaskAPI: "fetch('http://localhost:5000/api/create-token')"
+  FlaskAPI-->>NodeAPI: "paseto.create(key=key, exp_seconds=180)"
+  NodeAPI-->>Client Browser: "{token: pass_auth_token}"
   note over Client Browser,get_db_session(): TOTP Verification Phase
-  Client Browser->>Node.js :3000: "{success: true, token: pass_auth_token}"
-  Node.js :3000->>Flask :5000: "POST /totp/verify-login
-  Flask :5000->>Flask :5000: {username, token, passAuthToken}"
-  Flask :5000-->>Node.js :3000: "fetch('http://localhost:5000/api/verify-token')"
-  Node.js :3000->>Node.js :3000: "paseto.parse(key=key, token=token)"
+  Client Browser->>NodeAPI: "{success: true, token: pass_auth_token}"
+  NodeAPI->>FlaskAPI: "POST /totp/verify-login
+  FlaskAPI->>FlaskAPI: {username, token, passAuthToken}"
+  FlaskAPI-->>NodeAPI: "fetch('http://localhost:5000/api/verify-token')"
+  NodeAPI->>NodeAPI: "paseto.parse(key=key, token=token)"
   note over Client Browser,get_db_session(): Session Creation
-  Node.js :3000->>Flask :5000: "{valid: true}"
-  Flask :5000->>Redis: "authenticator.verify({token, secret})"
-  Flask :5000->>PostgreSQL: "fetch('http://localhost:5000/api/create-session')"
-  Flask :5000->>Flask :5000: "create_session(user_id, session_data, ttl=3600)"
-  Flask :5000-->>Node.js :3000: "db_session.add(UserSession)
-  Node.js :3000-->>Client Browser: db_session.add(RefreshToken)"
+  NodeAPI->>FlaskAPI: "{valid: true}"
+  FlaskAPI->>Redis: "authenticator.verify({token, secret})"
+  FlaskAPI->>PostgreSQL: "fetch('http://localhost:5000/api/create-session')"
+  FlaskAPI->>FlaskAPI: "create_session(user_id, session_data, ttl=3600)"
+  FlaskAPI-->>NodeAPI: "db_session.add(UserSession)
+  NodeAPI-->>Client Browser: db_session.add(RefreshToken)"
 ```
 
 **Key Internal Endpoints:**

@@ -40,7 +40,7 @@ LoginFinish --> CreateToken
 TotpVerifyLogin --> VerifyToken
 TotpVerifyLogin --> CreateSession
 
-subgraph FlaskAPI ["Flask Session Service :5000"]
+subgraph FlaskAPI ["Flask Session Service"]
     IndexRoute
     LoginPage
     RegisterPage
@@ -54,7 +54,7 @@ subgraph FlaskAPI ["Flask Session Service :5000"]
     RefreshToken --> Logout
 end
 
-subgraph NodeAPI ["Node.js Internal API :3000"]
+subgraph NodeAPI ["Node.js Internal API"]
     RegInit
     RegFinish
     LoginInit
@@ -920,44 +920,38 @@ sequenceDiagram
   participant NodeAPI as Node.js API
   participant FlaskAPI as Flask API
 
-  note over Client,Flask :5000: "Phase 1: OPAQUE Registration"
-  Client->>Node.js :3000: "POST /register/init
-  Node.js :3000-->>Client: {username, registrationRequest}"
-  Client->>Node.js :3000: "{registrationResponse}"
-  Node.js :3000-->>Client: "POST /register/finish
-  note over Client,Flask :5000: "Phase 2: TOTP Setup"
-  Client->>Node.js :3000: {username, record}"
-  Node.js :3000-->>Client: "{success: true}"
-  Client->>Node.js :3000: "POST /totp/setup
-  Node.js :3000-->>Client: {username}"
-  note over Client,Flask :5000: "Phase 3: OPAQUE Login"
-  Client->>Node.js :3000: "{secret, qrCode, otpauthUrl}"
-  Node.js :3000-->>Client: "POST /totp/verify-setup
-  Client->>Node.js :3000: {username, token}"
-  Node.js :3000->>Flask :5000: "{success: true}"
-  Flask :5000-->>Node.js :3000: "POST /login/init
-  Node.js :3000-->>Client: {username, serke1}"
-  note over Client,Flask :5000: "Phase 4: TOTP Login & Session"
-  Client->>Node.js :3000: "{ser_ke2}"
-  Node.js :3000->>Flask :5000: "POST /login/finish
-  Flask :5000-->>Node.js :3000: {username, serke3}"
-  Node.js :3000->>Flask :5000: "POST /api/create-token
-  Flask :5000-->>Node.js :3000: {username}"
-  Node.js :3000-->>Client: "{token: pass_auth_token}"
-  note over Client,Flask :5000: "Phase 5: Token Refresh"
-  Client->>Flask :5000: "{success: true, token}"
-  Flask :5000-->>Client: "POST /totp/verify-login
-  Client->>Flask :5000: {username, token, passAuthToken}"
-  Flask :5000-->>Client: "POST /api/verify-token
-  note over Client,Flask :5000: "Phase 6: Logout"
-  Client->>Flask :5000: {token, username}"
-  Flask :5000-->>Client: "{valid: true}"
-```
-
-**Sources:** [back-end/node_internal_api/app.js L143-L496](https://github.com/RogueElectron/Cypher1/blob/c60431e6/back-end/node_internal_api/app.js#L143-L496)
-
- [back-end/main.py L92-L560](https://github.com/RogueElectron/Cypher1/blob/c60431e6/back-end/main.py#L92-L560)
-
+  note over Client,FlaskAPI: "Phase 1: OPAQUE Registration"
+  Client->>NodeAPI: "POST /register/init"
+  NodeAPI-->>Client: {username, registrationRequest}"
+  Client->>NodeAPI: "{registrationResponse}"
+  NodeAPI-->>Client: "POST /register/finish"
+  note over Client,FlaskAPI: "Phase 2: TOTP Setup"
+  Client->>NodeAPI: {username, record}"
+  NodeAPI-->>Client: "{success: true}"
+  Client->>NodeAPI: "POST /totp/setup"
+  NodeAPI-->>Client: {username}"
+  note over Client,FlaskAPI: "Phase 3: OPAQUE Login"
+  Client->>NodeAPI: "{secret, qrCode, otpauthUrl}"
+  NodeAPI-->>Client: "POST /totp/verify-setup"
+  Client->>NodeAPI: {username, token}"
+  NodeAPI-->>Client: "{success: true}"
+  FlaskAPI-->>Client: "POST /login/init"
+  Client->>NodeAPI: {username, serke1}"
+  note over Client,FlaskAPI: "Phase 4: TOTP Login & Session"
+  Client->>NodeAPI: "{ser_ke2}"
+  NodeAPI->>FlaskAPI: "POST /login/finish"
+  FlaskAPI-->>NodeAPI: {username, serke3}"
+  NodeAPI->>FlaskAPI: "POST /api/create-token"
+  FlaskAPI-->>NodeAPI: {username}"
+  NodeAPI-->>Client: "{token: pass_auth_token}"
+  note over Client,FlaskAPI: "Phase 5: Token Refresh"
+  Client->>FlaskAPI: "{success: true, token}"
+  FlaskAPI-->>Client: "POST /totp/verify-login"
+  Client->>FlaskAPI: {username, token, passAuthToken}"
+  FlaskAPI-->>Client: "POST /api/verify-token"
+  note over Client,FlaskAPI: "Phase 6: Logout"
+  Client->>FlaskAPI: {token, username}"
+  FlaskAPI-->>Client: "{valid: true}"
 ---
 
 ## Security Headers

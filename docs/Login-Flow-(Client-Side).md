@@ -106,7 +106,6 @@ sequenceDiagram
   participant OpaqueClient
   participant OPAQUEConfig as OPAQUE Config
   participant NodeAPI as Node.js API
-  participant NodeAPI as Node.js API
   participant AuthLiveVisualization
 
   User->>login-form handler: "Submit username + password"
@@ -120,8 +119,8 @@ sequenceDiagram
   OpaqueClient-->>login-form handler: "ke1 object"
   login-form handler->>login-form handler: "ke1.serialize() → ser_ke1"
   login-form handler->>AuthLiveVisualization: "activateStep('send-ke1')"
-  login-form handler->>Node.js API: "POST /login/init
-  Node.js API-->>login-form handler: {username, serke1: ser_ke1}"
+  login-form handler->>NodeAPI: "POST /login/init
+  NodeAPI-->>login-form handler: {username, serke1: ser_ke1}"
   login-form handler->>AuthLiveVisualization: "{ser_ke2: base64}"
   login-form handler->>login-form handler: "activateStep('server-ke2')"
 ```
@@ -146,8 +145,6 @@ sequenceDiagram
   participant Auth as auth.js handler
   participant OpaqueClient instance
   participant FlaskAPI as Flask API
-  participant FlaskAPI as Flask API
-  participant NodeAPI as Node.js API
   participant NodeAPI as Node.js API
 
   auth.js handler->>auth.js handler: "KE2.deserialize(cfg, ser_ke2)"
@@ -156,12 +153,12 @@ sequenceDiagram
   OpaqueClient instance-->>auth.js handler: "finClient {ke3, sessionKey}"
   auth.js handler->>auth.js handler: "finClient.ke3.serialize() → ser_ke3"
   note over auth.js handler,:5000/api/create-token: "Intermediate Token Creation"
-  auth.js handler->>Flask API: "POST /api/create-token
-  Flask API-->>auth.js handler: {username}"
+  auth.js handler->>FlaskAPI: "POST /api/create-token
+  FlaskAPI-->>auth.js handler: {username}"
   auth.js handler->>auth.js handler: "{token: pass_auth_token}"
   note over auth.js handler,:3000/login/finish: "OPAQUE Completion"
-  auth.js handler->>Node.js API: "Set cookie: pass_auth_token
-  Node.js API-->>auth.js handler: Max-Age=180, SameSite=Lax"
+  auth.js handler->>NodeAPI: "Set cookie: pass_auth_token
+  NodeAPI-->>auth.js handler: Max-Age=180, SameSite=Lax"
 ```
 
 **Intermediate Token Flow:**
@@ -238,7 +235,6 @@ sequenceDiagram
   participant totp-verify-form handler
   participant getCookieValue()
   participant NodeAPI as Node.js API
-  participant NodeAPI as Node.js API
   participant SessionMgr as session-manager.js
   participant SessionManager
 
@@ -249,11 +245,11 @@ sequenceDiagram
   getCookieValue()-->>totp-verify-form handler: "passAuthFromCookie or null"
   loop ["Token not found or
     totp-verify-form handler->>totp-verify-form handler: "throw Error('Token expired')"
-    totp-verify-form handler->>Node.js API: "POST /totp/verify-login
-    Node.js API-->>totp-verify-form handler: {username, token, passAuthToken}"
+    totp-verify-form handler->>NodeAPI: "POST /totp/verify-login
+    NodeAPI-->>totp-verify-form handler: {username, token, passAuthToken}"
     totp-verify-form handler->>totp-verify-form handler: "{success, access_token, refresh_token, expires_in}"
-    totp-verify-form handler->>session-manager.js: "showAlert('Invalid TOTP code', 'error')"
-    totp-verify-form handler->>session-manager.js: "import('./session-manager.js')"
+    totp-verify-form handler->>SessionMgr: "showAlert('Invalid TOTP code', 'error')"
+    totp-verify-form handler->>SessionMgr: "import('./session-manager.js')"
     totp-verify-form handler->>totp-verify-form handler: "setTokens(access_token, refresh_token, expires_in)"
     totp-verify-form handler->>totp-verify-form handler: "Delete cookie: pass_auth_token"
   end

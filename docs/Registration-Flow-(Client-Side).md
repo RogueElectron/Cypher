@@ -62,10 +62,10 @@ FormHandler["registerForm submit handler<br>Lines 230-356"]
 TotpGenerator["generateTotpSecret()<br>Lines 360-397"]
 TotpVerifier["totpForm submit handler<br>Lines 423-493"]
 AlertSystem["showAlert() / clearAlerts()<br>Lines 172-209"]
-RegisterInit["POST /register/init<br>localhost:3000"]
-RegisterFinish["POST /register/finish<br>localhost:3000"]
-TotpSetup["POST /totp/setup<br>localhost:3000"]
-TotpVerifySetup["POST /totp/verify-setup<br>localhost:3000"]
+RegisterInit["POST /register/init<br>localhost (Port 3000)"]
+RegisterFinish["POST /register/finish<br>localhost (Port 3000)"]
+TotpSetup["POST /totp/setup<br>localhost (Port 3000)"]
+TotpVerifySetup["POST /totp/verify-setup<br>localhost (Port 3000)"]
 
 RegisterForm --> FormHandler
 TotpPhase --> TotpGenerator
@@ -84,7 +84,7 @@ subgraph subGraph2 ["API Endpoints Called"]
     TotpVerifySetup
 end
 
-subgraph subGraph1 ["JavaScript Module: register.js"]
+subgraph subGraph1 ["JavaScript Module"]
     LiveVisualization
     RegistrationSteps
     OpaqueClientImport
@@ -131,9 +131,8 @@ sequenceDiagram
   participant OpaqueClient
   participant @cloudflare/opaque-ts
   participant NodeAPI as Node.js API
-  participant NodeAPI as Node.js API
 
-  note over User,:3000: Phase 1: Password Registration (OPAQUE Protocol)
+  note over User, NodeAPI: Phase 1: Password Registration (OPAQUE Protocol)
   User->>Browser: Enter username, password, confirm_password
   Browser->>Browser: validatePasswords()
   Browser->>LiveVisualization: Check length >= 8
@@ -142,8 +141,8 @@ sequenceDiagram
   OpaqueClient-->>Browser: registerInit(password)
   Browser->>LiveVisualization: {request, serialize()}
   Browser->>LiveVisualization: completeStep("generate-keys")
-  Browser->>Node.js API: activateStep("registration-request")
-  Node.js API-->>Browser: POST /register/init
+  Browser->>NodeAPI: activateStep("registration-request")
+  NodeAPI-->>Browser: POST /register/init
   Browser->>LiveVisualization: {username, registrationRequest}
   Browser->>LiveVisualization: {registrationResponse}
   Browser->>OpaqueClient: completeStep("registration-request")
@@ -152,21 +151,21 @@ sequenceDiagram
   Browser->>OpaqueClient: completeStep("server-response")
   OpaqueClient-->>Browser: activateStep("finalize")
   Browser->>LiveVisualization: registerFinish(deSerRegResponse)
-  Browser->>Node.js API: {record.serialize()}
-  Node.js API-->>Browser: completeStep("finalize")
-  note over User,:3000: Phase 2: TOTP Two-Factor Setup
+  Browser->>NodeAPI: {record.serialize()}
+  NodeAPI-->>Browser: completeStep("finalize")
+  note over User, NodeAPI: Phase 2: TOTP Two-Factor Setup
   Browser->>Browser: POST /register/finish
   Browser->>LiveVisualization: {username, record}
   Browser->>Browser: {success: true}
-  Browser->>Node.js API: Switch UI:
-  Node.js API-->>Browser: hide
+  Browser->>NodeAPI: Switch UI:
+  NodeAPI-->>Browser: hide
   Browser->>Browser: activateStep("totp-setup")
   Browser->>Browser: generateTotpSecret()
   User->>Browser: POST /totp/setup
   User->>Browser: {username}
   Browser->>LiveVisualization: {secret, qrCode, otpauthUrl}
-  Browser->>Node.js API: displayServerQrCode()
-  Node.js API-->>Browser: Store window.currentUsername
+  Browser->>NodeAPI: displayServerQrCode()
+  NodeAPI-->>Browser: Store window.currentUsername
   Browser->>LiveVisualization: Scan QR code with authenticator app
   Browser->>Browser: Enter 6-digit TOTP code
 ```
@@ -305,7 +304,6 @@ if (finishResult.success) {
 
 The `generateTotpSecret()` function requests a new TOTP secret from the server:
 
-```javascript
 // Lines 360-396
 async function generateTotpSecret() {
     const username = document.getElementById('username').value;
@@ -740,7 +738,7 @@ submitButton.textContent = originalText;
 | `/totp/setup` | POST | `{username}` | `{secret, qrCode, otpauthUrl}` | Generate TOTP secret and QR code |
 | `/totp/verify-setup` | POST | `{username, token}` | `{success: boolean, error?}` | Verify TOTP code during setup |
 
-**All endpoints target:** `http://localhost:3000`
+**All endpoints target:** `http://localhost (Port 3000)`
 
 **Sources:** [back-end/src/register.js L275-L284](https://github.com/RogueElectron/Cypher1/blob/c60431e6/back-end/src/register.js#L275-L284)
 
