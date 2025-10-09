@@ -1,7 +1,5 @@
 # Cypher - Zero-Knowledge Authentication Platform
 
-[![Hackathon Project](https://img.shields.io/badge/Hackathon-Digitopia%20Finals-blue?style=for-the-badge&logo=hackaday&logoColor=white)](#)
-[![Security](https://img.shields.io/badge/Security-Zero--Knowledge-green?style=for-the-badge)](#)
 [![Tech Stack](https://img.shields.io/badge/Stack-Node.js%20%7C%20Flask%20%7C%20PostgreSQL%20%7C%20Redis-red?style=for-the-badge)](#)
 
 > **Revolutionary Zero-Knowledge Authentication Platform** - Passwords never leave your device, even during registration and login.
