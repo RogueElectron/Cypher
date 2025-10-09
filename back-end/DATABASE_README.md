@@ -6,12 +6,12 @@ The Cypher project has been upgraded from in-memory storage to a robust PostgreS
 
 ## Architecture
 
-### 🏗️ **Hybrid Database Design**
+### **Hybrid Database Design**
 - **PostgreSQL**: Persistent storage for users, sessions, tokens, and audit logs
 - **Redis**: High-speed caching for active sessions, rate limiting, and device tracking
 - **Encryption Layer**: Transparent encryption at rest with automatic key rotation
 
-### 🔐 **Security Features**
+###  **Security Features**
 - **Encryption at Rest**: All sensitive data encrypted using Fernet (AES 128)
 - **Key Rotation**: Automatic key rotation based on age (90 days) or usage (1M operations)
 - **Zero-Knowledge Design**: Maintains OPAQUE protocol's zero-knowledge properties
@@ -133,20 +133,20 @@ CREATE TABLE user_sessions (
 
 ## Security Features
 
-### 🔒 **Encryption at Rest**
+### **Encryption at Rest**
 - All sensitive database fields are automatically encrypted
 - Uses Fernet symmetric encryption (AES 128 in CBC mode)
 - Keys derived from master password using PBKDF2
 - Each encrypted field has associated key ID for rotation support
 
-### 🔄 **Key Rotation**
+### **Key Rotation**
 - Automatic rotation based on configurable criteria:
   - Age: Default 90 days
   - Usage: Default 1M encryption operations
 - Seamless rotation without service interruption
 - Old keys retained for decryption during transition
 
-### 📊 **Audit Logging**
+### **Audit Logging**
 All security events are logged with encryption:
 - User authentication attempts
 - Session creation/destruction  
@@ -154,7 +154,7 @@ All security events are logged with encryption:
 - Key rotation events
 - Administrative actions
 
-### ⚡ **Performance Optimization**
+### **Performance Optimization**
 - **Redis Caching**: Active sessions cached for sub-millisecond access
 - **Connection Pooling**: Optimized PostgreSQL connection management
 - **Lazy Loading**: Encryption keys loaded on demand
