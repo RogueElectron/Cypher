@@ -11,6 +11,9 @@ jobs:
   windows-test:
     runs-on: windows-latest
     
+    env:
+      DOCKER_DEFAULT_PLATFORM: linux/amd64
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -30,6 +33,9 @@ jobs:
     - name: Setup Docker
       run: |
         # Docker is pre-installed on GitHub Actions Windows runners
+        # Force Docker to use Linux containers
+        $env:DOCKER_DEFAULT_PLATFORM = "linux/amd64"
+        
         # Wait for Docker to be ready
         $timeout = 60
         $timer = 0
@@ -51,6 +57,8 @@ jobs:
           Write-Host "Docker may not be fully ready, but continuing..."
         } else {
           Write-Host "✅ Docker is ready"
+          # Verify Docker is in Linux mode
+          docker system info | Select-String "OSType"
         }
       shell: pwsh
       

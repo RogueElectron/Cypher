@@ -1,6 +1,7 @@
 services:
   postgres:
     image: postgres:15
+    platform: linux/amd64
     container_name: cypher-postgres
     environment:
       POSTGRES_DB: cypher_db
@@ -34,6 +35,7 @@ services:
 
   redis:
     image: redis:7
+    platform: linux/amd64
     container_name: cypher-redis
     ports:
       - "6379:6379"
