@@ -1,0 +1,15 @@
+{
+  "salt": "SspW3I4IfRJ0nGbnzYpKwAeYs7K67JKOzHjUPKTtMlE=",
+  "keys": {
+    "key_20251008_231020_e59f5b87f90fcdc5": {
+      "encrypted_data": "Z0FBQUFBQm81dTljY2QyNml1U3NtUVhaMHcyX043cW1BcHgzQ2xFUDNWSlo3Zmk5bWcyYnlpdzQtaG16ZGdtY01MQTB6aHpHUUlPZEJjYmhmZXIyNl82UmRpQThkRDgySmREUnJRNTNBSUxYazZTZzRZWEg4ZGFTYzBwNjBSWi1oU0xHZkN3LTZtY1k=",
+      "metadata": {
+        "key_id": "key_20251008_231020_e59f5b87f90fcdc5",
+        "created_at": "2025-10-08T23:10:20.885158",
+        "is_active": true
+      }
+    }
+  },
+  "active_key_id": "key_20251008_231020_e59f5b87f90fcdc5",
+  "encryption_count": 0
+}
