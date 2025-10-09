@@ -1,5 +1,5 @@
 # Cypher Documentation
-
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/RogueElectron/Cypher)
 HEY, MAJOR CHANGES, all docs were removed becuse they were old and im working on the new docs
 
 Welcome to the Cypher project documentation. This guide provides comprehensive information about the system architecture, implementation details, and development workflows.
