@@ -66,12 +66,7 @@ cd ..
 echo "building frontend assets..."
 npx vite build > /dev/null
 
-echo "setting up database infrastructure..."
-if [ ! -f ".env" ]; then
-    echo -e "${YELLOW}creating .env file from .env.example${NC}"
-    cp .env.example .env
-    echo -e "${GREEN}remember to update .env with your settings!${NC}"
-fi
+#included .env 
 
 echo "starting database services..."
 docker compose up -d postgres redis
