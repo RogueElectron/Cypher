@@ -19,7 +19,10 @@
 - **Python** 3.8+ and **pip**
 - **PostgreSQL** 15+
 - **Redis** 7+
-- **Docker** (optional, for containerized deployment)
+- **Docker**
+
+Then run the setup.sh and the start.sh scripts and OFF YOU GO
+The windows scripts are NOT tested and will probably have issues.
 
 ## Project Structure
 
