@@ -104,31 +104,14 @@ jobs:
         source "$VENV_PATH/bin/activate"
         
         echo "Testing Python dependencies..."
-        python3 -c "
-try:
-    import flask
-    print('✅ Flask imported successfully')
-except ImportError as e:
-    print(f'❌ Flask import failed: {e}')
-    
-try:
-    import requests  
-    print('✅ Requests imported successfully')
-except ImportError as e:
-    print(f'❌ Requests import failed: {e}')
-    
-try:
-    import redis
-    print('✅ Redis imported successfully') 
-except ImportError as e:
-    print(f'❌ Redis import failed: {e}')
-    
-try:
-    import psycopg2
-    print('✅ Psycopg2 imported successfully')
-except ImportError as e:
-    print(f'❌ Psycopg2 import failed: {e}')
-"
+        
+        # Test each dependency individually
+        python3 -c "import flask; print('✅ Flask imported successfully')" || echo "❌ Flask import failed"
+        python3 -c "import requests; print('✅ Requests imported successfully')" || echo "❌ Requests import failed"  
+        python3 -c "import redis; print('✅ Redis imported successfully')" || echo "❌ Redis import failed"
+        python3 -c "import psycopg2; print('✅ Psycopg2 imported successfully')" || echo "❌ Psycopg2 import failed"
+        
+        echo "✅ Application dependencies test completed"
         
         # Test Node.js dependencies
         cd node_internal_api
