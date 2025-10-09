@@ -17,10 +17,6 @@ import { authenticator } from 'otplib';
 import QRCode from 'qrcode';
 import xss from 'xss-clean';
 import helmet from 'helmet';
-import dotenv from 'dotenv';
-import createPostgresStorage from './db.js';
-
-dotenv.config({ path: '../.env' });
 
 
 const app = express();
@@ -46,25 +42,31 @@ app.use(
   );
 
 
-// old in-memory storage - keeping around just in case
-function createKVStorage() {
-    const storage = new Map();
-    return {
-        store(key, value) {
-            storage.set(key, value);
-            return true;
-        },
-        lookup(key) {
-            return storage.get(key) || false;
-        },
+function createKVStorage() {  // Simple KV storage for testing - not for production
+    const storage = new Map(); // Wrapper around Map for basic key-value operations    
+      
+    return {  
+        store(key, value) {  
+            storage.set(key, value);  
+            return true;  
+        },  
+          
+        lookup(key) {  
+            const value = storage.get(key);  
+            return value || false;  
+        },  
+
         delete(key) {
             return storage.delete(key);
         },
+
         clear() {
             storage.clear();
             return true;
         }
-    };
+          
+  
+    };  
 }
 
 
@@ -86,15 +88,15 @@ const serverKeypairSeed = cfg.prng.random(cfg.constants.Nseed);
 const serverAkeKeypair = await cfg.ake.deriveAuthKeyPair(serverKeypairSeed);
 
 // storage for user credentials and temporary state
-const database = createPostgresStorage();  // postgres for real storage
-const totpSecrets = new Map();  // temp totp secrets while setting up
-const unverifiedAccounts = new Map();  // accounts that need totp setup
-const VERIFICATION_TIMEOUT = 5 * 60 * 1000;  // 5 min to finish setup
+const database = createKVStorage();
+const totpSecrets = new Map();  // totp secrets during setup
+const unverifiedAccounts = new Map();  // pending verification cleanup
+const VERIFICATION_TIMEOUT = 5 * 60 * 1000;  // 5 minutes to complete setup
 
-async function cleanupUnverifiedAccount(username) {
-    const userData = await database.lookup(username);
+function cleanupUnverifiedAccount(username) {
+    const userData = database.lookup(username);
     if (userData !== false) {
-        await database.delete(username);
+        database.delete(username);
     }
     totpSecrets.delete(username);
     unverifiedAccounts.delete(username);
@@ -110,18 +112,10 @@ function scheduleAccountCleanup(username) {
     unverifiedAccounts.set(username, timeoutId);
 }
 
-async function markAccountVerified(username) {
+function markAccountVerified(username) {
     if (unverifiedAccounts.has(username)) {
         clearTimeout(unverifiedAccounts.get(username));
         unverifiedAccounts.delete(username);
-    }
-    
-    // store TOTP secret in database and enable TOTP
-    const secret = totpSecrets.get(username);
-    if (secret) {
-        await database.storeTotpSecret(username, secret);
-        await database.enableTotp(username);
-        totpSecrets.delete(username);  // remove from temp storage
     }
 }
 
@@ -155,7 +149,7 @@ app.post('/register/init', async (req, res) => {
         }
         
         // check if user already exists
-        const existingUser = await database.lookup(username);
+        const existingUser = database.lookup(username);
         if (existingUser !== false) {
             return res.status(409).json({ 
                 error: 'Username already exists' 
@@ -186,7 +180,7 @@ app.post('/register/finish', async (req, res) => {
         }
         
         // check if user already exists
-        const existingUser = await database.lookup(username);
+        const existingUser = database.lookup(username);
         if (existingUser !== false) {
             return res.status(409).json({ 
                 success: false, 
@@ -197,7 +191,7 @@ app.post('/register/finish', async (req, res) => {
         const deserRec = RegistrationRecord.deserialize(cfg, record);
         const credential_file = new CredentialFile(username, deserRec);
         // store user credentials in database
-        const success = await database.store(username, Uint8Array.from(credential_file.serialize()));
+        const success = database.store(username, Uint8Array.from(credential_file.serialize()));
         
         if (success) {
             console.log(`User ${username} registered successfully`);
@@ -230,7 +224,7 @@ app.post('/login/init', async (req, res) => {
             });
         }
         
-        const credFileBytes = await database.lookup(username);
+        const credFileBytes = database.lookup(username);
 
         if (credFileBytes === false) {
             return res.status(404).json({ 
@@ -243,7 +237,7 @@ app.post('/login/init', async (req, res) => {
         const responseke2 = await server.authInit(deser_ke1, credential_file.record, credential_file.credential_identifier);
         const { ke2, expected } = responseke2;
         
-        // stash the expected value for this login attempt
+        // Store expected for this user session (true session management comes after demo)
         global.userSessions = global.userSessions || new Map();
         global.userSessions.set(username, expected);
         const ser_ke2 = ke2.serialize();
@@ -265,7 +259,7 @@ app.post('/login/finish', async (req, res) => {
         const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);  
         const { serke3: ser_ke3, username } = req.body;
         
-        // grab the expected value from login init
+        // Get the expected value for this user
         const expected = global.userSessions?.get(username);
         if (!expected) {
             return res.status(400).json({ error: 'No active session found' });
@@ -324,7 +318,7 @@ app.post('/login/finish', async (req, res) => {
     }
 });
 
-// totp stuff
+// TOTP endpoints
 
 app.post('/totp/setup', async (req, res) => {
     try {
@@ -338,11 +332,11 @@ app.post('/totp/setup', async (req, res) => {
         
         totpSecrets.set(username, secret);
         
-        // make the uri for google authenticator etc
+        // Create URI for authenticator apps
         const service = 'Cypher';
         const otpauthUrl = authenticator.keyuri(username, service, secret);
         
-        // turn it into a qr code
+        // Generate QR code
         const qrCodeDataURL = await QRCode.toDataURL(otpauthUrl);
         
         // totp secret generated and qr code created for user enrollment
@@ -376,7 +370,7 @@ app.post('/totp/verify-setup', async (req, res) => {
         const isValid = authenticator.verify({ token, secret });
                 
         if (isValid) {
-            await markAccountVerified(username);
+            markAccountVerified(username);
             res.status(200).json({ success: true, message: 'TOTP verification successful' });
         } else {
             res.status(400).json({ success: false, error: 'Invalid TOTP code' });
@@ -428,13 +422,9 @@ app.post('/totp/verify-login', async (req, res) => {
         }
 
         // intermediate token validated - now check the totp code
-        // try temp storage first (during setup), then database (after setup)
-        let secret = totpSecrets.get(username);
+        const secret = totpSecrets.get(username);
         if (!secret) {
-            secret = await database.getTotpSecret(username);
-            if (!secret) {
-                return res.status(400).json({ error: 'No TOTP secret found for user' });
-            }
+            return res.status(400).json({ error: 'No TOTP secret found for user' });
         }
         
         // verify the 6-digit totp code with 30 second window

@@ -1,14 +1,5 @@
 #!/bin/bash
-
-# ensure databases are running
-echo "checking database services..."
-docker compose ps | grep -q "cypher-postgres.*Up" || {
-    echo "starting database services..."
-    docker compose up -d postgres redis
-    sleep 5
-}
-
-source ../cyvenv/bin/activate
+source venv/bin/activate
 python main.py &
 FLASK_PID=$!
 cd node_internal_api
