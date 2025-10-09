@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:15-alpine
+    image: postgres:15
     container_name: cypher-postgres
     environment:
       POSTGRES_DB: cypher_db
@@ -33,7 +33,7 @@ services:
       retries: 5
 
   redis:
-    image: redis:7-alpine
+    image: redis:7
     container_name: cypher-redis
     ports:
       - "6379:6379"
