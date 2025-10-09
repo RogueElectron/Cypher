@@ -41,7 +41,7 @@ The OPAQUE authentication process involves **six HTTP requests** across two serv
 sequenceDiagram
   participant Client
   participant (auth.js)
-  participant Node.js API
+  participant NodeAPI as Node.js API
   participant (app.js)
   participant Flask Service
   participant (main.py)
@@ -86,7 +86,7 @@ The second authentication phase involves TOTP verification and transitions to fu
 sequenceDiagram
   participant Client
   participant (auth.js)
-  participant Node.js API
+  participant NodeAPI as Node.js API
   participant (app.js)
   participant Flask Service
   participant (main.py)

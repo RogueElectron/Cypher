@@ -125,13 +125,13 @@ The following sequence diagram details the complete registration flow with preci
 sequenceDiagram
   participant User
   participant Browser
-  participant register.js
+  participant Register as register.js
   participant LiveVisualization
   participant instance
   participant OpaqueClient
   participant @cloudflare/opaque-ts
-  participant Node.js API
-  participant :3000
+  participant NodeAPI as Node.js API
+  participant NodeAPI as Node.js API
 
   note over User,:3000: Phase 1: Password Registration (OPAQUE Protocol)
   User->>Browser: Enter username, password, confirm_password

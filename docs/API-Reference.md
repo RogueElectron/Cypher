@@ -917,8 +917,8 @@ Rate limit errors include additional metadata:
 ```mermaid
 sequenceDiagram
   participant Client
-  participant Node.js :3000
-  participant Flask :5000
+  participant NodeAPI as Node.js API
+  participant FlaskAPI as Flask API
 
   note over Client,Flask :5000: "Phase 1: OPAQUE Registration"
   Client->>Node.js :3000: "POST /register/init

@@ -104,9 +104,9 @@ sequenceDiagram
   participant User
   participant login-form handler
   participant OpaqueClient
-  participant (cfg: OPAQUE_P256)
-  participant Node.js API
-  participant :3000/login/init
+  participant OPAQUEConfig as OPAQUE Config
+  participant NodeAPI as Node.js API
+  participant NodeAPI as Node.js API
   participant AuthLiveVisualization
 
   User->>login-form handler: "Submit username + password"
@@ -143,12 +143,12 @@ After receiving KE2 from the server, the client verifies server authenticity and
 
 ```mermaid
 sequenceDiagram
-  participant auth.js handler
+  participant Auth as auth.js handler
   participant OpaqueClient instance
-  participant Flask API
-  participant :5000/api/create-token
-  participant Node.js API
-  participant :3000/login/finish
+  participant FlaskAPI as Flask API
+  participant FlaskAPI as Flask API
+  participant NodeAPI as Node.js API
+  participant NodeAPI as Node.js API
 
   auth.js handler->>auth.js handler: "KE2.deserialize(cfg, ser_ke2)"
   auth.js handler->>OpaqueClient instance: "await authFinish(deser_ke2)"
@@ -237,9 +237,9 @@ sequenceDiagram
   participant User
   participant totp-verify-form handler
   participant getCookieValue()
-  participant Node.js API
-  participant :3000/totp/verify-login
-  participant session-manager.js
+  participant NodeAPI as Node.js API
+  participant NodeAPI as Node.js API
+  participant SessionMgr as session-manager.js
   participant SessionManager
 
   User->>totp-verify-form handler: "Submit 6-digit code"

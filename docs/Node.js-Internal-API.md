@@ -362,7 +362,7 @@ sequenceDiagram
   participant app.js
   participant /totp/verify-login
   participant Flask API
-  participant :5000
+  participant FlaskAPI as Flask API
   participant database
   participant authenticator.verify()
 
