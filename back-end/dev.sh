@@ -7,7 +7,7 @@ docker compose ps | grep -q "cypher-postgres.*Up" || {
     docker compose up -d postgres redis
     sleep 5
 }
-
+# test
 source ../cyvenv/bin/activate
 FLASK_DEBUG=1 python main.py &
 FLASK_PID=$!
