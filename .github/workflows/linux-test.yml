@@ -73,6 +73,22 @@ jobs:
           exit 1
         fi
         
+        # Check if requirements.txt was processed
+        VENV_PATHS=("./venv" "../venv" "../cyvenv" "./cyvenv")
+        VENV_PATH=""
+        for path in "${VENV_PATHS[@]}"; do
+            if [ -d "$path" ] && [ -f "$path/bin/activate" ]; then
+                VENV_PATH="$path"
+                break
+            fi
+        done
+        
+        if [ -n "$VENV_PATH" ]; then
+          source "$VENV_PATH/bin/activate"
+          pip list | grep -i flask || (echo "❌ Flask not installed in virtual environment" && exit 1)
+          echo "✅ Python packages installed in virtual environment"
+        fi
+        
         # Check Docker containers are running
         if ! docker compose ps | grep -q "Up"; then
           echo "❌ Docker services not running"
@@ -103,15 +119,16 @@ jobs:
         # Activate virtual environment and test Python dependencies
         source "$VENV_PATH/bin/activate"
         
-        echo "Testing Python dependencies..."
+        echo "Testing Python dependencies from requirements.txt..."
         
-        # Test each dependency individually
-        python3 -c "import flask; print('✅ Flask imported successfully')" || echo "❌ Flask import failed"
-        python3 -c "import requests; print('✅ Requests imported successfully')" || echo "❌ Requests import failed"  
-        python3 -c "import redis; print('✅ Redis imported successfully')" || echo "❌ Redis import failed"
-        python3 -c "import psycopg2; print('✅ Psycopg2 imported successfully')" || echo "❌ Psycopg2 import failed"
+        # Test actual dependencies from requirements.txt
+        python3 -c "import flask; print('✅ Flask imported successfully')" || (echo "❌ Flask import failed" && exit 1)
+        python3 -c "import redis; print('✅ Redis imported successfully')" || (echo "❌ Redis import failed" && exit 1)
+        python3 -c "import psycopg2; print('✅ Psycopg2 imported successfully')" || (echo "❌ Psycopg2 import failed" && exit 1)
+        python3 -c "import sqlalchemy; print('✅ SQLAlchemy imported successfully')" || (echo "❌ SQLAlchemy import failed" && exit 1)
+        python3 -c "import cryptography; print('✅ Cryptography imported successfully')" || (echo "❌ Cryptography import failed" && exit 1)
         
-        echo "✅ Application dependencies test completed"
+        echo "✅ Application dependencies test passed"
         
         # Test Node.js dependencies
         cd node_internal_api
