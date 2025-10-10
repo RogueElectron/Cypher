@@ -1,10 +1,20 @@
 ![Demo Status](https://github.com/RogueElectron/Cypher/actions/workflows/linux-test.yml/badge.svg)
 ![Repo size](https://img.shields.io/github/repo-size/RogueElectron/Cypher)
-![CodeQL](https://github.com/RogueElectron/Cypher/actions/workflows/codeql.yml/badge.svg)
+![CodeQL](https://github.com/RogueElectron/Cypher/actions/workflows/github-code-scanning/codeql/badge.svg)
+![Last commit](https://img.shields.io/github/last-commit/RogueElectron/Cypher)
+![License](https://img.shields.io/github/license/RogueElectron/Cypher)
 
 # Cypher - Zero-Knowledge Authentication Platform
 
 > **Revolutionary Zero-Knowledge Authentication Platform** - Passwords never leave your device, even during registration and login.
+
+## Key Highlights
+- **Zero-Knowledge Authentication (OPAQUE):** Passwords never transmitted or stored.
+- **Dual-Service Isolation:** Node.js handles cryptography; Flask manages sessions.
+- **Stateless Tokens (PASETO):** Safer JWT alternative with built-in tamper protection.
+- **Redis + PostgreSQL:** Balances speed and durability for real-world scalability.
+- **Full Automation:** End-to-end testing with Playwright for protocol correctness.
+- **CI/CD:** Automated testing and deployment.
 
 ## What Makes Cypher Special
 
