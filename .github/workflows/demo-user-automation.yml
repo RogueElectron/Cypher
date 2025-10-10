@@ -1,9 +1,13 @@
 name: Cypher User Registration Demo
 
 on:
-  # Trigger on pushes to main branch
+  # Trigger on pushes to main/dev branches
   push:
-    branches: [ main, master ]
+    branches: [ main, dev ]
+  
+  # Trigger on pull requests to main branches
+  pull_request:
+    branches: [ main, dev ]
   
   # Allow manual trigger for hackathon demos
   workflow_dispatch:
