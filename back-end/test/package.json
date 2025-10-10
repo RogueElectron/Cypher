@@ -1,0 +1,16 @@
+{
+  "name": "cypher-user-automation",
+  "version": "1.0.0",
+  "description": "Headless browser automation for Cypher user workflows",
+  "main": "demo-user-automation.js",
+  "scripts": {
+    "install-playwright": "npx playwright install chromium",
+    "demo": "node demo-user-automation.js",
+    "demo-visible": "node demo-user-automation.js --visible",
+    "demo-custom": "node demo-user-automation.js http://localhost:5000 custom_username --visible"
+  },
+  "dependencies": {
+    "playwright": "^1.40.0",
+    "otplib": "^12.0.1"
+  }
+}

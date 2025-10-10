@@ -2,9 +2,9 @@ name: Linux Testing
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, dev ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, develop, dev ]
   workflow_dispatch: # Allow manual trigger
 
 jobs:
@@ -100,16 +100,16 @@ jobs:
         
         # Test database connectivity 
         if ! docker compose ps | grep -q "postgres.*Up"; then
-          echo "❌ PostgreSQL container not running"
+          echo "PostgreSQL container not running"
           exit 1
         fi
         
         if ! docker compose ps | grep -q "redis.*Up"; then
-          echo "❌ Redis container not running" 
+          echo "Redis container not running" 
           exit 1
         fi
         
-        echo "✅ Database services are running"
+        echo "Database services are running"
         
     - name: Run Application Tests (if any)
       run: |
@@ -179,22 +179,116 @@ jobs:
         
         # Test if services are responding
         if curl -f http://localhost:5000 --max-time 10 --silent > /dev/null; then
-          echo "✅ Flask backend responding"
+          echo "Flask backend responding"
         else
-          echo "⚠️ Flask backend not responding"
+          echo "Flask backend not responding"
         fi
         
         if curl -f http://localhost:3000 --max-time 10 --silent > /dev/null; then
-          echo "✅ Node.js API responding"
+          echo "Node.js API responding"
         else
-          echo "⚠️ Node.js API not responding"
+          echo "Node.js API not responding"
         fi
         
         # Clean up processes
         kill $FLASK_PID $NODE_PID 2>/dev/null || true
         sleep 2
         
-        echo "✅ Startup components test completed"
+        echo "Startup components test completed"
+
+    - name: Test User Registration Automation
+      run: |
+        cd back-end
+        
+        # Install automation dependencies
+        cd test
+        npm install
+        npx playwright install chromium
+        cd ..
+        
+        # Find and activate virtual environment before starting services
+        VENV_PATHS=("./venv" "../venv" "../cyvenv" "./cyvenv")
+        VENV_PATH=""
+        for path in "${VENV_PATHS[@]}"; do
+            if [ -d "$path" ] && [ -f "$path/bin/activate" ]; then
+                VENV_PATH="$path"
+                break
+            fi
+        done
+        
+        if [ -z "$VENV_PATH" ]; then
+          echo "ERROR: No virtual environment found"
+          exit 1
+        fi
+        
+        source "$VENV_PATH/bin/activate"
+        
+        # Start services for automation testing
+        cd node_internal_api
+        node app.js &
+        NODE_PID=$!
+        cd ..
+        
+        python3 main.py &
+        FLASK_PID=$!
+        
+        echo "Started services - Node PID: $NODE_PID, Flask PID: $FLASK_PID"
+        
+        # Wait for services to be ready
+        sleep 15
+        
+        # Check if processes are still running
+        if kill -0 $NODE_PID 2>/dev/null; then
+          echo "Node API process is running"
+        else
+          echo "ERROR: Node API process died"
+        fi
+        
+        if kill -0 $FLASK_PID 2>/dev/null; then
+          echo "Flask process is running"
+        else
+          echo "ERROR: Flask process died"
+        fi
+        
+        # Health check
+        echo "Checking service health..."
+        
+        # Check Node API (try multiple endpoints)
+        if curl -f http://localhost:3000/health --max-time 5 --silent > /dev/null; then
+          echo "Node API health endpoint responding"
+        elif curl -f http://localhost:3000/ --max-time 5 --silent > /dev/null; then
+          echo "Node API root endpoint responding"
+        else
+          echo "WARNING: Node API not responding"
+        fi
+        
+        # Check Flask
+        if curl -f http://localhost:5000/ --max-time 5 --silent > /dev/null; then
+          echo "Flask service responding"
+        else
+          echo "WARNING: Flask service not responding"
+        fi
+        
+        # Run the user automation
+        cd test
+        USERNAME="ci_test_$(date +%s)"
+        echo "Running user automation test with username: $USERNAME"
+        
+        if node demo-user-automation.js http://localhost:5000 "$USERNAME"; then
+          echo "User automation test PASSED"
+        else
+          echo "User automation test FAILED"
+          exit 1
+        fi
+        
+        # Verify user was created in database
+        cd ../test
+        python3 verify_users.py
+        cd ..
+        
+        # Clean up automation processes
+        kill $FLASK_PID $NODE_PID 2>/dev/null || true
+        sleep 2
         
     - name: Cleanup
       run: |
@@ -204,5 +298,5 @@ jobs:
         # Kill any remaining processes
         pkill -f "python.*main.py" || true
         pkill -f "node.*app.js" || true
-        echo "✅ Cleanup completed"
+        echo "Cleanup completed"
       if: always()
