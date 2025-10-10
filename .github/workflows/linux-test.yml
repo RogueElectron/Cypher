@@ -321,6 +321,21 @@ jobs:
     - name: Verify User Registration in Database
       run: |
         cd back-end/test
+        VENV_PATHS=("../venv" "../../venv" "../cyvenv" "../../cyvenv" "./venv")
+        VENV_PATH=""
+        for path in "${VENV_PATHS[@]}"; do
+          if [ -d "$path" ] && [ -f "$path/bin/activate" ]; then
+            VENV_PATH="$path"
+            break
+          fi
+        done
+
+        if [ -z "$VENV_PATH" ]; then
+          echo "ERROR: No virtual environment found for verification step"
+          exit 1
+        fi
+
+        source "$VENV_PATH/bin/activate"
         python3 verify_users.py
         cd ..
 
