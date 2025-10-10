@@ -274,11 +274,41 @@ jobs:
         USERNAME="ci_test_$(date +%s)"
         echo "Running user automation test with username: $USERNAME"
         
-        if node demo-user-automation.js http://localhost:5000 "$USERNAME"; then
-          echo "User automation test PASSED"
+        set +e
+        AUTOMATION_OUTPUT=$(node demo-user-automation.js http://localhost:5000 "$USERNAME" 2>&1)
+        EXIT_CODE=$?
+        set -e
+        echo "$AUTOMATION_OUTPUT"
+
+        SUMMARY_LINE=$(echo "$AUTOMATION_OUTPUT" | grep "AUTOMATION_RESULT" | tail -n 1 || true)
+        if [ -n "$SUMMARY_LINE" ]; then
+          echo "Automation summary detected."
+          SUMMARY_JSON=${SUMMARY_LINE#AUTOMATION_RESULT }
+          echo "Summary JSON: $SUMMARY_JSON"
+          echo "::group::Parsed automation summary"
+          node -e "const summary = JSON.parse(process.argv[1]);
+                   const status = summary.success ? 'PASS' : 'FAIL';
+                   console.log('Status:', status);
+                   console.log('Username:', summary.username);
+                   console.log('TOTP Secret:', summary.totpSecret || 'n/a');
+                   if (summary.login) {
+                     console.log('Login success:', summary.login.success);
+                     if (summary.login.error) console.log('Login error:', summary.login.error);
+                     if (summary.login.welcomeText) console.log('Welcome text:', summary.login.welcomeText);
+                   }
+                   if (!summary.success) {
+                     console.log('Failure message:', summary.message || 'n/a');
+                   }" "$SUMMARY_JSON"
+          echo "::endgroup::"
         else
+          echo "WARNING: Automation summary not found in output."
+        fi
+
+        if [ $EXIT_CODE -ne 0 ]; then
           echo "User automation test FAILED"
-          exit 1
+          exit $EXIT_CODE
+        else
+          echo "User automation test PASSED"
         fi
         
         # Verify user was created in database

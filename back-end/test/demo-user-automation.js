@@ -12,7 +12,12 @@ function escapeRegExp(str) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+function logSection(title) {
+    console.log(`\n===== ${title.toUpperCase()} =====`);
+}
+
 async function performLogin(page, baseUrl, username, password, totpSecret) {
+    logSection('Login flow');
     console.log('Starting login automation...');
 
     try {
@@ -27,6 +32,7 @@ async function performLogin(page, baseUrl, username, password, totpSecret) {
         }
 
         await page.waitForSelector('#login-form', { timeout: 15000 });
+        console.log('Login form detected.');
 
         console.log('Filling login credentials...');
         await page.fill('#username, input[name="username"]', username);
@@ -109,6 +115,12 @@ async function performLogin(page, baseUrl, username, password, totpSecret) {
             };
         });
 
+        if (!tokenState.hasRefreshToken || !tokenState.hasAccessTokenCookie) {
+            throw new Error('Session tokens missing after login - access or refresh token not set');
+        }
+
+        console.log('Session tokens verified (access cookie and refresh token present).');
+
         return {
             success: true,
             welcomeText: welcomeText ? welcomeText.trim() : null,
@@ -131,6 +143,7 @@ async function automateUserRegistration(baseUrl = 'http://localhost:5000', optio
         slowMo = 500  // Add delays to see what's happening
     } = options;
 
+    logSection('Registration flow');
     console.log(`Starting user automation for: ${username}`);
     
     const browser = await chromium.launch({ 
@@ -351,8 +364,12 @@ if (require.main === module) {
         keepOpen: args.includes('--keep-open')
     })
         .then(result => {
-            console.log('\nAutomation Result:');
+            logSection('Automation summary');
             console.log(JSON.stringify(result, null, 2));
+            console.log(`AUTOMATION_RESULT ${JSON.stringify(result)}`);
+            if (!result.success) {
+                console.error('Automation failed. See logs above.');
+            }
             process.exit(result.success ? 0 : 1);
         })
         .catch(error => {
