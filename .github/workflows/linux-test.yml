@@ -206,6 +206,23 @@ jobs:
         npx playwright install chromium
         cd ..
         
+        # Find and activate virtual environment before starting services
+        VENV_PATHS=("./venv" "../venv" "../cyvenv" "./cyvenv")
+        VENV_PATH=""
+        for path in "${VENV_PATHS[@]}"; do
+            if [ -d "$path" ] && [ -f "$path/bin/activate" ]; then
+                VENV_PATH="$path"
+                break
+            fi
+        done
+        
+        if [ -z "$VENV_PATH" ]; then
+          echo "ERROR: No virtual environment found"
+          exit 1
+        fi
+        
+        source "$VENV_PATH/bin/activate"
+        
         # Start services for automation testing
         cd node_internal_api
         node app.js &
@@ -215,12 +232,42 @@ jobs:
         python3 main.py &
         FLASK_PID=$!
         
+        echo "Started services - Node PID: $NODE_PID, Flask PID: $FLASK_PID"
+        
         # Wait for services to be ready
         sleep 15
         
+        # Check if processes are still running
+        if kill -0 $NODE_PID 2>/dev/null; then
+          echo "Node API process is running"
+        else
+          echo "ERROR: Node API process died"
+        fi
+        
+        if kill -0 $FLASK_PID 2>/dev/null; then
+          echo "Flask process is running"
+        else
+          echo "ERROR: Flask process died"
+        fi
+        
         # Health check
-        curl -f http://localhost:3000/health || echo "Node API not ready"
-        curl -f http://localhost:5000/ || echo "Flask not ready"
+        echo "Checking service health..."
+        
+        # Check Node API (try multiple endpoints)
+        if curl -f http://localhost:3000/health --max-time 5 --silent > /dev/null; then
+          echo "Node API health endpoint responding"
+        elif curl -f http://localhost:3000/ --max-time 5 --silent > /dev/null; then
+          echo "Node API root endpoint responding"
+        else
+          echo "WARNING: Node API not responding"
+        fi
+        
+        # Check Flask
+        if curl -f http://localhost:5000/ --max-time 5 --silent > /dev/null; then
+          echo "Flask service responding"
+        else
+          echo "WARNING: Flask service not responding"
+        fi
         
         # Run the user automation
         cd test
