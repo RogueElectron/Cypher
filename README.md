@@ -2,7 +2,7 @@
 ![Repo size](https://img.shields.io/github/repo-size/RogueElectron/Cypher)
 ![CodeQL](https://github.com/RogueElectron/Cypher/actions/workflows/github-code-scanning/codeql/badge.svg)
 ![Last commit](https://img.shields.io/github/last-commit/RogueElectron/Cypher)
-![License](https://img.shields.io/github/license/RogueElectron/Cypher)
+![License](https://img.shields.io/github/license/RogueElectron/Cypher?cacheSeconds=3600)
 
 # Cypher - Zero-Knowledge Authentication Platform
 
