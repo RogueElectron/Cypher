@@ -196,7 +196,8 @@ jobs:
         
         echo "Startup components test completed"
 
-    - name: Test User Registration Automation
+    - name: Run Registration Automation
+      continue-on-error: true
       run: |
         cd back-end
         
@@ -274,22 +275,70 @@ jobs:
         USERNAME="ci_test_$(date +%s)"
         echo "Running user automation test with username: $USERNAME"
         
-        if node demo-user-automation.js http://localhost:5000 "$USERNAME"; then
-          echo "User automation test PASSED"
+        AUTOMATION_LOG=automation_output.log
+        set +e
+        node demo-user-automation.js http://localhost:5000 "$USERNAME" | tee "$AUTOMATION_LOG"
+        EXIT_CODE=${PIPESTATUS[0]}
+        set -e
+
+        SUMMARY_LINE=$(grep "AUTOMATION_RESULT" "$AUTOMATION_LOG" | tail -n 1 || true)
+        if [ -n "$SUMMARY_LINE" ]; then
+          echo "Automation summary detected."
+          SUMMARY_JSON=${SUMMARY_LINE#AUTOMATION_RESULT }
+          echo "$SUMMARY_JSON" > automation_summary.json
+          echo "::group::Parsed automation summary"
+          python3 parse_automation_summary.py
+          echo "::endgroup::"
         else
-          echo "User automation test FAILED"
-          exit 1
+          echo "WARNING: Automation summary not found in output."
         fi
-        
-        # Verify user was created in database
-        cd ../test
-        python3 verify_users.py
+
+        echo "$EXIT_CODE" > automation_exit_code.txt
+
         cd ..
         
         # Clean up automation processes
         kill $FLASK_PID $NODE_PID 2>/dev/null || true
         sleep 2
         
+        exit $EXIT_CODE
+
+    - name: Validate Login Automation Results
+      if: always()
+      run: |
+        cd back-end/test
+        if [ ! -f automation_exit_code.txt ]; then
+          echo "ERROR: automation_exit_code.txt not found"
+          exit 1
+        fi
+        if [ ! -f automation_summary.json ]; then
+          echo "ERROR: automation_summary.json not found"
+          exit 1
+        fi
+
+        python3 validate_automation_summary.py
+
+    - name: Verify User Registration in Database
+      run: |
+        cd back-end/test
+        VENV_PATHS=("../venv" "../../venv" "../cyvenv" "../../cyvenv" "./venv")
+        VENV_PATH=""
+        for path in "${VENV_PATHS[@]}"; do
+          if [ -d "$path" ] && [ -f "$path/bin/activate" ]; then
+            VENV_PATH="$path"
+            break
+          fi
+        done
+
+        if [ -z "$VENV_PATH" ]; then
+          echo "ERROR: No virtual environment found for verification step"
+          exit 1
+        fi
+
+        source "$VENV_PATH/bin/activate"
+        python3 verify_users.py
+        cd ..
+
     - name: Cleanup
       run: |
         cd back-end
