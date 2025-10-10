@@ -89,26 +89,7 @@ The full documentation has much more, Access the index here
 
 ## Automated Demo & Testing
 
-![Demo Status](https://github.com/RogueElectron/Cypher/actions/workflows/demo-user-automation.yml/badge.svg)
-![Hackathon Ready](https://github.com/RogueElectron/Cypher/actions/workflows/hackathon-demo.yml/badge.svg)
-
-### **Automated User Registration**
-- **Full OPAQUE workflow** - Complete zero-knowledge registration
-- **Real 2FA setup** - TOTP secret generation and verification  
-- **Headless browser automation** - No manual intervention needed
-- **Perfect for hackathons** - Reliable demo every time
-
-**Quick Demo:**
-```bash
-cd back-end/test
-npm install && npm run install-playwright
-npm run demo-visible  # Watch it work!
-```
-
-**GitHub Actions Integration:**
-- Manual trigger for instant demos
-- Full CI/CD validation  
-- Automated reports and verification
+![Demo Status](https://github.com/RogueElectron/Cypher/actions/workflows/linux-test.yml/badge.svg)
 
 ## Technical Specifications
 
