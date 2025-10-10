@@ -287,26 +287,7 @@ jobs:
           SUMMARY_JSON=${SUMMARY_LINE#AUTOMATION_RESULT }
           echo "$SUMMARY_JSON" > automation_summary.json
           echo "::group::Parsed automation summary"
-          node - <<'NODE'
-const fs = require('fs');
-try {
-  const summary = JSON.parse(fs.readFileSync('automation_summary.json', 'utf8'));
-  const status = summary.success ? 'PASS' : 'FAIL';
-  console.log('Status:', status);
-  console.log('Username:', summary.username);
-  console.log('TOTP Secret:', summary.totpSecret || 'n/a');
-  if (summary.login) {
-    console.log('Login success:', summary.login.success);
-    if (summary.login.error) console.log('Login error:', summary.login.error);
-    if (summary.login.welcomeText) console.log('Welcome text:', summary.login.welcomeText);
-  }
-  if (!summary.success) {
-    console.log('Failure message:', summary.message || 'n/a');
-  }
-} catch (err) {
-  console.error('Failed to parse automation summary:', err);
-}
-NODE
+          python3 parse_automation_summary.py
           echo "::endgroup::"
         else
           echo "WARNING: Automation summary not found in output."
@@ -335,51 +316,7 @@ NODE
           exit 1
         fi
 
-        node <<'NODE'
-const fs = require('fs');
-const exitCodeRaw = fs.readFileSync('automation_exit_code.txt', 'utf8').trim();
-const exitCode = parseInt(exitCodeRaw, 10);
-if (Number.isNaN(exitCode)) {
-  console.error('Invalid automation exit code:', exitCodeRaw);
-  process.exit(1);
-}
-
-const summary = JSON.parse(fs.readFileSync('automation_summary.json', 'utf8'));
-console.log('Automation exit code:', exitCode);
-
-if (exitCode !== 0) {
-  console.error('Automation script exited with code', exitCode);
-  console.error('Summary message:', summary.message || 'n/a');
-  process.exit(1);
-}
-
-if (!summary.success) {
-  console.error('Automation summary indicates failure:', summary.message || 'Unknown failure');
-  process.exit(1);
-}
-
-if (!summary.login || !summary.login.success) {
-  console.error('Login automation failed:', summary.login && summary.login.error ? summary.login.error : 'Unknown login error');
-  if (summary.login && summary.login.welcomeText) {
-    console.error('Observed welcome text:', summary.login.welcomeText);
-  }
-  process.exit(1);
-}
-
-console.log('Login automation succeeded for user:', summary.username);
-if (summary.login && summary.login.welcomeText) {
-  console.log('Welcome text:', summary.login.welcomeText);
-}
-if (summary.login && summary.login.tokens) {
-  console.log('Session tokens:', JSON.stringify(summary.login.tokens));
-  if (summary.login.tokens.accessToken) {
-    console.log('Access token:', summary.login.tokens.accessToken);
-  }
-  if (summary.login.tokens.refreshToken) {
-    console.log('Refresh token:', summary.login.tokens.refreshToken);
-  }
-}
-NODE
+        python3 validate_automation_summary.py
 
     - name: Verify User Registration in Database
       run: |
