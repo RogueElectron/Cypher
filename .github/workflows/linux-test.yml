@@ -196,7 +196,8 @@ jobs:
         
         echo "Startup components test completed"
 
-    - name: Test User Registration Automation
+    - name: Run Registration Automation
+      continue-on-error: true
       run: |
         cd back-end
         
@@ -274,52 +275,118 @@ jobs:
         USERNAME="ci_test_$(date +%s)"
         echo "Running user automation test with username: $USERNAME"
         
+        AUTOMATION_LOG=automation_output.log
         set +e
-        AUTOMATION_OUTPUT=$(node demo-user-automation.js http://localhost:5000 "$USERNAME" 2>&1)
-        EXIT_CODE=$?
+        node demo-user-automation.js http://localhost:5000 "$USERNAME" | tee "$AUTOMATION_LOG"
+        EXIT_CODE=${PIPESTATUS[0]}
         set -e
-        echo "$AUTOMATION_OUTPUT"
 
-        SUMMARY_LINE=$(echo "$AUTOMATION_OUTPUT" | grep "AUTOMATION_RESULT" | tail -n 1 || true)
+        SUMMARY_LINE=$(grep "AUTOMATION_RESULT" "$AUTOMATION_LOG" | tail -n 1 || true)
         if [ -n "$SUMMARY_LINE" ]; then
           echo "Automation summary detected."
           SUMMARY_JSON=${SUMMARY_LINE#AUTOMATION_RESULT }
-          echo "Summary JSON: $SUMMARY_JSON"
+          echo "$SUMMARY_JSON" > automation_summary.json
           echo "::group::Parsed automation summary"
-          node -e "const summary = JSON.parse(process.argv[1]);
-                   const status = summary.success ? 'PASS' : 'FAIL';
-                   console.log('Status:', status);
-                   console.log('Username:', summary.username);
-                   console.log('TOTP Secret:', summary.totpSecret || 'n/a');
-                   if (summary.login) {
-                     console.log('Login success:', summary.login.success);
-                     if (summary.login.error) console.log('Login error:', summary.login.error);
-                     if (summary.login.welcomeText) console.log('Welcome text:', summary.login.welcomeText);
-                   }
-                   if (!summary.success) {
-                     console.log('Failure message:', summary.message || 'n/a');
-                   }" "$SUMMARY_JSON"
+          node - <<'NODE'
+const fs = require('fs');
+try {
+  const summary = JSON.parse(fs.readFileSync('automation_summary.json', 'utf8'));
+  const status = summary.success ? 'PASS' : 'FAIL';
+  console.log('Status:', status);
+  console.log('Username:', summary.username);
+  console.log('TOTP Secret:', summary.totpSecret || 'n/a');
+  if (summary.login) {
+    console.log('Login success:', summary.login.success);
+    if (summary.login.error) console.log('Login error:', summary.login.error);
+    if (summary.login.welcomeText) console.log('Welcome text:', summary.login.welcomeText);
+  }
+  if (!summary.success) {
+    console.log('Failure message:', summary.message || 'n/a');
+  }
+} catch (err) {
+  console.error('Failed to parse automation summary:', err);
+}
+NODE
           echo "::endgroup::"
         else
           echo "WARNING: Automation summary not found in output."
         fi
 
-        if [ $EXIT_CODE -ne 0 ]; then
-          echo "User automation test FAILED"
-          exit $EXIT_CODE
-        else
-          echo "User automation test PASSED"
-        fi
-        
-        # Verify user was created in database
-        cd ../test
-        python3 verify_users.py
+        echo "$EXIT_CODE" > automation_exit_code.txt
+
         cd ..
         
         # Clean up automation processes
         kill $FLASK_PID $NODE_PID 2>/dev/null || true
         sleep 2
         
+        exit $EXIT_CODE
+
+    - name: Validate Login Automation Results
+      if: always()
+      run: |
+        cd back-end/test
+        if [ ! -f automation_exit_code.txt ]; then
+          echo "ERROR: automation_exit_code.txt not found"
+          exit 1
+        fi
+        if [ ! -f automation_summary.json ]; then
+          echo "ERROR: automation_summary.json not found"
+          exit 1
+        fi
+
+        node <<'NODE'
+const fs = require('fs');
+const exitCodeRaw = fs.readFileSync('automation_exit_code.txt', 'utf8').trim();
+const exitCode = parseInt(exitCodeRaw, 10);
+if (Number.isNaN(exitCode)) {
+  console.error('Invalid automation exit code:', exitCodeRaw);
+  process.exit(1);
+}
+
+const summary = JSON.parse(fs.readFileSync('automation_summary.json', 'utf8'));
+console.log('Automation exit code:', exitCode);
+
+if (exitCode !== 0) {
+  console.error('Automation script exited with code', exitCode);
+  console.error('Summary message:', summary.message || 'n/a');
+  process.exit(1);
+}
+
+if (!summary.success) {
+  console.error('Automation summary indicates failure:', summary.message || 'Unknown failure');
+  process.exit(1);
+}
+
+if (!summary.login || !summary.login.success) {
+  console.error('Login automation failed:', summary.login && summary.login.error ? summary.login.error : 'Unknown login error');
+  if (summary.login && summary.login.welcomeText) {
+    console.error('Observed welcome text:', summary.login.welcomeText);
+  }
+  process.exit(1);
+}
+
+console.log('Login automation succeeded for user:', summary.username);
+if (summary.login && summary.login.welcomeText) {
+  console.log('Welcome text:', summary.login.welcomeText);
+}
+if (summary.login && summary.login.tokens) {
+  console.log('Session tokens:', JSON.stringify(summary.login.tokens));
+  if (summary.login.tokens.accessToken) {
+    console.log('Access token:', summary.login.tokens.accessToken);
+  }
+  if (summary.login.tokens.refreshToken) {
+    console.log('Refresh token:', summary.login.tokens.refreshToken);
+  }
+}
+NODE
+
+    - name: Verify User Registration in Database
+      run: |
+        cd back-end/test
+        python3 verify_users.py
+        cd ..
+
     - name: Cleanup
       run: |
         cd back-end

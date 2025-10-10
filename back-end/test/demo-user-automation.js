@@ -109,9 +109,12 @@ async function performLogin(page, baseUrl, username, password, totpSecret) {
             const accessTokenCookie = document.cookie
                 .split('; ')
                 .find((row) => row.startsWith('access_token='));
+            const accessToken = accessTokenCookie ? accessTokenCookie.split('=')[1] : null;
             return {
                 hasRefreshToken: !!refreshToken,
-                hasAccessTokenCookie: !!accessTokenCookie
+                hasAccessTokenCookie: !!accessTokenCookie,
+                refreshToken: refreshToken || null,
+                accessToken: accessToken || null
             };
         });
 
@@ -120,6 +123,8 @@ async function performLogin(page, baseUrl, username, password, totpSecret) {
         }
 
         console.log('Session tokens verified (access cookie and refresh token present).');
+        console.log(`Access token (cookie): ${tokenState.accessToken}`);
+        console.log(`Refresh token (localStorage): ${tokenState.refreshToken}`);
 
         return {
             success: true,
