@@ -8,6 +8,121 @@
 const { chromium } = require('playwright');
 const { authenticator } = require('otplib');
 
+function escapeRegExp(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+async function performLogin(page, baseUrl, username, password, totpSecret) {
+    console.log('Starting login automation...');
+
+    try {
+        const loginUrl = `${baseUrl.replace(/\/$/, '')}/api/login`;
+
+        try {
+            await page.waitForURL(/\/api\/login/, { timeout: 15000 });
+            console.log('Detected redirect to login page.');
+        } catch (redirectErr) {
+            console.log('Login redirect not detected, navigating manually.');
+            await page.goto(loginUrl, { waitUntil: 'networkidle' });
+        }
+
+        await page.waitForSelector('#login-form', { timeout: 15000 });
+
+        console.log('Filling login credentials...');
+        await page.fill('#username, input[name="username"]', username);
+        await page.fill('#password, input[name="password"]', password);
+
+        console.log('Submitting login form...');
+        await page.click('#login-form button[type="submit"], button:has-text("Sign In")');
+
+        console.log('Waiting for TOTP verification phase...');
+        await page.waitForSelector('#totp-verify-form', { timeout: 20000 });
+
+        let loginSuccess = false;
+        let attempts = 0;
+        let lastError = null;
+
+        while (!loginSuccess && attempts < 2) {
+            attempts += 1;
+            const totpCode = authenticator.generate(totpSecret);
+            console.log(`Generated login TOTP code (attempt ${attempts}): ${totpCode}`);
+
+            await page.fill('#totp-code, input[name="totp_code"]', totpCode);
+            await page.click('#totp-verify-form button[type="submit"]');
+
+            try {
+                await Promise.race([
+                    page.waitForURL(new RegExp(`^${escapeRegExp(baseUrl.replace(/\/$/, ''))}/?$`), { timeout: 20000 }),
+                    page.waitForSelector('.alert-danger', { timeout: 20000 })
+                ]);
+            } catch (waitErr) {
+                lastError = waitErr;
+            }
+
+            const currentUrl = page.url();
+
+            if (new RegExp(`^${escapeRegExp(baseUrl.replace(/\/$/, ''))}/?$`).test(currentUrl)) {
+                loginSuccess = true;
+                break;
+            }
+
+            const errorAlert = await page.$('.alert-danger');
+            if (errorAlert) {
+                const errorText = (await errorAlert.textContent()) || '';
+                lastError = new Error(errorText.trim() || 'TOTP verification failed');
+                console.log(`Login TOTP attempt ${attempts} failed: ${errorText}`);
+                try {
+                    await errorAlert.click({ force: true });
+                } catch (_) {
+                    // ignore if cannot dismiss
+                }
+            }
+        }
+
+        if (!loginSuccess) {
+            throw lastError || new Error('Login failed after TOTP verification attempts');
+        }
+
+        console.log('Login redirect detected. Verifying homepage content...');
+
+        await page.waitForLoadState('networkidle');
+        await page.waitForSelector('.hero-section h2', { timeout: 10000 });
+
+        const welcomeText = await page.textContent('.hero-section h2');
+        const expectedGreeting = `Welcome back, ${username}!`;
+        const greetingMatches = (welcomeText || '').trim().includes(expectedGreeting);
+
+        if (!greetingMatches) {
+            throw new Error('Homepage welcome message not found or does not match username');
+        }
+
+        console.log('Homepage verification succeeded. User greeting displayed.');
+
+        const tokenState = await page.evaluate(() => {
+            const refreshToken = window.localStorage.getItem('refresh_token');
+            const accessTokenCookie = document.cookie
+                .split('; ')
+                .find((row) => row.startsWith('access_token='));
+            return {
+                hasRefreshToken: !!refreshToken,
+                hasAccessTokenCookie: !!accessTokenCookie
+            };
+        });
+
+        return {
+            success: true,
+            welcomeText: welcomeText ? welcomeText.trim() : null,
+            tokens: tokenState
+        };
+    } catch (error) {
+        console.error('Login automation failed:', error.message || error);
+        return {
+            success: false,
+            error: error.message || String(error)
+        };
+    }
+}
+
 async function automateUserRegistration(baseUrl = 'http://localhost:5000', options = {}) {
     const {
         username = `demo_${Date.now()}`,
@@ -158,13 +273,21 @@ async function automateUserRegistration(baseUrl = 'http://localhost:5000', optio
                 
                 if (successAlert || currentUrl.includes('/login')) {
                     console.log('Registration fully completed with 2FA!');
+
+                    const loginResult = await performLogin(page, baseUrl, username, password, totpSecret.trim());
+
+                    const overallSuccess = loginResult.success === true;
+
                     return {
-                        success: true,
+                        success: overallSuccess,
                         username,
                         password,
-                        totpSecret,
+                        totpSecret: totpSecret.trim(),
                         completedTotp: true,
-                        message: 'Full registration with 2FA completed successfully'
+                        message: overallSuccess
+                            ? 'Registration and login with 2FA completed successfully'
+                            : 'Registration succeeded, login failed',
+                        login: loginResult
                     };
                 } else if (errorAlert) {
                     const errorText = await errorAlert.textContent();
