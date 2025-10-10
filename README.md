@@ -1,3 +1,7 @@
+![Demo Status](https://github.com/RogueElectron/Cypher/actions/workflows/linux-test.yml/badge.svg)
+![Repo size](https://img.shields.io/github/repo-size/RogueElectron/Cypher)
+![CodeQL](https://github.com/RogueElectron/Cypher/actions/workflows/codeql.yml/badge.svg)
+
 # Cypher - Zero-Knowledge Authentication Platform
 
 > **Revolutionary Zero-Knowledge Authentication Platform** - Passwords never leave your device, even during registration and login.
@@ -86,10 +90,6 @@ Cypher/
 ### Full docs
 The full documentation has much more, Access the index here
 - **[Documentation index](docs/README.md)**
-
-## Automated Demo & Testing
-
-![Demo Status](https://github.com/RogueElectron/Cypher/actions/workflows/linux-test.yml/badge.svg)
 
 ## Technical Specifications
 
