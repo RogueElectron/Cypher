@@ -22,7 +22,14 @@
 - **Docker**
 
 Then run the setup.sh and the start.sh scripts and OFF YOU GO
-The windows scripts are NOT tested and will probably have issues.
+
+### Helper Scripts
+- **setup.sh** - Sets up the environment
+- **start.sh** - Starts the application
+- **dev.sh** - Starts the application in development mode (hot reload enabled)
+- **stop.sh** - Stops the application
+- **reset_databases.sh** - Resets the databases
+- **clear_databases.sh** - Clears the databases
 
 ## Project Structure
 
@@ -59,6 +66,10 @@ Cypher/
 
 ## Documentation
 
+### Digitopia-specific docs
+- **[Team Roles](docs/Team-Roles.md)** - Team structure and responsibilities
+- **[business model](docs/business-model.md)** - Business model
+
 ### Complete Documentation Suite
 - **[Overview](docs/Overview.md)** - System introduction and capabilities
 - **[API Reference](docs/API-Reference.md)** - Complete endpoint documentation
@@ -71,9 +82,9 @@ Cypher/
 - **[Installation and Setup](docs/Installation-and-Setup.md)** - Get started in minutes
 - **[Running the Application](docs/Running-the-Application.md)** - Launch instructions
 - **[Security Architecture](docs/Security-Architecture.md)** - Threat model and design
-- **[Team Roles](docs/Team-Roles.md)** - Team structure and responsibilities
 
 ### Full docs
+The full documentation has much more, Access the index here
 - **[Documentation index](docs/README.md)**
 
 ## Technical Specifications
@@ -85,6 +96,5 @@ Cypher/
 | **Flask Service** | Flask + PASETO | Session management & tokens |
 | **Database** | PostgreSQL | Persistent credential storage |
 | **Cache** | Redis | Session & rate limiting |
-| **Protocol** | OPAQUE (P-256) | Zero-knowledge authentication |
 | **Tokens** | PASETO v4.local | Stateless session management |
 

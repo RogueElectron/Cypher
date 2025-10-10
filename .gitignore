@@ -4,6 +4,6 @@
 /back-end/__pycache__ 
 /back-end/node_internal_api/node_modules
 /back-end/static/dist/
-/back-end/src/__pycache__
+/back-end/src/__pycache__/
 /back-end/.env
 /back-end/.keys/
