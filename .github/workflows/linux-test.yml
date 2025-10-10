@@ -282,8 +282,9 @@ jobs:
         fi
         
         # Verify user was created in database
-        cd test
+        cd ../test
         python3 verify_users.py
+        cd ..
         
         # Clean up automation processes
         kill $FLASK_PID $NODE_PID 2>/dev/null || true
