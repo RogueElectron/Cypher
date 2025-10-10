@@ -18,6 +18,8 @@ import QRCode from 'qrcode';
 import xss from 'xss-clean';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import Redis from 'ioredis';
+import { RateLimiterRedis } from 'rate-limiter-flexible';
 import createPostgresStorage from './db.js';
 
 dotenv.config({ path: '../.env' });
@@ -77,6 +79,62 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+const parsePositiveInt = (value, fallback) => {
+    const parsed = parseInt(value, 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+const redisClient = new Redis({
+    host: process.env.REDIS_HOST || '127.0.0.1',
+    port: parseInt(process.env.REDIS_PORT || '6379', 10),
+    password: process.env.REDIS_PASSWORD ? process.env.REDIS_PASSWORD : undefined,
+    db: parseInt(process.env.REDIS_DB || '0', 10),
+    enableOfflineQueue: false,
+    maxRetriesPerRequest: 2
+});
+
+redisClient.on('error', (err) => {
+    console.error('Redis rate limiter error:', err);
+});
+
+const rateLimiter = new RateLimiterRedis({
+    storeClient: redisClient,
+    keyPrefix: 'rlf:node',
+    points: parsePositiveInt(
+        process.env.NODE_RATE_LIMIT_MAX_REQUESTS || process.env.RATE_LIMIT_MAX_REQUESTS,
+        100
+    ),
+    duration: parsePositiveInt(
+        process.env.NODE_RATE_LIMIT_WINDOW || process.env.RATE_LIMIT_WINDOW,
+        60
+    ),
+    blockDuration: parsePositiveInt(process.env.NODE_RATE_LIMIT_BLOCK_DURATION, 60)
+});
+
+const rateLimitMiddleware = async (req, res, next) => {
+    const keyIp = req.headers['x-forwarded-for'] || req.ip || req.connection?.remoteAddress || 'anonymous';
+    const key = `${keyIp}:${req.path}`;
+
+    try {
+        await rateLimiter.consume(key);
+        return next();
+    } catch (err) {
+        if (!err || typeof err.msBeforeNext !== 'number') {
+            console.error('Rate limiter store failure, allowing request:', err);
+            return next();
+        }
+
+        const retryAfterSec = Math.ceil(err.msBeforeNext / 1000) || 1;
+        res.set('Retry-After', String(retryAfterSec));
+        return res.status(429).json({
+            error: 'Too many requests',
+            retryAfter: retryAfterSec
+        });
+    }
+};
+
+app.use(rateLimitMiddleware);
 
 // initialize opaque cryptographic configuration  
 const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);  
