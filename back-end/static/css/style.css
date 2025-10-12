@@ -488,3 +488,144 @@ code {
     border: 1px solid rgba(0, 212, 255, 0.3);
     color: var(--accent-cyan);
 }
+
+/* ===== MICRO-INTERACTIONS ===== */
+
+/* Button Ripple Effect */
+.btn-primary, .btn-outline-light, .btn-outline-primary {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary::after, .btn-outline-light::after, .btn-outline-primary::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn-primary:active::after, .btn-outline-light:active::after, .btn-outline-primary:active::after {
+    width: 300px;
+    height: 300px;
+    transition: width 0s, height 0s;
+}
+
+/* Input Focus Glow Pulse */
+.form-control:focus {
+    animation: inputPulse 2s ease-in-out infinite;
+}
+
+@keyframes inputPulse {
+    0%, 100% {
+        box-shadow: 
+            0 0 0 3px rgba(0, 212, 255, 0.1),
+            0 0 20px rgba(0, 212, 255, 0.3),
+            inset 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    50% {
+        box-shadow: 
+            0 0 0 3px rgba(0, 212, 255, 0.2),
+            0 0 30px rgba(0, 212, 255, 0.4),
+            inset 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* Card Hover Scale */
+.glass-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+    transform: translateY(-4px) scale(1.01);
+}
+
+/* Icon Bounce on Hover */
+.bi {
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+
+a:hover .bi, button:hover .bi {
+    transform: translateY(-2px);
+}
+
+/* ===== NEON PULSE ON KEY ELEMENTS ===== */
+
+/* Logo Pulse */
+.navbar-brand img {
+    animation: logoPulse 3s ease-in-out infinite;
+}
+
+@keyframes logoPulse {
+    0%, 100% {
+        filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.3));
+    }
+    50% {
+        filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.6));
+    }
+}
+
+/* CTA Button Pulse */
+.btn-primary.glow {
+    animation: ctaPulse 2s ease-in-out infinite;
+}
+
+@keyframes ctaPulse {
+    0%, 100% {
+        box-shadow: 
+            0 4px 15px rgba(0, 212, 255, 0.3),
+            0 0 30px rgba(0, 212, 255, 0.2);
+    }
+    50% {
+        box-shadow: 
+            0 6px 20px rgba(0, 212, 255, 0.5),
+            0 0 40px rgba(0, 212, 255, 0.4);
+    }
+}
+
+/* Feature Card Icons Pulse */
+.hero-section .glass-card .bi {
+    animation: iconPulse 3s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+    0%, 100% {
+        filter: drop-shadow(0 0 5px currentColor);
+        transform: scale(1);
+    }
+    50% {
+        filter: drop-shadow(0 0 15px currentColor);
+        transform: scale(1.05);
+    }
+}
+
+/* ===== SMOOTH COLOR TRANSITIONS ON SCROLL ===== */
+
+/* Navbar color shift on scroll */
+.navbar {
+    transition: all 0.3s ease;
+}
+
+.navbar.scrolled {
+    background: rgba(10, 10, 15, 1) !important;
+    border-bottom-color: rgba(0, 212, 255, 0.4);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Background gradient shift */
+body {
+    transition: background-image 0.5s ease;
+}
+
+body.scrolled {
+    background-image: 
+        radial-gradient(circle at 15% 85%, rgba(107, 0, 255, 0.2) 0%, transparent 50%),
+        radial-gradient(circle at 85% 15%, rgba(0, 212, 255, 0.2) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(255, 0, 110, 0.12) 0%, transparent 50%);
+}
