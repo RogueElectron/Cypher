@@ -14,10 +14,13 @@
         
         <!-- Main Form - Truly Centered -->
         <div class="col-lg-6 col-xl-4"> 
-            <div class="glass-card p-5 main-form-card mx-auto" style="max-width: 500px;">
-                <div class="text-center mb-4">
-                    <h2 class="text-white mb-2">Create Account</h2>
-                    <p class="text-secondary">Join the future of secure authentication</p>
+            <div class="glass-card p-5 main-form-card mx-auto" style="max-width: 520px;">
+                <div class="text-center mb-5">
+                    <div class="mb-3">
+                        <i class="bi bi-person-plus" style="font-size: 3.5rem; color: var(--accent-cyan); filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.5));"></i>
+                    </div>
+                    <h2 class="text-white mb-2" style="font-size: 2rem; font-weight: 700;">Create Account</h2>
+                    <p class="text-secondary" style="font-size: 1rem;">Join the future of secure authentication</p>
                 </div>
                 
                 <!-- Alert container for success/error messages -->
@@ -44,9 +47,12 @@
                 
                 <!-- TOTP Setup Phase (hidden initially) -->
                 <div id="totp-phase" style="display: none;">
-                    <div class="text-center mb-4">
-                        <h2 class="text-white mb-2">Setup Two-Factor Authentication</h2>
-                        <p class="text-secondary">scan the qr code with your authenticator app</p>
+                    <div class="text-center mb-5">
+                        <div class="mb-3">
+                            <i class="bi bi-qr-code" style="font-size: 3.5rem; color: var(--accent-purple); filter: drop-shadow(0 0 20px rgba(107, 0, 255, 0.5));"></i>
+                        </div>
+                        <h2 class="text-white mb-2" style="font-size: 2rem; font-weight: 700;">Setup Two-Factor Authentication</h2>
+                        <p class="text-secondary" style="font-size: 1rem;">Scan the QR code with your authenticator app</p>
                     </div>
                     
                     <div id="totp-alert-container" class="mb-3"></div>
@@ -80,9 +86,9 @@
                     </form>
                 </div>
                 
-                <div class="text-center" id="back-link">
+                <div class="text-center mt-4" id="back-link">
                     <p class="text-secondary mb-0">Already have an account? 
-                        <a href="{{ url_for('serve_login') }}" class="text-decoration-none" style="color: #667eea;">Sign in here</a>
+                        <a href="{{ url_for('serve_login') }}" class="text-decoration-none" style="color: var(--accent-cyan); font-weight: 600; transition: all 0.3s ease;">Sign in here</a>
                     </p>
                 </div>
             </div>
@@ -126,16 +132,30 @@
 </div>
 
 <style>
-/* main form styling */
+/* Enhanced Form Card */
 .main-form-card {
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
-    border: 2px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 
+        0 25px 50px rgba(0, 0, 0, 0.5) !important,
+        0 0 60px rgba(0, 212, 255, 0.15) !important;
+    border: 2px solid rgba(0, 212, 255, 0.3) !important;
+    position: relative;
+}
+
+.main-form-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--primary-gradient);
+    border-radius: 20px 20px 0 0;
 }
 
 .visualization-sidebar {
-    background: rgba(255, 255, 255, 0.03) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2) !important;
+    background: rgba(10, 10, 15, 0.8) !important;
+    border: 1px solid rgba(0, 212, 255, 0.2) !important;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3) !important;
 }
 
 /* live visualization styles */
@@ -161,22 +181,25 @@
 
 .live-step.active {
     opacity: 1;
-    border-color: #667eea;
-    background: rgba(102, 126, 234, 0.1);
+    border-color: var(--accent-cyan);
+    background: rgba(0, 212, 255, 0.1);
     transform: scale(1.02);
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
 }
 
 .live-step.completed {
     opacity: 1;
-    border-color: #4facfe;
-    background: rgba(75, 172, 254, 0.1);
+    border-color: var(--accent-purple);
+    background: rgba(107, 0, 255, 0.1);
+    box-shadow: 0 0 15px rgba(107, 0, 255, 0.2);
 }
 
 .live-step.processing {
     opacity: 1;
-    border-color: #f5576c;
-    background: rgba(245, 87, 108, 0.1);
+    border-color: var(--accent-pink);
+    background: rgba(255, 0, 110, 0.1);
     animation: subtle-pulse 1.5s ease-in-out infinite;
+    box-shadow: 0 0 20px rgba(255, 0, 110, 0.2);
 }
 
 @keyframes subtle-pulse {
@@ -198,22 +221,25 @@
 
 .live-step .step-icon {
     background: rgba(255, 255, 255, 0.1);
-    color: #b8b9c7;
+    color: var(--text-secondary);
 }
 
 .live-step.active .step-icon {
-    background: #667eea;
+    background: var(--accent-cyan);
     color: white;
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
 }
 
 .live-step.completed .step-icon {
-    background: #4facfe;
+    background: var(--accent-purple);
     color: white;
+    box-shadow: 0 0 15px rgba(107, 0, 255, 0.5);
 }
 
 .live-step.processing .step-icon {
-    background: #f5576c;
+    background: var(--accent-pink);
     color: white;
+    box-shadow: 0 0 15px rgba(255, 0, 110, 0.5);
 }
 
 .step-content {
@@ -239,29 +265,28 @@
 }
 
 .security-status {
-    background: rgba(75, 172, 254, 0.1);
-    border: 1px solid rgba(75, 172, 254, 0.2);
+    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.1);
 }
 
 input[type="text"]#totp-code {
     font-family: 'Courier New', monospace;
-    font-size: 18px;
-    letter-spacing: 4px;
-    font-weight: 600;
+    font-size: 20px;
+    letter-spacing: 6px;
+    font-weight: 700;
+    background: rgba(10, 10, 15, 0.8) !important;
+    border: 2px solid rgba(0, 212, 255, 0.4) !important;
 }
 
-code {
-    background: rgba(102, 126, 234, 0.1);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-family: 'Courier New', monospace;
-    letter-spacing: 1px;
+input[type="text"]#totp-code:focus {
+    box-shadow: 0 0 30px rgba(0, 212, 255, 0.4) !important;
 }
 
 .data-flow {
     font-size: 12px;
-    color: #667eea;
-    font-weight: 500;
+    color: var(--accent-cyan);
+    font-weight: 600;
     margin-top: 5px;
 }
 </style>

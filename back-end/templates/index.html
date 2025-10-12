@@ -6,24 +6,66 @@
 <div class="hero-section">
     <div class="container">
         <div class="row">
-            <div class="col-lg-8 mx-auto">
-                <div class="text-center mb-4">
-                    <img src="{{ url_for('static', filename='svg/cypher.svg') }}" alt="Cypher" style="height: 120px; width: auto;">
+            <div class="col-lg-10 mx-auto">
+                <!-- Logo with glow effect -->
+                <div class="text-center mb-5" style="position: relative;">
+                    <div style="position: relative; display: inline-block;">
+                        <img src="{{ url_for('static', filename='svg/cypher.svg') }}" alt="Cypher" style="height: 140px; width: auto; filter: drop-shadow(0 0 30px rgba(0, 212, 255, 0.5));">
+                    </div>
                 </div>
-                <p class="hero-subtitle">Next-generation authentication platform with zero-knowledge security</p>
+                
+                <!-- Main headline -->
+                <h1 class="hero-subtitle" style="font-size: 2rem; font-weight: 300; margin-bottom: 1rem; color: rgba(255, 255, 255, 0.9);">
+                    Next-Generation Authentication
+                </h1>
+                <p class="hero-subtitle" style="font-size: 1.3rem; margin-bottom: 3rem; color: var(--text-secondary); max-width: 700px; margin-left: auto; margin-right: auto;">
+                    Experience <span style="color: var(--accent-cyan); font-weight: 600;">zero-knowledge security</span> powered by the OPAQUE protocol. Your password never leaves your device.
+                </p>
+                
+                <!-- CTA Buttons -->
                 <div class="hero-buttons">
-                    <a href="{{ url_for('serve_login') }}" class="btn btn-outline-light btn-lg" style="min-width: 150px; height: 48px; display: inline-flex; align-items: center; justify-content: center;">Sign In</a>
-                    <a href="{{ url_for('serve_register') }}" class="btn btn-primary btn-lg glow" style="min-width: 150px; height: 48px; display: inline-flex; align-items: center; justify-content: center;">Get Started</a>
+                    <a href="{{ url_for('serve_login') }}" class="btn btn-outline-light btn-lg">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+                    </a>
+                    <a href="{{ url_for('serve_register') }}" class="btn btn-primary btn-lg glow">
+                        <i class="bi bi-shield-check me-2"></i>Get Started
+                    </a>
                 </div>
             </div>
         </div>
         
-        <!-- simple info section -->
-        <div class="row mt-5 pt-5">
-            <div class="col-lg-8 mx-auto">
-                <div class="glass-card p-4 text-center">
-                    <p class="text-secondary mb-0">
-                        built with the OPAQUE protocol, your password never leaves your device
+        <!-- Feature Cards -->
+        <div class="row mt-5 pt-5 g-4">
+            <div class="col-lg-4">
+                <div class="glass-card p-4 text-center h-100">
+                    <div class="mb-3">
+                        <i class="bi bi-shield-lock" style="font-size: 3rem; color: var(--accent-cyan);"></i>
+                    </div>
+                    <h5 class="text-white mb-3">Zero-Knowledge Proof</h5>
+                    <p class="text-secondary mb-0" style="font-size: 0.95rem;">
+                        Your password never leaves your device. Built with the OPAQUE protocol for maximum security.
+                    </p>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="glass-card p-4 text-center h-100">
+                    <div class="mb-3">
+                        <i class="bi bi-lightning-charge" style="font-size: 3rem; color: var(--accent-purple);"></i>
+                    </div>
+                    <h5 class="text-white mb-3">Lightning Fast</h5>
+                    <p class="text-secondary mb-0" style="font-size: 0.95rem;">
+                        Optimized authentication flow with minimal latency. Secure doesn't mean slow.
+                    </p>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="glass-card p-4 text-center h-100">
+                    <div class="mb-3">
+                        <i class="bi bi-fingerprint" style="font-size: 3rem; color: var(--accent-pink);"></i>
+                    </div>
+                    <h5 class="text-white mb-3">2FA Protected</h5>
+                    <p class="text-secondary mb-0" style="font-size: 0.95rem;">
+                        Time-based one-time passwords (TOTP) add an extra layer of security to your account.
                     </p>
                 </div>
             </div>
