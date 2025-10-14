@@ -1,5 +1,7 @@
 flask>=3.0.0
 flask-cors>=4.0.0
+flask-talisman>=1.1.0
+bleach>=6.1.0
 paseto>=1.8.0
 sqlalchemy>=2.0.0
 psycopg2-binary>=2.9.0

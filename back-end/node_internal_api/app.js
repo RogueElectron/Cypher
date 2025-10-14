@@ -17,6 +17,7 @@ import { authenticator } from 'otplib';
 import QRCode from 'qrcode';
 import xss from 'xss-clean';
 import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import Redis from 'ioredis';
 import { RateLimiterRedis } from 'rate-limiter-flexible';
@@ -37,13 +38,20 @@ app.use(
           scriptSrc: ["'self'"], 
           styleSrc: ["'self'", "'unsafe-inline'"], 
           imgSrc: ["'self'", "data:"], 
-          objectSrc: ["'none'"], 
+          objectSrc: ["'none'"],
+          baseUri: ["'self'"],
+          formAction: ["'self'"],
+          frameAncestors: ["'none'"],
           upgradeInsecureRequests: [] 
         }
       },
       crossOriginEmbedderPolicy: false,
       crossOriginOpenerPolicy: false,
-      crossOriginResourcePolicy: { policy: "same-origin" }, 
+      crossOriginResourcePolicy: { policy: "same-origin" },
+      referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+      noSniff: true,
+      xssFilter: true,
+      hidePoweredBy: true
     })
   );
 
@@ -80,6 +88,65 @@ app.use(cors({
 
 app.use(express.json());
 
+// Two-layer approach: rae
+// 1. Redis (global) - baseline protection for all requests
+// 2. express-rate-limit (specific endpoints) - stricter limits for sensitive ops
+
+// Strict rate limiter for authentication endpoints (login/register)
+const authRateLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // 5 requests per window
+    message: {
+        error: 'Too many authentication attempts. Please try again later.',
+        retryAfter: '15 minutes'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: (req, res) => {
+        res.status(429).json({
+            error: 'Too many authentication attempts',
+            retryAfter: '15 minutes'
+        });
+    }
+});
+
+// Moderate rate limiter for TOTP operations
+const totpRateLimiter = rateLimit({
+    windowMs: 5 * 60 * 1000, // 5 minutes
+    max: 10, // 10 requests per window
+    message: {
+        error: 'Too many TOTP verification attempts. Please try again later.',
+        retryAfter: '5 minutes'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: (req, res) => {
+        res.status(429).json({
+            error: 'Too many TOTP attempts',
+            retryAfter: '5 minutes'
+        });
+    }
+});
+
+// Aggressive rate limiter for setup operations
+const setupRateLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 3, // 3 requests per hour
+    message: {
+        error: 'Too many setup requests. Please try again later.',
+        retryAfter: '1 hour'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: (req, res) => {
+        res.status(429).json({
+            error: 'Too many setup requests',
+            retryAfter: '1 hour'
+        });
+    }
+});
+
+// Redis-based global rate limiter (Layer 1)
 const parsePositiveInt = (value, fallback) => {
     const parsed = parseInt(value, 10);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
@@ -135,6 +202,8 @@ const rateLimitMiddleware = async (req, res, next) => {
 };
 
 app.use(rateLimitMiddleware);
+
+// ===================================================
 
 // initialize opaque cryptographic configuration  
 const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);  
@@ -198,7 +267,7 @@ const server = new OpaqueServer(
 
 
 // user registration endpoints
-app.post('/register/init', async (req, res) => {
+app.post('/register/init', setupRateLimiter, async (req, res) => {
     // make sure opaque server is ready
     if (!server) {
         return res.status(503).json({ error: 'Server not initialized yet' });
@@ -232,7 +301,7 @@ app.post('/register/init', async (req, res) => {
     }
 });
 
-app.post('/register/finish', async (req, res) => {
+app.post('/register/finish', setupRateLimiter, async (req, res) => {
     try {
         const { record, username } = req.body;
         
@@ -277,7 +346,7 @@ app.post('/register/finish', async (req, res) => {
     }
 })
 
-app.post('/login/init', async (req, res) => {
+app.post('/login/init', authRateLimiter, async (req, res) => {
     try {
         const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);  
         const { serke1, username } = req.body;
@@ -318,7 +387,7 @@ app.post('/login/init', async (req, res) => {
 
 
 
-app.post('/login/finish', async (req, res) => {
+app.post('/login/finish', authRateLimiter, async (req, res) => {
     try {
         const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);  
         const { serke3: ser_ke3, username } = req.body;
@@ -384,7 +453,7 @@ app.post('/login/finish', async (req, res) => {
 
 // totp stuff
 
-app.post('/totp/setup', async (req, res) => {
+app.post('/totp/setup', setupRateLimiter, async (req, res) => {
     try {
         const { username } = req.body;
         
@@ -418,7 +487,7 @@ app.post('/totp/setup', async (req, res) => {
     }
 });
 
-app.post('/totp/verify-setup', async (req, res) => {
+app.post('/totp/verify-setup', totpRateLimiter, async (req, res) => {
     try {
         const { username, token } = req.body;
         
@@ -446,7 +515,7 @@ app.post('/totp/verify-setup', async (req, res) => {
     }
 });
 
-app.post('/totp/verify-login', async (req, res) => {
+app.post('/totp/verify-login', totpRateLimiter, async (req, res) => {
 
     try {
         const { username, token, passAuthToken } = req.body;

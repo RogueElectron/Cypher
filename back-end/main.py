@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify, make_response
 from flask_cors import CORS
+import bleach
 import paseto
 from paseto.keys.symmetric_key import SymmetricKey
 from paseto.protocols.v4 import ProtocolVersion4
@@ -27,6 +28,28 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 CORS(app, origins=['http://127.0.0.1:5000', 'http://localhost:5000'], supports_credentials=True)
+
+# xss recursive sanitizer
+
+def sanitize_recursive(obj):
+    if isinstance(obj, dict):
+        return {key: sanitize_recursive(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [sanitize_recursive(item) for item in obj]
+    elif isinstance(obj, str):
+        return bleach.clean(obj, tags=[], strip=True)
+    else:
+        return obj
+
+@app.before_request
+def sanitize_json_input():
+    if request.is_json and request.get_json(silent=True):
+        try:
+            original_data = request.get_json()
+            if original_data:
+                request._cached_json = (sanitize_recursive(original_data), original_data)
+        except Exception as e:
+            logger.warning(f"Failed to sanitize JSON input: {e}")
 
 # paseto keys - TODO: load these from secure storage in prod
 key = SymmetricKey.generate(protocol=ProtocolVersion4)
