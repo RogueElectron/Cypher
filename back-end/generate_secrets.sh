@@ -2,6 +2,7 @@
 
 # Generate new secrets for Cypher application
 # WARNING: This will replace existing secrets and may break existing data!
+# Usage: ./generate_secrets.sh [--yes]
 
 set -e
 
@@ -11,15 +12,26 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# Check for --yes flag to skip confirmation
+SKIP_CONFIRM=false
+if [[ "$1" == "--yes" ]] || [[ "$1" == "-y" ]]; then
+    SKIP_CONFIRM=true
+fi
+
 echo -e "${YELLOW}⚠️  WARNING: This will generate new secrets and may break existing encrypted data!${NC}"
 echo -e "Current secrets will be backed up to .env.backup"
 echo ""
-read -p "Are you sure you want to continue? (y/N): " -n 1 -r
-echo ""
 
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo "Cancelled."
-    exit 0
+if [ "$SKIP_CONFIRM" = false ]; then
+    read -p "Are you sure you want to continue? (y/N): " -n 1 -r
+    echo ""
+    
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "Cancelled."
+        exit 0
+    fi
+else
+    echo "Skipping confirmation (--yes flag provided)"
 fi
 
 # Check if .env exists

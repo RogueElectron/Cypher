@@ -163,7 +163,7 @@ jobs:
         source "$VENV_PATH/bin/activate"
         
         echo "Testing Flask application startup..."
-        ./generate_secrets.sh
+        ./generate_secrets.sh --yes
         # Start Flask in background for testing
         timeout 30 python3 main.py &
         FLASK_PID=$!
