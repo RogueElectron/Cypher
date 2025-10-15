@@ -12,12 +12,13 @@ import logging
 from contextlib import contextmanager
 from dotenv import load_dotenv
 
-# load env vars first
-load_dotenv()
-
 # import our database stuff
 import sys
 from pathlib import Path
+
+# load env vars first - search up to find .env in project root
+env_path = Path(__file__).parent.parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
 # Add parent directory to path so we can import from backend package
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 

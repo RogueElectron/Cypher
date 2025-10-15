@@ -12,8 +12,11 @@ from cryptography.hazmat.backends import default_backend
 import logging
 from typing import Dict, Optional, Tuple, Union
 from dotenv import load_dotenv
+from pathlib import Path
 
-load_dotenv()
+# Load .env from project root (two levels up from this file)
+env_path = Path(__file__).parent.parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
 logger = logging.getLogger(__name__)
 
 # TODO: look into hardware security modules for production

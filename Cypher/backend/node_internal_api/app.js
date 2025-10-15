@@ -23,7 +23,7 @@ import Redis from 'ioredis';
 import { RateLimiterRedis } from 'rate-limiter-flexible';
 import createPostgresStorage from './db.js';
 
-dotenv.config({ path: '../.env' });
+dotenv.config({ path: '../../.env' });
 
 
 const app = express();

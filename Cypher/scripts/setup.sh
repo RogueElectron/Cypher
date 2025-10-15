@@ -94,9 +94,8 @@ if [ ! -f ".env" ]; then
         echo "creating .env file from .env.example..."
         cp .env.example .env
         
-        # Update KEY_STORE_PATH to be relative to current directory
-        CURRENT_DIR=$(pwd)
-        sed -i "s|KEY_STORE_PATH=.*|KEY_STORE_PATH=$CURRENT_DIR/.keys|g" .env
+        # Keep KEY_STORE_PATH as relative path (already set in .env.example)
+        # Don't override with absolute path - relative path works everywhere
         
         echo "generating secure secrets..."
         

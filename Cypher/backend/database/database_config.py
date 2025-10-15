@@ -9,7 +9,11 @@ from sqlalchemy.pool import QueuePool
 from sqlalchemy.ext.declarative import declarative_base
 import logging
 from dotenv import load_dotenv
+from pathlib import Path
 
+# Load .env from project root (two levels up from this file)
+env_path = Path(__file__).parent.parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
 
 logger = logging.getLogger(__name__)
 
