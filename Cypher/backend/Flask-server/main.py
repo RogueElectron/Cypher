@@ -34,7 +34,15 @@ from sqlalchemy import create_engine
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
+# Flask needs to know where templates and static files are
+# They're in front-end/ directory, not backend/Flask-server/
+project_root = Path(__file__).parent.parent.parent
+template_folder = project_root / 'front-end' / 'templates'
+static_folder = project_root / 'front-end' / 'static'
+
+app = Flask(__name__, 
+            template_folder=str(template_folder),
+            static_folder=str(static_folder))
 CORS(app, origins=['http://127.0.0.1:5000', 'http://localhost:5000'], supports_credentials=True)
 
 # xss recursive sanitizer
