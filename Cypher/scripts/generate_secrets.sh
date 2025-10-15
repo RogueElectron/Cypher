@@ -55,7 +55,8 @@ FLASK_SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))"
 
 # OPAQUE secrets using the opaque-ts library for proper cryptographic generation
 echo "Generating OPAQUE secrets using opaque-ts library..."
-OPAQUE_SECRETS=$(node generate_opaque_secrets.js)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+OPAQUE_SECRETS=$(node "$SCRIPT_DIR/generate_opaque_secrets.js")
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}Error: Failed to generate OPAQUE secrets${NC}"
