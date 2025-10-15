@@ -1,9 +1,9 @@
 /cyvenv
 /venv
-/back-end/node_modules
-/back-end/__pycache__ 
-/back-end/node_internal_api/node_modules
-/back-end/static/dist/
-/back-end/src/__pycache__/
-/back-end/.env
-/back-end/.keys/
+/Cypher/front-end/node_modules
+/Cypher/backend/node_internal_api/node_modules
+/Cypher/backend/__pycache__ 
+/Cypher/front-end/static/dist/
+/Cypher/backend/src/__pycache__/
+/Cypher/.env
+/Cypher/.keys/

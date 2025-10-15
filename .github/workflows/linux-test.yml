@@ -25,7 +25,9 @@ jobs:
       with:
         node-version: '20'
         cache: 'npm'
-        cache-dependency-path: back-end/package.json
+        cache-dependency-path: |
+          Cypher/front-end/package.json
+          Cypher/backend/node_internal_api/package.json
         
     - name: Update package lists
       run: |
@@ -36,17 +38,17 @@ jobs:
       
     - name: Make setup script executable
       run: |
-        cd back-end
-        chmod +x setup.sh
+        cd Cypher
+        chmod +x scripts/setup.sh
         
     - name: Run Cypher Setup
       run: |
-        cd back-end
-        ./setup.sh
+        cd Cypher
+        ./scripts/setup.sh
         
     - name: Verify Setup Success
       run: |
-        cd back-end
+        cd Cypher
         
         # Check if virtual environment was created
         if [ ! -d "venv" ] && [ ! -d "../venv" ] && [ ! -d "../cyvenv" ] && [ ! -d "cyvenv" ]; then
@@ -61,14 +63,14 @@ jobs:
         fi
         
         # Check if start.sh was created and is executable
-        if [ ! -f "start.sh" ] || [ ! -x "start.sh" ]; then
-          echo "❌ start.sh not created or not executable"
+        if [ ! -f "scripts/start.sh" ] || [ ! -x "scripts/start.sh" ]; then
+          echo "❌ scripts/start.sh not created or not executable"
           exit 1
         fi
         
         # Check if dev.sh was created and is executable
-        if [ ! -f "dev.sh" ] || [ ! -x "dev.sh" ]; then
-          echo "❌ dev.sh not created or not executable"
+        if [ ! -f "scripts/dev.sh" ] || [ ! -x "scripts/dev.sh" ]; then
+          echo "❌ scripts/dev.sh not created or not executable"
           exit 1
         fi
         
@@ -84,7 +86,7 @@ jobs:
         
     - name: Test Database Connectivity
       run: |
-        cd back-end
+        cd Cypher
         
         # Find and activate virtual environment
         VENV_PATHS=("./venv" "../venv" "../cyvenv" "./cyvenv")
@@ -113,7 +115,7 @@ jobs:
         
     - name: Run Application Tests (if any)
       run: |
-        cd back-end
+        cd Cypher
         
         # Activate virtual environment
         VENV_PATHS=("./venv" "../venv" "../cyvenv" "./cyvenv")
@@ -138,7 +140,7 @@ jobs:
         fi
         
         # Check for Node.js tests
-        cd node_internal_api
+        cd backend/node_internal_api
         if [ -f "package.json" ]; then
           if grep -q '"test"' package.json; then
             echo "Running Node.js tests..."
@@ -149,7 +151,7 @@ jobs:
         
     - name: Test Application Startup Components  
       run: |
-        cd back-end
+        cd Cypher
         
         # Find and activate virtual environment
         VENV_PATHS=("./venv" "../venv" "../cyvenv" "./cyvenv")
@@ -163,16 +165,16 @@ jobs:
         source "$VENV_PATH/bin/activate"
         
         echo "Testing Flask application startup..."
-        ./generate_secrets.sh --yes
+        ./scripts/generate_secrets.sh --yes
         # Start Flask in background for testing
-        timeout 30 python3 main.py &
+        timeout 30 python3 backend/Flask-server/main.py &
         FLASK_PID=$!
         
         # Start Node.js API in background for testing
-        cd node_internal_api
+        cd backend/node_internal_api
         timeout 30 node app.js &
         NODE_PID=$!
-        cd ..
+        cd ../..
         
         # Wait a bit for services to start
         sleep 10
@@ -199,7 +201,7 @@ jobs:
     - name: Run Registration Automation
       continue-on-error: true
       run: |
-        cd back-end
+        cd Cypher
         
         # Install automation dependencies
         cd test
@@ -225,12 +227,12 @@ jobs:
         source "$VENV_PATH/bin/activate"
         
         # Start services for automation testing
-        cd node_internal_api
+        cd backend/node_internal_api
         node app.js &
         NODE_PID=$!
-        cd ..
+        cd ../..
         
-        python3 main.py &
+        python3 backend/Flask-server/main.py &
         FLASK_PID=$!
         
         echo "Started services - Node PID: $NODE_PID, Flask PID: $FLASK_PID"
@@ -306,7 +308,7 @@ jobs:
     - name: Validate Login Automation Results
       if: always()
       run: |
-        cd back-end/test
+        cd Cypher/test
         if [ ! -f automation_exit_code.txt ]; then
           echo "ERROR: automation_exit_code.txt not found"
           exit 1
@@ -320,7 +322,7 @@ jobs:
 
     - name: Verify User Registration in Database
       run: |
-        cd back-end/test
+        cd Cypher/test
         VENV_PATHS=("../venv" "../../venv" "../cyvenv" "../../cyvenv" "./venv")
         VENV_PATH=""
         for path in "${VENV_PATHS[@]}"; do
@@ -341,7 +343,7 @@ jobs:
 
     - name: Cleanup
       run: |
-        cd back-end
+        cd Cypher
         # Stop Docker containers
         docker compose down
         # Kill any remaining processes

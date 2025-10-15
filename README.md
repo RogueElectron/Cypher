@@ -50,32 +50,48 @@ Then run the setup.sh, then generate_secrets.sh and the start.sh script and OFF 
 
 ```
 Cypher/
-├── back-end/                    # Main application backend
-│   ├── src/                     # Python source modules
-│   │   ├── auth.js                 # Client-side authentication
-│   │   ├── register.js             # Registration flow
-│   │   ├── session-manager.js      # Token lifecycle management
-│   │   ├── models.py               # Database models
-│   │   ├── encryption_manager.py   # Encryption utilities
-│   │   └── redis_manager.py        # Redis operations
+├── backend/                     # Application backend
+│   ├── Flask-server/            # Flask web application
+│   │   ├── main.py                 # Flask application entry point
+│   │   ├── requirements.txt        # Python dependencies
+│   │   └── __init__.py
+│   ├── database/                # Python database modules
+│   │   ├── database_config.py      # PostgreSQL & Redis config
+│   │   ├── encryption_manager.py   # Encryption & key rotation
+│   │   ├── models.py               # SQLAlchemy models
+│   │   ├── redis_manager.py        # Redis operations
+│   │   └── __init__.py
 │   ├── node_internal_api/       # Node.js cryptographic service
-│   │   ├── app.js                  # Express application
+│   │   ├── app.js                  # Express OPAQUE server
 │   │   ├── db.js                   # Database operations
 │   │   └── package.json
-│   ├── static/                  # Frontend assets
-│   │   ├── dist/                   # Compiled JavaScript
-│   │   └── templates/              # HTML templates
-│   ├── migrations/              # Database migrations
-│   ├── main.py                     # Flask application
-│   ├── requirements.txt            # Python dependencies
-│   └── docker-compose.yml          # Infrastructure
+│   └── redis.conf               # Redis configuration
+├── front-end/                   # Frontend assets
+│   ├── src/                     # JavaScript source
+│   │   ├── auth.js                 # Client-side authentication
+│   │   ├── register.js             # Registration flow
+│   │   ├── session-manager.js      # Token lifecycle
+│   │   └── index.js                # Main entry
+│   ├── static/                  # Static assets
+│   │   └── dist/                   # Compiled output (vite build)
+│   ├── templates/               # HTML templates
+│   ├── package.json                # Frontend dependencies
+│   └── vite.config.js              # Vite build configuration
+├── scripts/                     # DevOps scripts
+│   ├── setup.sh                    # Initial setup
+│   ├── start.sh                    # Start application
+│   ├── dev.sh                      # Development mode
+│   ├── init_db.py                  # Database initialization
+│   └── *_databases.sh              # Database management
+├── test/                        # Automation tests
 ├── docs/                        # Comprehensive documentation
 │   ├── Overview.md                 # System overview
 │   ├── API-Reference.md            # Complete API documentation
 │   ├── Authentication-System.md    # Security architecture
 │   ├── System-Architecture.md      # Technical architecture
 │   └── README.md                   # Documentation index
-├── Documentation/               # Legacy documentation (being migrated)
+├── docker-compose.yml           # Infrastructure
+├── .env                         # Environment variables
 └── README.md                       # This file
 ```
 
