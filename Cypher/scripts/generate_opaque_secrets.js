@@ -1,7 +1,7 @@
 import {
     OpaqueID,
     getOpaqueConfig
-} from './node_internal_api/node_modules/@cloudflare/opaque-ts/lib/src/index.js';
+} from '../backend/node_internal_api/node_modules/@cloudflare/opaque-ts/lib/src/index.js';
 
 // Generate OPAQUE cryptographic secrets properly using the library
 async function generateOpaqueSecrets() {

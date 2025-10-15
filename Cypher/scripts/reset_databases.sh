@@ -65,7 +65,7 @@ echo ""
 
 echo "Initializing fresh database schema..."
 source ../cyvenv/bin/activate
-python migrations/init_db.py --all
+python scripts/init_db.py --all
 
 echo ""
 echo -e "${GREEN}✓ Complete database reset finished!${NC}"

@@ -58,11 +58,11 @@ echo -e "${GREEN}Redis is ready${NC}"
 
 # Install Python dependencies
 echo -e "${YELLOW}Installing Python dependencies...${NC}"
-pip install -r requirements.txt
+pip install -r backend/Flask-server/requirements.txt
 
 # Initialize database
 echo -e "${YELLOW}Initializing database tables and security...${NC}"
-python migrations/init_db.py --all
+python scripts/init_db.py --all
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}Database initialization completed successfully!${NC}"

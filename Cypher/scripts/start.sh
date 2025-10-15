@@ -24,12 +24,12 @@ if [ -z "$VENV_PATH" ]; then
 fi
 
 source "$VENV_PATH/bin/activate"
-python main.py &
+python backend/Flask-server/main.py &
 FLASK_PID=$!
-cd node_internal_api
+cd backend/node_internal_api
 node app.js &
 NODE_PID=$!
-cd ..
+cd ../..
 echo "cypher running - flask: http://127.0.0.1:5000 | node: http://localhost:3000"
 echo "press ctrl+c to stop"
 echo "Access cypher by going to http://localhost:5000"

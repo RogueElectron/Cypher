@@ -18,15 +18,15 @@ echo ""
 echo "Checking required files..."
 FILES=(
     ".env"
-    "main.py"
-    "src/database_config.py"
-    "src/encryption_manager.py"
-    "src/models.py"
-    "src/redis_manager.py"
-    "node_internal_api/app.js"
-    "node_internal_api/db.js"
+    "backend/Flask-server/main.py"
+    "backend/database/database_config.py"
+    "backend/database/encryption_manager.py"
+    "backend/database/models.py"
+    "backend/database/redis_manager.py"
+    "backend/node_internal_api/app.js"
+    "backend/node_internal_api/db.js"
     "docker-compose.yml"
-    "scripts/redis.conf"
+    "backend/redis.conf"
 )
 
 for file in "${FILES[@]}"; do
@@ -98,11 +98,10 @@ echo "Checking Python imports..."
 source ../cyvenv/bin/activate
 
 python -c "
+import sys
+sys.path.insert(0, '.')
 try:
-    from src.database_config import init_databases
-    from src.encryption_manager import init_encryption
-    from src.models import User
-    from src.redis_manager import init_redis_managers
+    from backend.database import init_databases, init_encryption, User, init_redis_managers
     print('  \033[0;32m✓\033[0m All Python imports working')
 except ImportError as e:
     print(f'  \033[0;31m✗\033[0m Import error: {e}')

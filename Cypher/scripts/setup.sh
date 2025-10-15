@@ -12,8 +12,8 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # no color
 
 # check if we're in the right directory
-if [ ! -f "main.py" ] || [ ! -f "package.json" ]; then
-    echo -e "${RED}error: run this script from the back-end directory${NC}"
+if [ ! -f "docker-compose.yml" ] || [ ! -d "backend" ]; then
+    echo -e "${RED}error: run this script from the Cypher project root${NC}"
     exit 1
 fi
 
@@ -71,15 +71,12 @@ fi
 echo "activating virtual environment..."
 source "$VENV_PATH/bin/activate"
 pip install --upgrade pip > /dev/null
-pip install -r requirements.txt
+pip install -r backend/Flask-server/requirements.txt
 
-echo "installing main backend dependencies..."
+echo "installing node internal api dependencies..."
+cd backend/node_internal_api
 npm install > /dev/null
-
-echo "installing internal api dependencies..."
-cd node_internal_api
-npm install > /dev/null
-cd ..
+cd ../..
 
 echo "building frontend assets..."
 npx vite build > /dev/null
@@ -133,7 +130,7 @@ echo "waiting for databases to be ready..."
 sleep 5
 
 echo "initializing database tables..."
-python migrations/init_db.py --all || echo -e "${YELLOW}database may already be initialized${NC}"
+python scripts/init_db.py --all || echo -e "${YELLOW}database may already be initialized${NC}"
 
 echo "creating startup scripts..."
 
