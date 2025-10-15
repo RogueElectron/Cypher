@@ -1,0 +1,15 @@
+{
+  "name": "cypher-frontend",
+  "version": "1.0.0",
+  "description": "Cypher Frontend - Zero-Knowledge Authentication UI",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-basic-ssl": "^2.1.0",
+    "vite": "^7.1.6"
+  }
+}

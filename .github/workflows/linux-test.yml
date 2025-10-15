@@ -25,7 +25,9 @@ jobs:
       with:
         node-version: '20'
         cache: 'npm'
-        cache-dependency-path: Cypher/backend/node_internal_api/package.json
+        cache-dependency-path: |
+          Cypher/front-end/package.json
+          Cypher/backend/node_internal_api/package.json
         
     - name: Update package lists
       run: |

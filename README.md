@@ -72,8 +72,10 @@ Cypher/
 │   │   ├── session-manager.js      # Token lifecycle
 │   │   └── index.js                # Main entry
 │   ├── static/                  # Static assets
-│   │   └── dist/                   # Compiled output
-│   └── templates/               # HTML templates
+│   │   └── dist/                   # Compiled output (vite build)
+│   ├── templates/               # HTML templates
+│   ├── package.json                # Frontend dependencies
+│   └── vite.config.js              # Vite build configuration
 ├── scripts/                     # DevOps scripts
 │   ├── setup.sh                    # Initial setup
 │   ├── start.sh                    # Start application
@@ -81,16 +83,14 @@ Cypher/
 │   ├── init_db.py                  # Database initialization
 │   └── *_databases.sh              # Database management
 ├── test/                        # Automation tests
-├── docker-compose.yml           # Infrastructure
-├── vite.config.js               # Frontend build config
-├── .env                         # Environment variables
-└── docs/                        # Comprehensive documentation
+├── docs/                        # Comprehensive documentation
 │   ├── Overview.md                 # System overview
 │   ├── API-Reference.md            # Complete API documentation
 │   ├── Authentication-System.md    # Security architecture
 │   ├── System-Architecture.md      # Technical architecture
 │   └── README.md                   # Documentation index
-├── Documentation/               # Legacy documentation (being migrated)
+├── docker-compose.yml           # Infrastructure
+├── .env                         # Environment variables
 └── README.md                       # This file
 ```
 

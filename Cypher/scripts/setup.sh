@@ -73,13 +73,20 @@ source "$VENV_PATH/bin/activate"
 pip install --upgrade pip > /dev/null
 pip install -r backend/Flask-server/requirements.txt
 
+echo "installing frontend build dependencies..."
+cd front-end
+npm install > /dev/null
+cd ..
+
 echo "installing node internal api dependencies..."
 cd backend/node_internal_api
 npm install > /dev/null
 cd ../..
 
 echo "building frontend assets..."
-npx vite build > /dev/null
+cd front-end
+npm run build > /dev/null
+cd ..
 
 echo "setting up environment configuration..."
 if [ ! -f ".env" ]; then
