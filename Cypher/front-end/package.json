@@ -8,6 +8,9 @@
     "dev": "vite",
     "preview": "vite preview"
   },
+  "dependencies": {
+    "@cloudflare/opaque-ts": "^0.7.5"
+  },
   "devDependencies": {
     "@vitejs/plugin-basic-ssl": "^2.1.0",
     "vite": "^7.1.6"
