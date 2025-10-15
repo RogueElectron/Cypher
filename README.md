@@ -35,7 +35,7 @@
 - **Redis** 7+
 - **Docker**
 
-Then run the setup.sh and the start.sh scripts and OFF YOU GO
+Then run the setup.sh, then generate_secrets.sh and the start.sh script and OFF YOU GO
 
 ### Helper Scripts
 - **setup.sh** - Sets up the environment
@@ -44,6 +44,7 @@ Then run the setup.sh and the start.sh scripts and OFF YOU GO
 - **stop.sh** - Stops the application
 - **reset_databases.sh** - Resets the databases
 - **clear_databases.sh** - Clears the databases
+- **generate_secrets.sh** - Generates OPAQUE secrets (oprf seeds and server private and public key)
 
 ## Project Structure
 
