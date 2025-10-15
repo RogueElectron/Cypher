@@ -16,10 +16,17 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # import our database stuff
-from src.database_config import init_databases, get_db_session, Base
-from src.encryption_manager import init_encryption
-from src.redis_manager import init_redis_managers, get_session_manager, get_token_manager, get_rate_limiter
-from src.models import User, UserSession, RefreshToken, AuditLog
+import sys
+from pathlib import Path
+# Add parent directory to path so we can import from backend package
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+from backend.database import (
+    init_databases, get_db_session, Base, db_config,
+    init_encryption,
+    init_redis_managers, get_session_manager, get_token_manager, get_rate_limiter,
+    User, UserSession, RefreshToken, AuditLog
+)
 from sqlalchemy import create_engine
 
 # setup logging
@@ -81,7 +88,6 @@ def initialize_app():
         logger.info("Redis managers initialized")
         
         # make sure tables exist
-        from src.database_config import db_config
         Base.metadata.create_all(bind=db_config.engine)
         logger.info("Database tables created/verified")
         

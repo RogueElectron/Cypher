@@ -62,8 +62,9 @@ class EncryptionManager:
         self.max_encryption_operations = int(os.getenv('MAX_ENCRYPTION_OPS', '1000000'))  # or after 1M operations
         self.encryption_count = 0  # track how many times we've encrypted stuff
         
-        # where we store the encrypted keys
-        self.key_store_path = os.getenv('KEY_STORE_PATH', '/home/rogz/Cypher/back-end/.keys')
+        # where we store the encrypted keys - use relative path from project root
+        default_path = os.path.join(os.path.dirname(__file__), '..', '..', '.keys')
+        self.key_store_path = os.getenv('KEY_STORE_PATH', os.path.abspath(default_path))
         os.makedirs(self.key_store_path, mode=0o700, exist_ok=True)  # 700 = owner only
         
         self._load_or_create_keys()

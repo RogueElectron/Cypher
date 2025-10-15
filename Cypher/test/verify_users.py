@@ -9,17 +9,19 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-# Add src to path
+# Add backend to path
 backend_dir = Path(__file__).parent.parent
-sys.path.append(str(backend_dir / 'src'))
+sys.path.insert(0, str(backend_dir))
 
 # Load environment variables from backend .env
 env_path = backend_dir / '.env'
 load_dotenv(dotenv_path=env_path)
 
-from database_config import init_databases, get_db_session
-from models import User
-from encryption_manager import init_encryption
+from backend.database import (
+    init_databases, get_db_session,
+    User,
+    init_encryption
+)
 
 def verify_users():
     try:

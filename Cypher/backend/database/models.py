@@ -3,13 +3,9 @@
 from sqlalchemy import Column, String, DateTime, Boolean, Text, Integer, Index
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
-try:
-    from src.database_config import Base
-    from src.encryption_manager import get_encryption_manager
-except ImportError:
-    # when called from migrations or other contexts
-    from database_config import Base
-    from encryption_manager import get_encryption_manager
+# Use relative imports within the database package
+from .database_config import Base
+from .encryption_manager import get_encryption_manager
 import uuid
 from datetime import datetime
 from typing import Optional, Dict, Any

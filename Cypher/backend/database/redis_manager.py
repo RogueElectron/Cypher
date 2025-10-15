@@ -6,8 +6,8 @@ import hashlib
 import secrets
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List, Union
-from src.database_config import get_redis
-from src.encryption_manager import get_encryption_manager
+from .database_config import get_redis
+from .encryption_manager import get_encryption_manager
 import logging
 
 logger = logging.getLogger(__name__)

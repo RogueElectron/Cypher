@@ -11,12 +11,14 @@ from dotenv import load_dotenv
 # Load environment variables first!
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
-# Add src to path so we can import our modules
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+# Add backend to path so we can import the database package
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from database_config import init_databases, Base, db_config
-from encryption_manager import init_encryption
-from models import User, UserSession, RefreshToken, AuditLog
+from backend.database import (
+    init_databases, Base, db_config,
+    init_encryption,
+    User, UserSession, RefreshToken, AuditLog
+)
 from sqlalchemy import text
 import argparse
 
