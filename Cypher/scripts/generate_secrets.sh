@@ -80,9 +80,9 @@ sed -i "s|SERVER_PUBLIC_KEY=.*|SERVER_PUBLIC_KEY=$SERVER_PUBLIC_KEY|g" .env
 
 echo -e "${GREEN}✅ New secrets generated and saved to .env${NC}"
 echo -e "${YELLOW}📋 Next steps:${NC}"
-echo "1. Clear existing database data: ./clear_databases.sh"
-echo "2. Re-initialize database: python migrations/init_db.py --all"
-echo "3. Restart application: ./start.sh"
+echo "1. Clear existing database data: ./scripts/clear_databases.sh"
+echo "2. Re-initialize database: python scripts/init_db.py --all"
+echo "3. Restart application: ./scripts/start.sh"
 echo ""
 echo -e "${YELLOW}🔐 Secret types generated:${NC}"
 echo "- Master encryption password (32 bytes)"

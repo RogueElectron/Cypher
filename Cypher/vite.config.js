@@ -6,14 +6,14 @@ export default defineConfig({
     basicSsl()
   ],
   build: {
-    outDir: 'static/dist',
+    outDir: 'front-end/static/dist',
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        register: 'src/register.js',
-        auth: 'src/auth.js',
-        index: 'src/index.js',
-        'session-manager': 'src/session-manager.js'
+        register: 'front-end/src/register.js',
+        auth: 'front-end/src/auth.js',
+        index: 'front-end/src/index.js',
+        'session-manager': 'front-end/src/session-manager.js'
       },
       output: {
         entryFileNames: '[name].js',
