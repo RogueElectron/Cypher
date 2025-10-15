@@ -3,7 +3,7 @@
 ![CodeQL](https://github.com/RogueElectron/Cypher/actions/workflows/github-code-scanning/codeql/badge.svg)
 ![Last commit](https://img.shields.io/github/last-commit/RogueElectron/Cypher)
 ![License](https://img.shields.io/github/license/RogueElectron/Cypher?cacheSeconds=3600)
-![Digitopia-stage](https://custom-icon-badges.herokuapp.com/badge/Digitopia_stage-FINALS-000000?style=for-the-badge&logo=check-circle-fill&logoColor=white&labelColor=000000)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/RogueElectron/Cypher)
 # Cypher - Zero-Knowledge Authentication Platform
 
 > **Revolutionary Zero-Knowledge Authentication Platform** - Passwords never leave your device, even during registration and login.
