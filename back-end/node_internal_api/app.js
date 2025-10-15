@@ -207,8 +207,19 @@ app.use(rateLimitMiddleware);
 
 // initialize opaque cryptographic configuration  
 const cfg = getOpaqueConfig(OpaqueID.OPAQUE_P256);  
-const oprfSeed = cfg.prng.random(cfg.hash.Nh);  
-const serverKeypairSeed = cfg.prng.random(cfg.constants.Nseed);
+
+// use stable seeds from environment - CRITICAL for production
+// random seeds would change on restart and invalidate all user credentials
+if (!process.env.OPRF_SEED || !process.env.SERVER_KEYPAIR_SEED) {
+    throw new Error('OPRF_SEED and SERVER_KEYPAIR_SEED must be set in .env file. Run generate_secrets.sh to generate them.');
+}
+
+// Convert hex strings to Array (OPAQUE library expects regular Arrays, not Uint8Array)
+const fromHex = (hexString) => hexString.match(/.{1,2}/g).map(byte => parseInt(byte, 16));
+
+const oprfSeed = fromHex(process.env.OPRF_SEED);
+const serverKeypairSeed = fromHex(process.env.SERVER_KEYPAIR_SEED);
+
 // generate server keypair for authenticated key exchange
 const serverAkeKeypair = await cfg.ake.deriveAuthKeyPair(serverKeypairSeed);
 
