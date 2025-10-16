@@ -8,6 +8,8 @@
 
 > **Revolutionary Zero-Knowledge Authentication Platform** - Passwords never leave your device, even during registration and login.
 
+PS: current docs are deprecated, will not re-write until done with current changes
+
 ## Key Highlights
 - **Zero-Knowledge Authentication (OPAQUE):** Passwords never transmitted or stored.
 - **Dual-Service Isolation:** Node.js handles cryptography; Flask manages sessions.
