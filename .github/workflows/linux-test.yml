@@ -168,11 +168,11 @@ jobs:
         ./scripts/generate_secrets.sh --yes
         
         # Start Internal Python API in background for testing
-        timeout 30 python3 backend/python_internal_api/internal_api.py &
+        timeout 30 python backend/python_internal_api/internal_api.py &
         INTERNAL_API_PID=$!
         
         # Start Flask in background for testing
-        timeout 30 python3 backend/Flask-server/main.py &
+        timeout 30 python backend/Flask-server/main.py &
         FLASK_PID=$!
         
         # Start Node.js API in background for testing
@@ -239,7 +239,7 @@ jobs:
         
         # Start services for automation testing
         # Start internal Python API first
-        python3 backend/python_internal_api/internal_api.py &
+        python backend/python_internal_api/internal_api.py &
         INTERNAL_API_PID=$!
         
         # Start Node.js API
@@ -249,7 +249,7 @@ jobs:
         cd ../..
         
         # Start Flask app
-        python3 backend/Flask-server/main.py &
+        python backend/Flask-server/main.py &
         FLASK_PID=$!
         
         echo "Started services - Internal API PID: $INTERNAL_API_PID, Node PID: $NODE_PID, Flask PID: $FLASK_PID"
@@ -313,7 +313,7 @@ jobs:
           SUMMARY_JSON=${SUMMARY_LINE#AUTOMATION_RESULT }
           echo "$SUMMARY_JSON" > automation_summary.json
           echo "::group::Parsed automation summary"
-          python3 parse_automation_summary.py
+          python parse_automation_summary.py
           echo "::endgroup::"
         else
           echo "WARNING: Automation summary not found in output."
