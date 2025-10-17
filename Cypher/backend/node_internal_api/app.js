@@ -277,6 +277,10 @@ const server = new OpaqueServer(
 
 
 
+app.get('/health', (req, res) => {
+    res.status(200).json({ message: 'Node.js internal API is running' });
+});
+
 // user registration endpoints
 app.post('/register/init', setupRateLimiter, async (req, res) => {
     // make sure opaque server is ready

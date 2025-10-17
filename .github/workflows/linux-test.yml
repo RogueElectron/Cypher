@@ -191,7 +191,7 @@ jobs:
           echo "Flask backend not responding"
         fi
         
-        if curl -f http://localhost:3000 --max-time 10 --silent > /dev/null; then
+        if curl -f http://localhost:3000/health --max-time 10 --silent > /dev/null; then
           echo "Node.js API responding"
         else
           echo "Node.js API not responding"
