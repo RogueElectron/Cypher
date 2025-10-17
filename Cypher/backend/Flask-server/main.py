@@ -67,10 +67,27 @@ def sanitize_json_input():
         except Exception as e:
             logger.warning(f"Failed to sanitize JSON input: {e}")
 
-# paseto keys - TODO: load these from secure storage in prod
-key = SymmetricKey.generate(protocol=ProtocolVersion4)
-session_key = SymmetricKey.generate(protocol=ProtocolVersion4)
-refresh_key = SymmetricKey.generate(protocol=ProtocolVersion4)
+# paseto keys - load from environment variables
+try:
+    key_hex = os.getenv('PASETO_KEY')
+    session_key_hex = os.getenv('PASETO_SESSION_KEY')
+    refresh_key_hex = os.getenv('PASETO_REFRESH_KEY')
+    
+    if not all([key_hex, session_key_hex, refresh_key_hex]):
+        raise ValueError("PASETO keys not found in environment. Run generate_secrets.sh to generate them.")
+    
+    # Load keys from hex strings
+    key = SymmetricKey.from_paserk(f"k4.local.{key_hex}")
+    session_key = SymmetricKey.from_paserk(f"k4.local.{session_key_hex}")
+    refresh_key = SymmetricKey.from_paserk(f"k4.local.{refresh_key_hex}")
+    
+    logger.info("PASETO keys loaded from environment")
+except Exception as e:
+    logger.error(f"Failed to load PASETO keys: {e}")
+    logger.warning("Generating temporary keys - these will NOT persist across restarts!")
+    key = SymmetricKey.generate(protocol=ProtocolVersion4)
+    session_key = SymmetricKey.generate(protocol=ProtocolVersion4)
+    refresh_key = SymmetricKey.generate(protocol=ProtocolVersion4)
 
 # track if db is ready
 db_initialized = False
