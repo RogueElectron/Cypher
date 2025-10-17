@@ -172,7 +172,7 @@ class EncryptionManager:
             return True
             
         except Exception as e:
-            logger.error(f"Failed to load encryption keys: {e}")
+            logger.error(f"Failed to load encryption keys: {type(e).__name__}: {str(e) or 'Invalid key file or wrong master password'}")
             return False
     
     def _load_or_create_keys(self):
