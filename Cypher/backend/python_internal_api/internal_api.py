@@ -27,6 +27,7 @@ from backend.database import (
     User, UserSession, RefreshToken, AuditLog,
     init_databases, init_redis_managers
 )
+from backend.database.encryption_manager import init_encryption
 
 # Load environment variables
 env_path = Path(__file__).parent.parent.parent / '.env'
@@ -41,13 +42,19 @@ app = Flask(__name__)
 
 # Initialize databases and Redis on startup
 def initialize_services():
-    """Initialize database connections and Redis managers"""
+    """Initialize database connections, encryption, and Redis managers"""
     try:
+        # Initialize encryption first (required by Redis managers)
+        init_encryption()
+        
+        # Initialize databases
         if not init_databases():
             logger.error("Failed to initialize databases")
             return False
         
+        # Initialize Redis managers (depends on encryption)
         init_redis_managers()
+        
         logger.info("Internal API services initialized")
         return True
     except Exception as e:
