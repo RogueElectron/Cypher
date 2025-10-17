@@ -144,63 +144,9 @@ def serve_register():
 def serve_totp():
     return render_template('totp.html')
 
-@app.route('/api/create-token', methods=['POST'])
-def create_token():
-    data = request.get_json()
-    username = data.get('username')
-    
-    if not username:
-        return jsonify({'error': 'Username required'}), 400
-    
-    claims = {
-        'username': username,
-        'pass_authed': True
-    }
-    
-    token = paseto.create(
-        key=key,
-        purpose='local',
-        claims=claims,
-        exp_seconds=180
-    )
-    
-    return jsonify({'token': token})
-
-@app.route('/api/verify-token', methods=['POST'])
-def verify_token():
-    data = request.get_json()
-    token = data.get('token')
-    username = data.get('username')
-    
-    if not token:
-        return jsonify({'error': 'Token required'}), 400
-    
-    if not username:
-        return jsonify({'error': 'Username required'}), 400
-    
-    try:
-        parsed = paseto.parse(
-            key=key,
-            purpose='local',
-            token=token
-        )
-        
-        token_username = parsed['message'].get('username')
-        pass_authed = parsed['message'].get('pass_authed')
-        
-        if token_username != username:
-            return jsonify({'valid': False, 'error': 'Token username mismatch'}), 401
-        
-        if pass_authed is not True:
-            return jsonify({'valid': False, 'error': 'Token pass_authed claim missing'}), 401
-        
-        return jsonify({
-            'valid': True,
-            'claims': parsed['message']
-        })
-        
-    except (paseto.ExpireError, paseto.ValidationError):
-        return jsonify({'valid': False, 'error': 'Invalid or expired token'}), 401
+# SECURITY NOTE: /api/create-token and /api/verify-token endpoints moved to
+# internal Python API (backend/python_internal_api/internal_api.py)
+# These are now only accessible via localhost:5001 for internal Node.js calls
 
 @app.route('/api/create-session', methods=['POST'])
 def create_session():
