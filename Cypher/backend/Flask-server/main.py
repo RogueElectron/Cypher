@@ -77,9 +77,9 @@ try:
         raise ValueError("PASETO keys not found in environment. Run generate_secrets.sh to generate them.")
     
     # Load keys from hex strings (convert hex back to bytes)
-    key = SymmetricKey(key=bytes.fromhex(key_hex), protocol=ProtocolVersion4)
-    session_key = SymmetricKey(key=bytes.fromhex(session_key_hex), protocol=ProtocolVersion4)
-    refresh_key = SymmetricKey(key=bytes.fromhex(refresh_key_hex), protocol=ProtocolVersion4)
+    key = SymmetricKey(key_material=bytes.fromhex(key_hex), protocol=ProtocolVersion4)
+    session_key = SymmetricKey(key_material=bytes.fromhex(session_key_hex), protocol=ProtocolVersion4)
+    refresh_key = SymmetricKey(key_material=bytes.fromhex(refresh_key_hex), protocol=ProtocolVersion4)
     
     logger.info("PASETO keys loaded from environment")
 except Exception as e:
@@ -615,5 +615,5 @@ def logout():
     return jsonify({'success': True})
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=False, port=5000)
 
