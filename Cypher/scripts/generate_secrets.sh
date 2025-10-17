@@ -92,9 +92,25 @@ sed -i "s|OPRF_SEED=.*|OPRF_SEED=$OPRF_SEED|g" .env
 sed -i "s|SERVER_KEYPAIR_SEED=.*|SERVER_KEYPAIR_SEED=$SERVER_KEYPAIR_SEED|g" .env
 sed -i "s|SERVER_PRIVATE_KEY=.*|SERVER_PRIVATE_KEY=$SERVER_PRIVATE_KEY|g" .env
 sed -i "s|SERVER_PUBLIC_KEY=.*|SERVER_PUBLIC_KEY=$SERVER_PUBLIC_KEY|g" .env
-sed -i "s|PASETO_KEY=.*|PASETO_KEY=$PASETO_KEY|g" .env
-sed -i "s|PASETO_SESSION_KEY=.*|PASETO_SESSION_KEY=$PASETO_SESSION_KEY|g" .env
-sed -i "s|PASETO_REFRESH_KEY=.*|PASETO_REFRESH_KEY=$PASETO_REFRESH_KEY|g" .env
+
+# Add or replace PASETO keys (check if they exist first)
+if grep -q "^PASETO_KEY=" .env; then
+    sed -i "s|PASETO_KEY=.*|PASETO_KEY=$PASETO_KEY|g" .env
+else
+    echo "PASETO_KEY=$PASETO_KEY" >> .env
+fi
+
+if grep -q "^PASETO_SESSION_KEY=" .env; then
+    sed -i "s|PASETO_SESSION_KEY=.*|PASETO_SESSION_KEY=$PASETO_SESSION_KEY|g" .env
+else
+    echo "PASETO_SESSION_KEY=$PASETO_SESSION_KEY" >> .env
+fi
+
+if grep -q "^PASETO_REFRESH_KEY=" .env; then
+    sed -i "s|PASETO_REFRESH_KEY=.*|PASETO_REFRESH_KEY=$PASETO_REFRESH_KEY|g" .env
+else
+    echo "PASETO_REFRESH_KEY=$PASETO_REFRESH_KEY" >> .env
+fi
 
 echo -e "${GREEN}✅ New secrets generated and saved to .env${NC}"
 echo -e "${YELLOW}📋 Next steps:${NC}"
