@@ -14,16 +14,11 @@ def generate_paseto_keys():
         session_key = SymmetricKey.generate(protocol=ProtocolVersion4)
         refresh_key = SymmetricKey.generate(protocol=ProtocolVersion4)
         
-        # Export keys in PASERK format and extract the hex part
-        # PASERK format is: k4.local.<hex>
-        key_paserk = key.to_paserk()
-        session_key_paserk = session_key.to_paserk()
-        refresh_key_paserk = refresh_key.to_paserk()
-        
-        # Extract hex part (remove "k4.local." prefix)
-        key_hex = key_paserk.replace("k4.local.", "")
-        session_key_hex = session_key_paserk.replace("k4.local.", "")
-        refresh_key_hex = refresh_key_paserk.replace("k4.local.", "")
+        # Export keys as hex strings (raw key bytes)
+        # Access the raw key material and convert to hex
+        key_hex = key.key.hex()
+        session_key_hex = session_key.key.hex()
+        refresh_key_hex = refresh_key.key.hex()
         
         # Output as JSON for easy parsing by bash script
         secrets = {

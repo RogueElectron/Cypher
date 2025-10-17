@@ -76,10 +76,10 @@ try:
     if not all([key_hex, session_key_hex, refresh_key_hex]):
         raise ValueError("PASETO keys not found in environment. Run generate_secrets.sh to generate them.")
     
-    # Load keys from hex strings
-    key = SymmetricKey.from_paserk(f"k4.local.{key_hex}")
-    session_key = SymmetricKey.from_paserk(f"k4.local.{session_key_hex}")
-    refresh_key = SymmetricKey.from_paserk(f"k4.local.{refresh_key_hex}")
+    # Load keys from hex strings (convert hex back to bytes)
+    key = SymmetricKey(key=bytes.fromhex(key_hex), protocol=ProtocolVersion4)
+    session_key = SymmetricKey(key=bytes.fromhex(session_key_hex), protocol=ProtocolVersion4)
+    refresh_key = SymmetricKey(key=bytes.fromhex(refresh_key_hex), protocol=ProtocolVersion4)
     
     logger.info("PASETO keys loaded from environment")
 except Exception as e:
