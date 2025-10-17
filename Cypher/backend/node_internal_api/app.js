@@ -588,7 +588,7 @@ app.post('/totp/verify-login', totpRateLimiter, async (req, res) => {
             
             // totp verified - create actual session tokens for the user
             try {
-                const sessionResponse = await fetch('http://localhost:5000/api/create-session', {
+                const sessionResponse = await fetch('http://127.0.0.1:5001/internal/create-session', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

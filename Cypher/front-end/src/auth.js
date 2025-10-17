@@ -290,29 +290,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 authLiveViz.activateStep('send-ke3');
                 authLiveViz.updateSecurityStatus('Sending authentication proof to complete mutual authentication');
                 
-                const createResponse = await fetch('/api/create-token', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({
-                        username: username
-                    })
-                });
-                
-                const tokenResult = await createResponse.json();
-                
-                if (!createResponse.ok || !tokenResult.token) {
-                    showAlert('Failed to create authentication token', 'error');
-                    authLiveViz.updateSecurityStatus('Token creation failed', 'error');
-                    return;
-                }
-                
-                // store passauth token for 3 minutes
-                const passAuthCookie = `pass_auth_token=${tokenResult.token}; Max-Age=180; SameSite=Lax; Path=/`;
-                document.cookie = passAuthCookie;
-                
+                // Send KE3 to Node.js which will verify OPAQUE auth and create pass_auth token internally
                 const result = await fetch('http://localhost:3000/login/finish', {
                     method: 'POST',
                     headers: {
@@ -327,10 +305,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 if (!result.ok) {
                     const errorData = await result.json();
-                    throw new Error(errorData.error || 'Login completion failed');
+                    showAlert(errorData.error || 'Login completion failed', 'error');
+                    authLiveViz.updateSecurityStatus('Authentication failed', 'error');
+                    return;
                 }
                 
                 const loginResult = await result.json();
+                
+                // Node.js returns the pass_auth token after successful OPAQUE verification
+                if (!loginResult.token) {
+                    showAlert('Failed to receive authentication token', 'error');
+                    authLiveViz.updateSecurityStatus('Token creation failed', 'error');
+                    return;
+                }
+                
+                // Store pass_auth token for 3 minutes (for TOTP verification)
+                const passAuthCookie = `pass_auth_token=${loginResult.token}; Max-Age=180; SameSite=Lax; Path=/`;
+                document.cookie = passAuthCookie;
                 
                 if (loginResult.success) {
 
