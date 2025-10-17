@@ -24,14 +24,27 @@ if [ -z "$VENV_PATH" ]; then
 fi
 
 source "$VENV_PATH/bin/activate"
+
+# start internal python api (localhost only - for node.js auth)
+python backend/python_internal_api/internal_api.py &
+INTERNAL_API_PID=$!
+
+# start main flask app
 python backend/Flask-server/main.py &
 FLASK_PID=$!
+
+# start node.js internal api
 cd backend/node_internal_api
 node app.js &
 NODE_PID=$!
 cd ../..
-echo "cypher running - flask: http://127.0.0.1:5000 | node: http://localhost:3000"
+
+echo "cypher running:"
+echo "  - flask app:      http://127.0.0.1:5000"
+echo "  - node api:       http://127.0.0.1:3000 (localhost only)"
+echo "  - internal auth:  http://127.0.0.1:5001 (localhost only)"
+echo ""
 echo "press ctrl+c to stop"
 echo "Access cypher by going to http://localhost:5000"
-trap 'kill $FLASK_PID $NODE_PID 2>/dev/null; exit' INT
+trap 'kill $FLASK_PID $NODE_PID $INTERNAL_API_PID 2>/dev/null; exit' INT
 wait

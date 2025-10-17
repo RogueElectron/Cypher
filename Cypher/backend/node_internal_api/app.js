@@ -277,6 +277,10 @@ const server = new OpaqueServer(
 
 
 
+app.get('/health', (req, res) => {
+    res.status(200).json({ message: 'Node.js internal API is running' });
+});
+
 // user registration endpoints
 app.post('/register/init', setupRateLimiter, async (req, res) => {
     // make sure opaque server is ready
@@ -419,7 +423,7 @@ app.post('/login/finish', authRateLimiter, async (req, res) => {
         if (finServer.session_key) {
             // opaque auth succeeded - need intermediate token for totp phase
             try {
-                const createTokenResponse = await fetch('http://localhost:5000/api/create-token', {
+                const createTokenResponse = await fetch('http://127.0.0.1:5001/internal/create-token', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -540,7 +544,7 @@ app.post('/totp/verify-login', totpRateLimiter, async (req, res) => {
         }
         
         try {
-            const verifyResponse = await fetch('http://localhost:5000/api/verify-token', {
+            const verifyResponse = await fetch('http://127.0.0.1:5001/internal/verify-token', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -588,7 +592,7 @@ app.post('/totp/verify-login', totpRateLimiter, async (req, res) => {
             
             // totp verified - create actual session tokens for the user
             try {
-                const sessionResponse = await fetch('http://localhost:5000/api/create-session', {
+                const sessionResponse = await fetch('http://127.0.0.1:5001/internal/create-session', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

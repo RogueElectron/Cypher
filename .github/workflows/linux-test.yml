@@ -166,8 +166,13 @@ jobs:
         
         echo "Testing Flask application startup..."
         ./scripts/generate_secrets.sh --yes
+        
+        # Start Internal Python API in background for testing
+        timeout 30 python backend/python_internal_api/internal_api.py &
+        INTERNAL_API_PID=$!
+        
         # Start Flask in background for testing
-        timeout 30 python3 backend/Flask-server/main.py &
+        timeout 30 python backend/Flask-server/main.py &
         FLASK_PID=$!
         
         # Start Node.js API in background for testing
@@ -186,14 +191,20 @@ jobs:
           echo "Flask backend not responding"
         fi
         
-        if curl -f http://localhost:3000 --max-time 10 --silent > /dev/null; then
+        if curl -f http://localhost:3000/health --max-time 10 --silent > /dev/null; then
           echo "Node.js API responding"
         else
           echo "Node.js API not responding"
         fi
         
+        if curl -f http://127.0.0.1:5001/health --max-time 10 --silent > /dev/null; then
+          echo "Internal auth API responding"
+        else
+          echo "Internal auth API not responding"
+        fi
+        
         # Clean up processes
-        kill $FLASK_PID $NODE_PID 2>/dev/null || true
+        kill $FLASK_PID $NODE_PID $INTERNAL_API_PID 2>/dev/null || true
         sleep 2
         
         echo "Startup components test completed"
@@ -227,15 +238,21 @@ jobs:
         source "$VENV_PATH/bin/activate"
         
         # Start services for automation testing
+        # Start internal Python API first
+        python backend/python_internal_api/internal_api.py &
+        INTERNAL_API_PID=$!
+        
+        # Start Node.js API
         cd backend/node_internal_api
         node app.js &
         NODE_PID=$!
         cd ../..
         
-        python3 backend/Flask-server/main.py &
+        # Start Flask app
+        python backend/Flask-server/main.py &
         FLASK_PID=$!
         
-        echo "Started services - Node PID: $NODE_PID, Flask PID: $FLASK_PID"
+        echo "Started services - Internal API PID: $INTERNAL_API_PID, Node PID: $NODE_PID, Flask PID: $FLASK_PID"
         
         # Wait for services to be ready
         sleep 15
@@ -272,6 +289,13 @@ jobs:
           echo "WARNING: Flask service not responding"
         fi
         
+        # Check Internal Auth API
+        if curl -f http://127.0.0.1:5001/health --max-time 5 --silent > /dev/null; then
+          echo "Internal auth API responding"
+        else
+          echo "WARNING: Internal auth API not responding"
+        fi
+        
         # Run the user automation
         cd test
         USERNAME="ci_test_$(date +%s)"
@@ -289,7 +313,7 @@ jobs:
           SUMMARY_JSON=${SUMMARY_LINE#AUTOMATION_RESULT }
           echo "$SUMMARY_JSON" > automation_summary.json
           echo "::group::Parsed automation summary"
-          python3 parse_automation_summary.py
+          python parse_automation_summary.py
           echo "::endgroup::"
         else
           echo "WARNING: Automation summary not found in output."
@@ -300,7 +324,7 @@ jobs:
         cd ..
         
         # Clean up automation processes
-        kill $FLASK_PID $NODE_PID 2>/dev/null || true
+        kill $FLASK_PID $NODE_PID $INTERNAL_API_PID 2>/dev/null || true
         sleep 2
         
         exit $EXIT_CODE
