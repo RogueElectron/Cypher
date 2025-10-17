@@ -24,7 +24,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from backend.database import (
     get_db_session,
     get_session_manager, get_token_manager, get_rate_limiter,
-    User, UserSession, RefreshToken, AuditLog
+    User, UserSession, RefreshToken, AuditLog,
+    init_databases, init_redis_managers
 )
 
 # Load environment variables
@@ -37,6 +38,21 @@ logger = logging.getLogger(__name__)
 
 # Create Flask app
 app = Flask(__name__)
+
+# Initialize databases and Redis on startup
+def initialize_services():
+    """Initialize database connections and Redis managers"""
+    try:
+        if not init_databases():
+            logger.error("Failed to initialize databases")
+            return False
+        
+        init_redis_managers()
+        logger.info("Internal API services initialized")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to initialize services: {e}")
+        return False
 
 # Load PASETO keys from environment (same as main Flask app)
 try:
@@ -308,6 +324,16 @@ def health():
 
 if __name__ == '__main__':
     # CRITICAL: Only bind to localhost - never expose externally
+    
+    # Initialize database and Redis connections
+    if not initialize_services():
+        logger.critical("Failed to initialize internal API services. Exiting.")
+        sys.exit(1)
+    
+    # Suppress Flask request logs
+    import logging as log
+    log.getLogger('werkzeug').setLevel(log.ERROR)
+    
     logger.info("Starting internal authentication API on http://127.0.0.1:5001")
     logger.warning("SECURITY: This API should ONLY be accessible from localhost")
     app.run(host='127.0.0.1', port=5001, debug=False)
