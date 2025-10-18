@@ -99,33 +99,16 @@ Cypher/
 
 ## Documentation
 
-### Digitopia-specific docs
-- **[Team Roles](docs/Team-Roles.md)** - Team structure and responsibilities
-- **[business model](docs/business-model.md)** - Business model
-
-### Complete Documentation Suite
-- **[Overview](docs/Overview.md)** - System introduction and capabilities
-- **[API Reference](docs/API-Reference.md)** - Complete endpoint documentation
-- **[Authentication System](docs/Authentication-System.md)** - Security architecture deep-dive
-- **[System Architecture](docs/System-Architecture.md)** - Technical design details
-- **[Authentication Workflows](docs/Authentication-Workflows.md)** - Flow diagrams
-- **[Development and Deployment](docs/Development-and-Deployment.md)** - Setup and contribution guide
-
-### Quick Links
-- **[Installation and Setup](docs/Installation-and-Setup.md)** - Get started in minutes
-- **[Running the Application](docs/Running-the-Application.md)** - Launch instructions
-- **[Security Architecture](docs/Security-Architecture.md)** - Threat model and design
-
-### Full docs
-The full documentation has much more, Access the index here
-- **[Documentation index](docs/README.md)**
+### Removed old documentation
+### working on major changes so won't write new docs until done
 
 ## Technical Specifications
 
 | Component | Technology | Purpose |
 |-----------|------------|---------|
 | **Frontend** | Vanilla JS + Vite | Zero-knowledge client operations |
-| **Node.js API** | Express + OPAQUE | Cryptographic protocol handling |
+| **Node.js Internal API** | Express + OPAQUE | Cryptographic protocol handling |
+| **Flask Internal API** | FLASK + PASETO  | Internal API for session management |
 | **Flask Service** | Flask + PASETO | Session management & tokens |
 | **Database** | PostgreSQL | Persistent credential storage |
 | **Cache** | Redis | Session & rate limiting |
