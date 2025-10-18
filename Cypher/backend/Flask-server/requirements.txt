@@ -1,5 +1,5 @@
 flask>=3.0.0
-flask-cors>=4.0.0
+flask-cors>=6.0.0
 flask-talisman>=1.1.0
 bleach>=6.1.0
 paseto>=1.8.0
@@ -9,3 +9,5 @@ redis>=5.0.0
 cryptography>=41.0.0
 alembic>=1.12.0
 python-dotenv>=1.0.0
+werkzeug>=3.0.3 # not directly required, pinned by Snyk to avoid a vulnerability
+zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability
