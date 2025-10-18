@@ -1,9 +1,28 @@
-/cyvenv
-/venv
-/Cypher/front-end/node_modules
-/Cypher/backend/node_internal_api/node_modules
-/Cypher/backend/__pycache__ 
-/Cypher/front-end/static/dist/
-/Cypher/backend/src/__pycache__/
-/Cypher/.env
-/Cypher/.keys/
+# Virtual environments
+cyvenv/
+venv/
+.venv/
+
+# Node modules
+Cypher/front-end/node_modules/
+Cypher/backend/node_internal_api/node_modules/
+
+# Python cache (all __pycache__ directories anywhere)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Build outputs
+Cypher/front-end/static/dist/
+
+# Secrets and config
+Cypher/.env
+Cypher/.keys/
+*.key
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
