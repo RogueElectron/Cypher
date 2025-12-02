@@ -6,6 +6,8 @@
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/RogueElectron/Cypher)
 # Cypher - Zero-Knowledge Authentication Platform
 
+# Won 3rd place in DIGITOPIA egypt 2025 CyberSecurity track
+
 > **Revolutionary Zero-Knowledge Authentication Platform** - Passwords never leave your device, even during registration and login.
 
 PS: current docs are deprecated, will not re-write until done with current changes
